@@ -143,7 +143,7 @@ nav a{transition:background-color .25s,color .25s}
  <div class="card" id="reviewCard" style="border:2px solid var(--warn)"><h2 id="reviewTitle">Needs a category</h2><p class="note" style="margin-top:-6px">Found in your SMS or statements and already counted in your balances. Tap each one to pick a category; the app remembers it for that name next time.</p><ul class="list" id="reviewList"></ul></div>
  </div>
  <div data-sub="all" data-title="All entries">
- <div class="chips" id="allAccs" style="margin-bottom:12px"></div>
+ <div class="f"><label for="allAccSel">Account</label><select id="allAccSel"></select></div>
  <div class="card">
   <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px"><h2 id="listTitle" style="margin:0">Latest</h2><button class="ib" id="clearAcc" hidden>Show all</button></div>
   <ul class="list" id="homeList"></ul>
@@ -386,7 +386,7 @@ nav a{transition:background-color .25s,color .25s}
  <div class="card">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><h2 style="margin:0">Installments</h2><button class="ib" id="pClose">Close</button></div>
   <div class="info" id="pTx" style="--c:var(--credit)"></div>
-  <div class="f"><span class="lbl">Number of months</span><div class="chips" id="pMonths"></div></div>
+  <div class="f"><label for="pMonthsSel">Number of months</label><select id="pMonthsSel"></select></div>
   <div class="row"><div><label for="pMonthsIn">Or type months</label><input id="pMonthsIn" type="number" min="2" max="60" inputmode="numeric"></div><div><label for="pEach">Monthly installment (EGP)</label><input id="pEach" type="number" inputmode="decimal" min="0" step="0.01"></div></div>
   <div class="f"><label for="pFirst">First installment due on</label><select id="pFirst"></select></div>
   <div id="pSum"></div>
@@ -616,7 +616,7 @@ function renderHome(){renderBalCheck();
  $('reviewTitle').textContent=rv.length?`${rv.length} need${rv.length===1?'s':''} a category`:'All sorted';$('reviewList').innerHTML=rv.length?rv.slice(0,200).map(t=>row(t,null)).join(''):'<li class="empty" style="display:block;border:0">Nothing waiting for a category.</li>';
  $('homeMenu').innerHTML=(rv.length?menuBtn('home-review','🏷️',`${rv.length} need${rv.length===1?'s':''} a category`,'Tap to sort them — similar ones can be done together'):'');
  $('homeLatest').innerHTML=tx.length?grouped([...tx].filter(t=>!isCheck(t)).sort(byDate).slice(0,8),null):'<li class="empty" style="display:block;border:0">Nothing here yet. Tap <b>+ Add</b> to record your first expense.</li>';
- $('allAccs').innerHTML=[['','All'],...ACC.map(a=>[a,accName(a)])].map(([a,n])=>`<button class="chip${(homeAcc||'')===a?' on':''}" ${a?`style="--c:${ACOL[a]}"`:''} data-allacc="${a}">${esc(n)}</button>`).join('');
+ $('allAccSel').innerHTML='<option value="">All accounts</option>'+accOpts(ACC,homeAcc);
  const list=tx.filter(t=>!homeAcc||touches(t,homeAcc)).sort(byDate);
  $('listTitle').textContent=homeAcc?accName(homeAcc):'Latest';$('clearAcc').hidden=!homeAcc;
  $('homeList').innerHTML=list.length?grouped(list.slice(0,homeN),homeAcc):'<li class="empty" style="display:block;border:0">Nothing here yet. Tap <b>+ Add</b> to record your first expense.</li>';
@@ -669,7 +669,7 @@ function renderReports(){
  const ms=[...new Set([today.slice(0,7),...tx.map(t=>t.date.slice(0,7))])].sort().reverse(),ys=[...new Set(ms.map(m=>m.slice(0,4)))];
  const cur=$('rMonth').value||today.slice(0,7);
  $('rMonth').innerHTML=ms.map(m=>`<option value="${m}">${monthLbl(m)}</option>`).join('')+ys.map(y=>`<option value="${y}">All of ${y}</option>`).join('');$('rMonth').value=cur;if(!$('rMonth').value)$('rMonth').value=today.slice(0,7);
- const ca=$('rAcc').value||'all';$('rAcc').innerHTML='<option value="all">All accounts</option>'+ACC.map(a=>`<option value="${a}">${esc(accName(a))}</option>`).join('');$('rAcc').value=ca;
+ const ca=$('rAcc').value||'all';$('rAcc').innerHTML='<option value="all">All accounts</option>'+accOpts(ACC);$('rAcc').value=ca;
  const p=$('rMonth').value,acc=ca==='all'?null:ca,inP=tx.filter(t=>t.date.startsWith(p)&&(!acc||t.acc===acc));
  const ex=inP.filter(t=>t.type==='exp'&&t.cat!=='gam3ya'),sp=r2(ex.reduce((s,t)=>s+cost(t),0)),inc=r2(inP.filter(t=>t.type==='inc'&&t.cat!=='gam3ya').reduce((s,t)=>s+t.amt,0));
  $('rTiles').innerHTML=`<div class="tile"><div class="k">Spent</div><div class="v" style="color:var(--out)">${money(sp)}</div></div><div class="tile"><div class="k">Income</div><div class="v" style="color:var(--in)">${money(inc)}</div></div><div class="tile"><div class="k">Net</div><div class="v">${money(inc-sp)}</div></div>`;
@@ -813,6 +813,8 @@ $('aType').addEventListener('click',e=>{const b=e.target.closest('button');if(!b
 $('aMode').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;F.mode=b.dataset.mode;renderAdd()});
 ['aAmt','aNote'].forEach(id=>$(id).addEventListener('input',info));$('aIpn').addEventListener('change',info);$('aFx').addEventListener('change',info);
 $('aDate').addEventListener('input',renderAdd);
+/* account <option>s sorted A–Z */
+const accOpts=(list,sel)=>[...list].sort((a,b)=>accName(a).localeCompare(accName(b),undefined,{sensitivity:'base'})).map(a=>`<option value="${a}"${sel===a?' selected':''}>${esc(accName(a))}</option>`).join('');
 const byName=list=>[...list].sort((a,b)=>a.n.localeCompare(b.n,undefined,{sensitivity:'base'}));
 $('aAccSel').addEventListener('change',()=>{F.acc=$('aAccSel').value;if(F.type==='xfer'&&F.to===F.acc)F.to=null;renderAdd()});
 $('aToSel').addEventListener('change',()=>{F.to=$('aToSel').value;renderAdd()});
@@ -821,7 +823,7 @@ $('quickCatAdd').addEventListener('click',()=>{const id=addCat(F.type,$('quickCa
 
 /* ---------- clicks ---------- */
 let undo=null;
-document.addEventListener('click',e=>{const f=e.target.closest('[data-allacc]');if(f){homeAcc=f.dataset.allacc||null;homeN=40;renderHome()}});
+$('allAccSel').addEventListener('change',()=>{homeAcc=$('allAccSel').value||null;homeN=40;renderHome()});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-plan],[data-tx],[data-acc],[data-aacc],[data-ato],[data-acat],[data-months],[data-paynow],[data-fill],[data-rcat],[data-addcat],[data-rmcat],#newCatChip');if(!b)return;
  const d=b.dataset;
  if(d.plan)openPlan(d.plan);
@@ -892,7 +894,7 @@ function openPlan(id,fromAdd){const t=tx.find(x=>x.id===id);if(!t)return;
 function pMonths(){const v=parseInt($('pMonthsIn').value);return v>=2?v:P.months}
 function renderPlan(){if(!P){go('credit');return}const t=tx.find(x=>x.id===P.id);if(!t){go('credit');return}
  $('pTx').innerHTML=`<b>${esc(t.note||catName(t))}</b> · ${egp(t.amt)}<br>Bought ${dow(t.date)} ${fmt(t.date)} on ${esc(accName('credit'))}`;
- $('pMonths').innerHTML=[3,6,9,10,12,18,24,36].map(n=>`<button class="chip${P.months===n&&!$('pMonthsIn').value?' on':''}" data-pm="${n}">${n}</button>`).join('');
+ {const typed=parseInt($('pMonthsIn').value),cur=typed>=2?typed:P.months,ns=[...new Set([3,6,9,10,12,18,24,36,cur])].sort((a,b)=>a-b);$('pMonthsSel').innerHTML=ns.map(n=>`<option value="${n}"${n===cur?' selected':''}>${n} months</option>`).join('')}
  const from=stmtOf(t.date),to=addM(stmtOf(today)>from?stmtOf(today):from,6),opts=[];
  for(let k=0,x=from;x<=to&&k<60;k++,x=addM(from,k))opts.push(x);
  if(!opts.includes(P.first))opts.push(P.first);opts.sort();
@@ -909,10 +911,10 @@ function planSum(){const t=tx.find(x=>x.id===P.id);if(!t)return;const n=pMonths(
   <div class="kv tot"><span>Months remaining</span><b>${left} · ${egp(leftAmt)}</b></div>
   <div class="kv"><span>Last installment due</span><b>${fmt(dueOf(sc.at(-1).stmt))}</b></div>
   <div class="info" style="margin:12px 0 0;--c:var(--credit)">Only <b>${egp(each)}</b> a month counts in your bills, starting with the one due <b>${fmtS(firstDue)}</b>.${fullBill<sc[0].stmt?` The bill due ${fmtS(dueOf(fullBill))} won't include this purchase.`:fullBill===sc[0].stmt?` The bill due ${fmtS(dueOf(fullBill))} has ${egp(each)} for it instead of ${egp(t.amt)}.`:''}</div>`}
-$('pMonths').addEventListener('click',e=>{const b=e.target.closest('[data-pm]');if(!b)return;P.months=+b.dataset.pm;$('pMonthsIn').value='';
+$('pMonthsSel').addEventListener('change',e=>{P.months=+$('pMonthsSel').value;$('pMonthsIn').value='';
  const t=tx.find(x=>x.id===P.id);if(!P.touched&&t)$('pEach').value=r2(t.amt/P.months);renderPlan()});
 $('pMonthsIn').addEventListener('input',()=>{const t=tx.find(x=>x.id===P.id);if(!P.touched&&t&&pMonths()>=2)$('pEach').value=r2(t.amt/pMonths());
- document.querySelectorAll('#pMonths .chip').forEach(c=>c.classList.toggle('on',!$('pMonthsIn').value&&+c.dataset.pm===P.months));planSum()});
+ planSum()});
 $('pEach').addEventListener('input',()=>{P.touched=true;planSum()});
 $('pFirst').addEventListener('change',()=>{P.first=$('pFirst').value;planSum()});
 function leavePlan(){P=null;if(history.length>1)history.back();else go('credit')}
@@ -1213,7 +1215,7 @@ function subInfo(sb){const ch=subCharges(sb.id),last=ch[0]||null,price=last?last
  return{ch,last,price,monthly:sb.cycle==='y'?r2(price/12):price,next:last?nextDate(last.date,sb.cycle):null}}
 let subEdit=null;
 function renderSubs(){
- const infos=S.subs.map(sb=>({sb,...subInfo(sb)})),mon=r2(infos.reduce((a,i)=>a+i.monthly,0)),fees=r2(infos.reduce((a,i)=>a+(i.last&&i.last.fxFee?(i.sb.cycle==='y'?i.last.fxFee/12:i.last.fxFee):0),0));
+ const infos=[...S.subs].sort((a,b)=>a.n.localeCompare(b.n,undefined,{sensitivity:'base'})).map(sb=>({sb,...subInfo(sb)})),mon=r2(infos.reduce((a,i)=>a+i.monthly,0)),fees=r2(infos.reduce((a,i)=>a+(i.last&&i.last.fxFee?(i.sb.cycle==='y'?i.last.fxFee/12:i.last.fxFee):0),0));
  $('subTiles').innerHTML=`<div class="tile"><div class="k">Per month</div><div class="v" style="color:var(--out)">${money(mon)}</div></div><div class="tile"><div class="k">Per year</div><div class="v">${money(mon*12)}</div></div><div class="tile"><div class="k">FX fees / month</div><div class="v">${money(fees)}</div></div>`;
  const ym=today.slice(0,7);
  $('subList').innerHTML=infos.length?infos.map(({sb,last,price,next})=>{const paid=last&&last.date.startsWith(ym),late=next&&next<today;
@@ -1221,7 +1223,7 @@ function renderSubs(){
  const all=tx.filter(t=>t.type==='exp'&&(t.sub||t.cat==='subs')).sort(byDate).slice(0,60);
  $('subChShort').textContent=`${all.length} charge${all.length===1?'':'s'} found`;
  $('subCharges').innerHTML=all.length?grouped(all,null):'<li class="empty" style="display:block;border:0">No charges found yet. They appear here from your SMS and statements.</li>';
- $('sbAcc').innerHTML=ACC.filter(a=>a!=='cash').map(a=>`<option value="${a}">${esc(accName(a))}</option>`).join('')}
+ $('sbAcc').innerHTML=accOpts(ACC.filter(a=>a!=='cash'))}
 function openSub(id){subEdit=id||null;const sb=id?S.subs.find(x=>x.id===id):{n:'',kw:'',price:0,fx:true,acc:'credit',cycle:'m'};
  $('subForm').hidden=false;$('subFormTitle').textContent=id?sb.n:'New subscription';$('sbName').value=sb.n;$('sbKw').value=sb.kw;$('sbPrice').value=sb.price||'';
  $('sbFx').checked=sb.fx!==false;$('sbAcc').value=sb.acc;$('sbCycle').value=sb.cycle||'m';$('sbDel').hidden=!id;$('subForm').scrollIntoView({behavior:'smooth',block:'start'})}
@@ -1341,7 +1343,7 @@ function renderGam(){
   ${got&&left>0?`<div class="msg">You got the money already — you still owe ${egp(left)} over ${g.months-paid.length} month${g.months-paid.length===1?'':'s'}.</div>`:''}
   <div class="btns" style="margin-top:10px">${done?'<span class="pill paid">All paid</span>':`<button class="btn" data-gampay="${g.id}">Pay ${monthLbl(addYm(g.start,nextI))} · ${money(each)}</button>`}${!got&&idx>=g.turn-1?`<button class="btn" style="background:var(--in)" data-gamget="${g.id}">I received ${money(gamPayout(g))}</button>`:''}</div></div>`}).join('')
   :'<div class="card empty">Gam3ya not found.</div>';
- $('gmAcc').innerHTML=NONCC.map(a=>`<option value="${a}">${esc(accName(a))}</option>`).join('')}
+ $('gmAcc').innerHTML=accOpts(NONCC)}
 function gmInfo(){const a=r2($('gmAmt').value),n=+$('gmMonths').value,sh=+$('gmShares').value||1,t=+$('gmTurn').value,st=$('gmStart').value;
  $('gmInfo').innerHTML=a&&n?`You pay ${egp(a*sh)} a month for ${n} months and get <b>${egp(a*n*sh)}</b>${t&&st?` in ${monthLbl(addYm(st,t-1))}`:''}.${t&&t<n?` After that you keep paying ${egp(a*sh*(n-t))}.`:''}`:'Enter the monthly amount and the number of months.'}
 ['gmAmt','gmMonths','gmShares','gmTurn','gmStart'].forEach(id=>$(id).addEventListener('input',gmInfo));
@@ -1371,8 +1373,8 @@ function charityMonths(){const pct=+S.charity.pct||0,sal=tx.filter(t=>t.type==='
   rows.push({ym,salary,est:salBy[ym]==null&&fut,due,paid,left:r2(Math.max(0,due-paid))})}
  return rows}
 function renderCharity(){const rows=charityMonths(),cur=ymOf(today),now=rows.filter(r=>r.ym<=cur&&r.left>0&&!r.est),pct=+S.charity.pct||0;
- $('chPct').value=pct;$('chFrom').value=S.charity.from;$('chAcc').innerHTML=NONCC.map(a=>`<option value="${a}"${S.charity.acc===a?' selected':''}>${esc(accName(a))}</option>`).join('');
- const opts=NONCC.map(a=>`<option value="${a}"${S.charity.acc===a?' selected':''}>${esc(accName(a))}</option>`).join('');
+ $('chPct').value=pct;$('chFrom').value=S.charity.from;$('chAcc').innerHTML=accOpts(NONCC,S.charity.acc);
+ const opts=accOpts(NONCC,S.charity.acc);
  $('chNow').innerHTML=now.length?now.map(r=>`<div class="due" style="border-left-color:var(--acc)"><div class="t"><small>Church · ${monthLbl(r.ym)} (${pct}% of ${money(r.salary)})</small><span class="big">${egp(r.left)}</span>${r.paid?`<small>${money(r.paid)} already given</small>`:''}
   <div class="catrow" style="margin-top:8px"><select id="chFrom-${r.ym}" aria-label="Pay from">${opts}</select><button class="btn" style="width:auto" data-chpay="${r.ym}">Pay now</button></div></div></div>`).join('')
   :`<div class="due ok"><div class="t"><small>Church</small><b>Nothing due right now.</b><small>${(()=>{const n=rows.find(r=>r.ym>cur||r.est);return n?`Next: about ${egp(n.due)} in ${monthLbl(n.ym)}${n.est?' (estimated from your last salary)':''}`:'Add your salary (payslip, SMS or statement) to see what is due.'})()}</small></div></div>`;
@@ -1554,7 +1556,7 @@ function pollSms(){if(!HAS_SMS||!S.sms.on)return;let l;try{l=JSON.parse(Android.
 function saveKw(){SMS_ACC.forEach(a=>S.sms.kw[a]=$('kw-'+a).value.trim());S.sms.ipAcc=$('ipAcc').value;save();pushSmsConfig()}
 function renderSms(){
  $('kwRows').innerHTML=SMS_ACC.map(a=>`<div class="f"><label for="kw-${a}">${esc(accName(a))}</label><input id="kw-${a}" value="${esc(S.sms.kw[a]||'')}" placeholder="e.g. 1234, 100012345678" inputmode="text"></div>`).join('');
- $('ipAcc').innerHTML=['debit','od','telda'].map(a=>`<option value="${a}"${S.sms.ipAcc===a?' selected':''}>${esc(accName(a))}</option>`).join('');
+ $('ipAcc').innerHTML=accOpts(['debit','od','telda'],S.sms.ipAcc);
  let st;
  if(!HAS_SMS)st='<div class="msg">Reading SMS works in the Android app. You can still test a message below.</div>';
  else{const g=Android.smsPermission()==='granted';

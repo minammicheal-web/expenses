@@ -72,8 +72,8 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
 .amt.o{color:var(--out)}.amt.i{color:var(--in)}.amt.n{color:var(--mute)}
 .day{font-size:13px;font-weight:700;color:var(--mute);padding:14px 0 4px;text-transform:uppercase;letter-spacing:.04em}
 .tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}
-.tile{background:var(--card);border-radius:14px;padding:14px}
-.tile .k{font-size:13px;color:var(--mute)}.tile .v{font:800 clamp(15px,4.2vw,26px)/1.2 system-ui,sans-serif;white-space:nowrap;margin-top:4px;overflow:hidden;text-overflow:ellipsis}
+.tile{background:var(--card);border-radius:14px;padding:14px 12px}
+.tile .k{font-size:13px;color:var(--mute)}.tile .v{font:800 clamp(13px,3.7vw,26px)/1.2 system-ui,sans-serif;white-space:nowrap;margin-top:4px;letter-spacing:-.01em}
 .meter{margin-bottom:12px;cursor:pointer}.meter .top{display:flex;justify-content:space-between;gap:8px;font-size:15px}.meter .top b{white-space:nowrap;flex:0 0 auto}
 .meter.on .top span{font-weight:700;text-decoration:underline}
 .kv>span{flex:1 1 auto}.kv>b{flex:0 0 auto;text-align:right}
@@ -103,7 +103,7 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
 .grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
 .grid2>.card{margin-bottom:0}
 [hidden]{display:none!important}
-@media(max-width:700px){.grid2{grid-template-columns:minmax(0,1fr)}.grid2>.card{margin-bottom:0}.tiles .tile .v{font-size:18px}}
+@media(max-width:700px){.grid2{grid-template-columns:minmax(0,1fr)}.grid2>.card{margin-bottom:0}}
 @media(max-width:380px){nav a{font-size:13px;padding:10px 10px}.seg button{font-size:13px}}
 </style>
 </head>
@@ -334,6 +334,7 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
 </section>
 </div>
 <button class="fab" id="fab">+ Add</button>
+<div id="dlg" hidden style="position:fixed;inset:0;z-index:9;background:rgb(0 0 0/.45);display:flex;align-items:flex-end;justify-content:center;padding:16px"><div class="card" style="width:100%;max-width:520px;margin:0 0 calc(10px + env(safe-area-inset-bottom))"><h2 id="dlgT"></h2><div id="dlgB" class="note" style="font-size:15px;color:var(--ink);margin-bottom:14px"></div><div id="dlgBtns" style="display:grid;gap:8px"></div></div></div>
 <div class="toast" id="toast"><span id="toastT"></span><button id="toastB">Undo</button></div>
 
 <script>
@@ -549,7 +550,7 @@ function renderHome(){renderBalCheck();
  const ym=today.slice(0,7),inM=tx.filter(t=>t.date.startsWith(ym));
  const sp=r2(inM.filter(t=>t.type==='exp'&&t.cat!=='gam3ya').reduce((s,t)=>s+cost(t),0)),inc=r2(inM.filter(t=>t.type==='inc'&&t.cat!=='gam3ya').reduce((s,t)=>s+t.amt,0));
  $('monthTiles').innerHTML=`<div class="tile"><div class="k">Spent in ${MONTHS[+ym.slice(5)-1]}</div><div class="v" style="color:var(--out)">${money(sp)}</div></div><div class="tile"><div class="k">Income</div><div class="v" style="color:var(--in)">${money(inc)}</div></div><div class="tile"><div class="k">Net</div><div class="v">${money(inc-sp)}</div></div>`;
- const rv=tx.filter(t=>t.review).sort(byDate);$('reviewCard').hidden=!rv.length;
+ const rv=tx.filter(t=>t.review&&!isCheck(t)).sort(byDate);$('reviewCard').hidden=!rv.length;
  if(rv.length){$('reviewTitle').textContent=`${rv.length} need${rv.length===1?'s':''} a category`;$('reviewList').innerHTML=rv.slice(0,20).map(t=>row(t,null)).join('')}
  const list=tx.filter(t=>!homeAcc||touches(t,homeAcc)).sort(byDate);
  $('listTitle').textContent=homeAcc?accName(homeAcc):'Latest';$('clearAcc').hidden=!homeAcc;
@@ -681,9 +682,25 @@ function readForm(){const e=[],amt=r2($('aAmt').value),date=$('aDate').value;
  const old=editId&&tx.find(x=>x.id===editId);if(old&&old.sms)t.sms={...old.sms,guess:false};['stmtKey','bill','payKey','instKey'].forEach(k=>{if(old&&old[k]!=null&&t[k]==null)t[k]=old[k]});
  if(F.type==='exp'&&F.acc==='credit'&&F.mode==='inst'&&old&&old.plan)t.plan=old.plan;
  return{t,e}}
+/* a small choice dialog: resolves with the value of the button tapped */
+function ask(title,body,buttons){return new Promise(res=>{$('dlgT').textContent=title;$('dlgB').innerHTML=body;
+ $('dlgBtns').innerHTML=buttons.map((b,i)=>`<button class="btn${b.ghost?' ghost':''}" data-dlg="${i}">${esc(b.label)}</button>`).join('');$('dlg').hidden=false;
+ $('dlgBtns').onclick=e=>{const x=e.target.closest('[data-dlg]');if(!x)return;$('dlg').hidden=true;res(buttons[+x.dataset.dlg].value)}})}
+/* "the same shop or person": Uber Downtown = Uber; for very common first words (Google, Paymob, Fawry…) the first two words; people by full name */
+const GENERIC1=new Set(['google','paymob','fawry','fawrypf','geidea','amazon','my','the','el','al','instapay','transfer','internet','ipn','cib','payment','pos','mc','visa','apple','samsung','vodafone']);
+function simKey(t){const raw=t&&typeof t==='object'?(t.note||(t.sms&&t.sms.m)||''):String(t||'');const w=mkey(raw.replace(/\(.*?\)/g,'')).split(' ').filter(x=>x.length>1);
+ if(!w.length)return '';if(t&&typeof t==='object'&&(t.cat==='sent'||t.cat==='recv'||/[؀-ۿ]/.test(raw)))return w.join(' ');
+ return GENERIC1.has(w[0])&&w[1]?w[0]+' '+w[1]:w[0]}
+function similar(t){const k=simKey(t);if(!k||k.length<3)return[];return tx.filter(x=>x.id!==t.id&&x.type===t.type&&!x.plan&&simKey(x)===k)}
+async function offerSimilar(t){if(!(t.type==='exp'||t.type==='inc')||!t.cat)return;const sim=similar(t).filter(x=>x.cat!==t.cat);if(!sim.length)return;
+ const unsorted=sim.filter(x=>x.review||!x.cat),name=(t.note||'').replace(/\s*\(.*$/,'').slice(0,40)||simKey(t),cat=catName(t);
+ const btns=[{label:`Yes, all ${sim.length+1}`,value:'all'}];if(unsorted.length&&unsorted.length<sim.length)btns.push({label:`Only the ${unsorted.length} without a category`,value:'unsorted',ghost:true});btns.push({label:'No, just this one',value:'none',ghost:true});
+ const v=await ask(`Put the others in ${cat} too?`,`<b>${sim.length}</b> other ${t.type==='exp'?'payment':'income'}${sim.length===1?'':'s'} look like <b>${esc(name)}</b>${unsorted.length?` (${unsorted.length} without a category)`:''}. New ones will go to ${esc(cat)} automatically either way.`,btns);
+ if(v==='none')return;const list=v==='all'?sim:unsorted;list.forEach(x=>{x.cat=t.cat;x.review=false;x.catSet=true});save();toast(`${list.length+1} entries moved to ${cat}`,false)}
 $('aSave').addEventListener('click',()=>{const{t,e}=readForm();$('aErr').innerHTML=e.map(x=>`<div class="msg warn">${x}</div>`).join('');if(e.length)return;
  if(editId){const o=tx.find(x=>x.id===editId);if(o&&o.cat!==t.cat)t.catSet=true;else if(o&&o.catSet)t.catSet=true}
- const was=editId,needPlan=t.type==='exp'&&t.acc==='credit'&&F.mode==='inst'&&!t.plan;if(t.sms&&t.sms.m&&t.cat&&(t.type==='exp'||t.type==='inc'))S.merch[t.type+':'+mkey(t.sms.m)]=t.cat;tx=tx.filter(x=>x.id!==t.id).concat(t);if(save()){if(needPlan){editId=null;openPlan(t.id,true);return}toast(was?'Changes saved':`Saved ${egp(t.amt)}`,false);closeAdd()}});
+ const was=editId,needPlan=t.type==='exp'&&t.acc==='credit'&&F.mode==='inst'&&!t.plan;if(t.sms&&t.sms.m&&t.cat&&(t.type==='exp'||t.type==='inc'))S.merch[t.type+':'+mkey(t.sms.m)]=t.cat;if(t.cat&&(t.type==='exp'||t.type==='inc')&&simKey(t))S.merch[t.type+':~'+simKey(t)]=t.cat;
+ const old=was&&tx.find(x=>x.id===t.id),catChanged=!old||old.cat!==t.cat||old.review;tx=tx.filter(x=>x.id!==t.id).concat(t);if(save()){if(needPlan){editId=null;openPlan(t.id,true);return}closeAdd();toast(was?'Changes saved':`Saved ${egp(t.amt)}`,false);if(catChanged)offerSimilar(t)}});
 $('aPlan').addEventListener('click',()=>{if(editId)openPlan(editId)});
 $('aDel').addEventListener('click',()=>{if(!editId)return;const b=$('aDel');if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to delete';setTimeout(()=>{b.dataset.sure='';b.textContent='Delete'},3000);return}
  b.dataset.sure='';b.textContent='Delete';const t=tx.find(x=>x.id===editId);tx=tx.filter(x=>x.id!==editId);if(t&&t.sms)skip.push(t.sms.key);save();undo=t;toast('Entry deleted',true);closeAdd()});
@@ -924,7 +941,7 @@ const GUESS=[[/uber|careem|didi|indrive|swvl|\bmetro\b|wataniya|petrol|gas stati
  [/carrefour|spinneys|hyper|kazyon|gomla|seoudi|oscar|kheir zaman|grocery|supermarket|metro market|el ?farah|fathalla/i,'groc'],
  [/we-mobile|we mobile|vodafone|orange|etisalat|dream telecom|telecom egypt/i,'phone'],
  [/pharm|el ?ezaby|seif|19011|roshdy|tarshouby/i,'pharm']];
-function guessCat(desc){const k=S.merch['exp:'+mkey(desc)];if(k&&S.exp.some(c=>c.id===k&&!c.hidden))return k;
+function guessCat(desc){const k=S.merch['exp:'+mkey(desc)]||S.merch['exp:~'+simKey(desc)];if(k&&S.exp.some(c=>c.id===k&&!c.hidden))return k;
  for(const[re,id]of GUESS)if(re.test(desc)&&S.exp.some(c=>c.id===id&&!c.hidden))return id;return null}
 const FEERE=/\bfees?\b|interest|insurance fee|late (?:payment )?charge|\bvat\b|stamp/i;
 function peopleCat(type,name){const k=name&&S.merch[type+':'+mkey(name)];if(k&&S[type].some(c=>c.id===k&&!c.hidden))return k;
@@ -1384,7 +1401,7 @@ function ingest(list){const r={added:0,merged:0,known:0,failed:0};
   if(p.noAmt){const sb=subMatch(norm(msg.body));if(sb&&sb.price>0)Object.assign(p,{err:null,type:'exp',amt:sb.price,m:sb.n,est:true})}
   if(p.err){fails.unshift({key,from:msg.from||'',body:msg.body,ts:msg.ts,err:p.err});fails=fails.slice(0,20);r.failed++;continue}
   const t={id:uid(),type:p.type,acc:p.acc,amt:p.amt,date:iso(new Date(msg.ts)),note:p.m||'',created:msg.ts,sms:{key,from:msg.from||'',body:msg.body,ts:msg.ts,m:p.m,ip:p.ip}};
-  if(p.type==='exp'||p.type==='inc'){const c=p.m&&S.merch[p.type+':'+mkey(p.m)];
+  if(p.type==='exp'||p.type==='inc'){const c=p.m&&(S.merch[p.type+':'+mkey(p.m)]||S.merch[p.type+':~'+simKey(p.m)]);
    if(c&&S[p.type].some(x=>x.id===c))t.cat=c;else if(p.type==='inc'&&p.acc==='credit')t.cat='refund';else if(p.acc!=='credit'&&IPRE.test(norm(msg.body)))t.cat=peopleCat(p.type,p.m);else{t.cat=null;t.review=true}}
   if(p.type==='xfer')t.to=p.to||'cash';if(p.bal!=null)t.sms.bal=p.bal;
   if(p.type==='pay'){t.acc='debit';t.sms.guess=true}

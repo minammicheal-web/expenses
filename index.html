@@ -124,6 +124,7 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
   <div class="card" id="limitCard"></div>
   <div class="card" id="openCard"></div>
  </div>
+ <p class="note" id="stmHint" style="margin:-4px 0 14px">Got a statement PDF? <a href="#settings" style="color:var(--credit);font-weight:700">Import it in Settings</a> to set your card position and installments.</p>
  <div class="card"><h2>What will I owe?</h2><div class="row" style="margin-bottom:6px"><div><label for="fcDate">Due date</label><input id="fcDate" type="date"></div><div></div></div><div id="fcOut"></div></div>
  <div class="card"><h2>Installments</h2><ul class="list" id="instList"></ul></div>
  <div class="card"><h2>Card purchases</h2><p class="note" style="margin-top:-6px">Turned one of these into installments at the bank? Tap <b>Installments</b> next to it. The others stay as pay-in-full.</p><ul class="list" id="ccList"></ul><button class="btn ghost" id="ccMore" hidden style="margin-top:10px">Show more</button></div>
@@ -171,6 +172,12 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
  <div class="grid2" style="margin-bottom:14px">
   <div class="card"><h2>Expense categories</h2><div id="expCats"></div><div class="catrow"><input id="newExp" placeholder="New category" maxlength="40"><button class="ib" data-addcat="exp">Add</button></div></div>
   <div class="card"><h2>Income categories</h2><div id="incCats"></div><div class="catrow"><input id="newInc" placeholder="New category" maxlength="40"><button class="ib" data-addcat="inc">Add</button></div></div>
+ </div>
+ <div class="card" id="stmCard">
+  <h2>Bank statements (PDF)</h2>
+  <p class="note" style="margin-top:-6px">Choose your CIB credit card statements. The app adds the transactions it doesn't have yet, matches the ones it already found in your SMS, registers your active installments, and takes your card position (amount due, due date, balance, limit) from the newest statement. Nothing changes until you tap Import.</p>
+  <div class="upbox"><span class="btn" style="display:flex;align-items:center;justify-content:center" aria-hidden="true">Choose statement PDFs</span><input type="file" id="stmFile" accept="application/pdf,.pdf" multiple aria-label="Choose statement PDF files"></div>
+  <div id="stmOut"></div>
  </div>
  <div class="card" id="smsCard">
   <h2>Read bank SMS</h2>
@@ -287,22 +294,33 @@ const cost=t=>t.plan?planTotal(t.plan):t.amt;
 function schedule(t){const n=t.plan.months,base=stmtOf(t.plan.first);
  return Array.from({length:n},(_,i)=>({stmt:addM(base,i),amt:r2(t.plan.each),i:i+1,n}))}
 function fixPlan(t){const p=t.plan;if(!p||p.each!=null)return;const n=p.months||1;p.each=r2((t.amt+(+p.fee||0))/n);p.first=addM(stmtOf(t.date),p.off||0);delete p.fee;delete p.off}
+const dayDiff=(a,b)=>Math.round((new Date(b+'T00:00')-new Date(a+'T00:00'))/864e5);
+const base=()=>S.ccBase&&S.ccBase.stmt?S.ccBase:null;
+/* the bill a card charge is on: the statement it was found on, else by date (a few days before a
+   statement that was imported but doesn't list it means it posted late, so it goes on the next bill) */
+function billOf(t){if(t.bill)return t.bill;const B=base(),s=stmtOf(t.date);
+ if(B&&B.imported&&s===B.stmt&&!t.stmtKey&&dayDiff(t.date,B.stmt)<7)return addM(B.stmt,1);return s}
+const isCharge=t=>(t.type==='exp'||t.type==='xfer')&&t.acc==='credit';
+const isCredit=t=>t.type==='pay'||(t.type==='inc'&&t.acc==='credit');
 function credit(){
- const map=new Map(),bill=s=>{if(!map.has(s))map.set(s,{stmt:s,due:dueOf(s),full:[],inst:[],billed:0});return map.get(s)};
+ const B=base(),after=x=>!B||x>B.stmt;
+ const map=new Map(),bill=x=>{if(!map.has(x))map.set(x,{stmt:x,due:B&&x===B.stmt&&B.dueDate?B.dueDate:dueOf(x),full:[],inst:[],billed:0,base:0});return map.get(x)};
  let charged=0,pool=0;
  for(const t of tx){
-  if(t.type==='exp'&&t.acc==='credit'){charged+=cost(t);
-   if(t.plan)schedule(t).forEach(p=>{const b=bill(p.stmt);b.inst.push({t,...p});b.billed+=p.amt});
-   else{const b=bill(stmtOf(t.date));b.full.push({t,amt:t.amt});b.billed+=t.amt}}
-  else if(t.type==='pay'||(t.type==='inc'&&t.acc==='credit'))pool+=t.amt;
+  if(isCharge(t)){
+   if(t.type==='exp'&&t.plan){if(after(billOf(t)))charged+=cost(t);   /* bought before the statement: already in its closing balance */
+    schedule(t).forEach(p=>{if(after(p.stmt)){const b=bill(p.stmt);b.inst.push({t,...p});b.billed+=p.amt}})}
+   else{const x=billOf(t);if(after(x)){charged+=t.amt;const b=bill(x);b.full.push({t,amt:t.amt});b.billed+=t.amt}}}
+  else if(isCredit(t)){if(!B||(t.bill?t.bill>B.stmt:t.date>B.stmt))pool+=t.amt}
  }
+ if(B){const b=bill(B.stmt);b.base=r2(B.due);b.billed+=b.base}
  const openS=stmtOf(today);bill(openS);
  const bills=[...map.values()].sort((a,b)=>a.stmt.localeCompare(b.stmt));let left=r2(pool);
  for(const b of bills){b.billed=r2(b.billed);b.covered=r2(Math.min(b.billed,left));left=r2(left-b.covered);b.rem=r2(b.billed-b.covered);
   b.status=b.stmt>=today?(b.stmt===openS?'open':'future'):b.rem<=0?'paid':b.due<today?'over':b.covered>0?'part':'due'}
  const issued=bills.filter(b=>b.stmt<today&&b.rem>0);
  const now=issued.length?{amt:r2(issued.reduce((s,b)=>s+b.rem,0)),due:issued[0].due,over:issued[0].due<today,stmt:issued.at(-1).stmt}:null;
- const used=r2(charged-pool);
+ const used=r2((B?B.closing:0)+charged-pool);
  return{bills,open:map.get(openS),used,avail:r2((S.acc.credit.limit||0)-used),extra:left,now,last:[...bills].reverse().find(b=>b.stmt<today)};
 }
 
@@ -326,7 +344,8 @@ function title(t){
  return catName(t)}
 function sub(t,a){const bits=[];
  if(!a||t.type==='exp'||t.type==='inc')if(t.type!=='xfer'&&t.type!=='pay')bits.push(accName(t.acc));
- if(t.type==='exp'&&t.acc==='credit')bits.push(t.plan?`${t.plan.months} × ${money(t.plan.each)} installments`:`bill of ${fmtS(stmtOf(t.date))}`);
+ if(t.type==='xfer'&&t.acc==='credit')bits.push(`bill of ${fmtS(billOf(t))}`);
+ if(t.type==='exp'&&t.acc==='credit')bits.push(t.plan?`${t.plan.months} × ${money(t.plan.each)} installments`:`bill of ${fmtS(billOf(t))}`);
  if(t.note)bits.push(esc(t.note));if(t.sms)bits.push('SMS');return bits.join(' · ')}
 const ACOL={debit:'var(--debit)',credit:'var(--credit)',telda:'var(--telda)',cash:'var(--cash)'};
 function row(t,a){const d=delta(t,a),cls=d<0?'o':d>0?'i':'n',sign=d<0?'−':d>0?'+':'';
@@ -340,7 +359,7 @@ function load(){try{const j=JSON.parse(localStorage.getItem('exp-data')||'{}');t
 function merge(s){const o=clone(DEF);if(!s)return o;
  for(const k of ['stmt','due','remind'])if(s[k]!=null)o[k]=s[k];
  if(s.acc)for(const a of ACC)o.acc[a]={...o.acc[a],...(s.acc[a]||{})};
- if(s.sms)o.sms={...o.sms,...s.sms,kw:{...o.sms.kw,...(s.sms.kw||{})}};if(s.merch&&typeof s.merch==='object')o.merch=s.merch;
+ if(s.sms)o.sms={...o.sms,...s.sms,kw:{...o.sms.kw,...(s.sms.kw||{})}};if(s.merch&&typeof s.merch==='object')o.merch=s.merch;if(s.ccBase)o.ccBase=s.ccBase;
  if(Array.isArray(s.exp))o.exp=s.exp;if(Array.isArray(s.inc))o.inc=s.inc;return o}
 const backupJSON=()=>JSON.stringify({app:'expenses',version:1,exported:new Date().toISOString(),settings:S,tx,skip},null,1);
 function save(){
@@ -376,21 +395,21 @@ function renderHome(){
 /* ---------- credit ---------- */
 function renderCredit(){
  const c=credit(),lim=+S.acc.credit.limit||0;$('sDayTxt').textContent=S.stmt;$('dDayTxt').textContent=S.due;
- $('dueBox2').innerHTML=dueHTML(c,true);
- $('limitCard').innerHTML=`<h2>${esc(accName('credit'))}</h2><div class="kv"><span>Limit</span><b>${lim?egp(lim):'Not set'}</b></div><div class="kv"><span>Used (incl. remaining installments)</span><b>${egp(Math.max(0,c.used))}</b></div><div class="kv tot"><span>Available</span><b>${lim?egp(c.avail):'—'}</b></div>${lim?`<div class="bar" style="--c:var(--credit)"><i style="width:${Math.min(100,Math.max(0,c.used/lim*100))}%"></i></div>`:''}${c.used<0?`<div class="msg">You have ${egp(-c.used)} extra paid on the card.</div>`:''}`;
+ $('dueBox2').innerHTML=dueHTML(c,true);$('stmHint').hidden=!!base();
+ $('limitCard').innerHTML=`<h2>${esc(accName('credit'))}</h2><div class="kv"><span>Limit</span><b>${lim?egp(lim):'Not set'}</b></div><div class="kv"><span>Used (incl. remaining installments)</span><b>${egp(Math.max(0,c.used))}</b></div><div class="kv tot"><span>Available</span><b>${lim?egp(c.avail):'—'}</b></div>${lim?`<div class="bar" style="--c:var(--credit)"><i style="width:${Math.min(100,Math.max(0,c.used/lim*100))}%"></i></div>`:''}${c.used<0?`<div class="msg">You have ${egp(-c.used)} extra paid on the card.</div>`:''}${base()?`<p class="note" style="margin:10px 0 0">Starting from your statement of ${fmt(base().stmt)}: closing balance ${egp(base().closing)}, total due ${egp(base().due)}.</p>`:''}`;
  const o=c.open,fs=r2(o.full.reduce((s,x)=>s+x.amt,0)),is=r2(o.inst.reduce((s,x)=>s+x.amt,0));
  $('openCard').innerHTML=`<h2>Next bill · ${fmtS(o.stmt)}</h2><p class="note" style="margin-top:-6px">Still open · due ${dow(o.due)} ${fmtS(o.due)}</p><div class="kv"><span>Purchases to pay in full</span><b>${egp(fs)}</b></div><div class="kv"><span>Installments this month (${o.inst.length})</span><b>${egp(is)}</b></div>${o.covered?`<div class="kv"><span>Already paid ahead</span><b>− ${egp(o.covered)}</b></div>`:''}<div class="kv tot"><span>So far</span><b>${egp(o.rem)}</b></div>`;
  const plans=tx.filter(t=>t.type==='exp'&&t.acc==='credit'&&t.plan).sort(byDate);
  $('instList').innerHTML=plans.length?plans.map(t=>{const sc=schedule(t),done=sc.filter(p=>p.stmt<today),leftAmt=r2(sc.filter(p=>p.stmt>=today).reduce((s,p)=>s+p.amt,0)),fin=done.length===sc.length;
   return `<li class="tx" data-plan="${t.id}" style="--c:var(--credit)"><span class="t"><b>${esc(t.note||catName(t))}</b> <span class="pill${fin?' paid':''}">${fin?'Finished':`${done.length} of ${sc.length} billed`}</span><small>${money(sc[0].amt)} × ${sc.length} = ${money(cost(t))} · bought ${fmt(t.date)} · last due ${fmtS(dueOf(sc.at(-1).stmt))}</small><span class="bar" style="display:block;--c:var(--credit)"><i style="width:${done.length/sc.length*100}%"></i></span></span><span class="amt">${fin?'':money(leftAmt)+'<br><small class="note">left</small>'}</span></li>`}).join(''):'<li class="empty" style="display:block;border:0">No installment plans yet. Tap <b>Installments</b> on a card purchase below.</li>';
  const cp=tx.filter(t=>t.type==='exp'&&t.acc==='credit'&&!t.plan).sort(byDate);
- $('ccList').innerHTML=cp.length?cp.slice(0,ccN).map(t=>`<li><span class="dot" style="--c:var(--credit)"></span><span class="t" data-tx="${t.id}" style="cursor:pointer">${esc(title(t))}<small>${fmt(t.date)}${t.note?' · '+esc(t.note):''} · bill of ${fmtS(stmtOf(t.date))}</small></span><span class="amt">${money(t.amt)}</span><button class="ib" data-plan="${t.id}">Installments</button></li>`).join(''):'<li class="empty" style="display:block;border:0">No card purchases yet.</li>';
+ $('ccList').innerHTML=cp.length?cp.slice(0,ccN).map(t=>`<li><span class="dot" style="--c:var(--credit)"></span><span class="t" data-tx="${t.id}" style="cursor:pointer">${esc(title(t))}<small>${fmt(t.date)}${t.note?' · '+esc(t.note):''} · bill of ${fmtS(billOf(t))}</small></span><span class="amt">${money(t.amt)}</span><button class="ib" data-plan="${t.id}">Installments</button></li>`).join(''):'<li class="empty" style="display:block;border:0">No card purchases yet.</li>';
  $('ccMore').hidden=cp.length<=ccN;
  if(!$('fcDate').value)$('fcDate').value=(c.now?c.now.due:c.open.due);renderForecast();
  const fut=c.bills.filter(b=>b.status==='future'&&b.billed>0),show=[...fut.slice(0,2).reverse(),...c.bills.filter(b=>b.status!=='future'&&(b.billed>0||b.status==='open')).reverse()];
  const part=(n,w,a)=>n?`${n} ${w}${n===1?'':'s'} ${money(a)}`:'';
  const lbl={open:'Open',future:'Upcoming',paid:'Paid',over:'Overdue',part:'Partly paid',due:'To pay'};
- $('billList').innerHTML=show.map(b=>`<li><span class="t"><b>${fmt(b.stmt)}</b> <span class="pill ${b.status}">${lbl[b.status]}</span><small>${['due '+fmtS(b.due),part(b.full.length,'purchase',r2(b.full.reduce((s,x)=>s+x.amt,0))),part(b.inst.length,'installment',r2(b.inst.reduce((s,x)=>s+x.amt,0)))].filter(Boolean).join(' · ')}</small></span><span class="amt">${money(b.billed)}${b.rem>0&&b.covered>0?`<br><small class="note">${money(b.rem)} left</small>`:''}</span></li>`).join('')||'<li class="empty" style="display:block;border:0">No bills yet.</li>';
+ $('billList').innerHTML=show.map(b=>`<li><span class="t"><b>${fmt(b.stmt)}</b> <span class="pill ${b.status}">${lbl[b.status]}</span><small>${['due '+fmtS(b.due),b.base?`from your statement ${money(b.base)}`:'',part(b.full.length,'purchase',r2(b.full.reduce((s,x)=>s+x.amt,0))),part(b.inst.length,'installment',r2(b.inst.reduce((s,x)=>s+x.amt,0)))].filter(Boolean).join(' · ')}</small></span><span class="amt">${money(b.billed)}${b.rem>0&&b.covered>0?`<br><small class="note">${money(b.rem)} left</small>`:''}</span></li>`).join('')||'<li class="empty" style="display:block;border:0">No bills yet.</li>';
  if(fut.length>2)$('billList').insertAdjacentHTML('afterbegin',`<li class="note" style="border:0">+ ${fut.length-2} more upcoming bill${fut.length-2===1?'':'s'} with installments, until ${fmtS(fut.at(-1).stmt)}</li>`);
 }
 
@@ -451,7 +470,7 @@ function openEdit(id){const t=tx.find(x=>x.id===id);if(!t)return;editId=id;
  F={type:t.type,acc:t.acc,to:t.to||'cash',cat:t.cat||null,mode:t.plan?'inst':'full'};
  $('aAmt').value=t.amt;
  $('aNote').value=t.note||'';$('aDate').value=t.date;$('aErr').innerHTML='';$('addTitle').textContent='Edit entry';$('aDel').hidden=false;$('aSms').hidden=!t.sms;$('aSms').textContent=t.sms?'From SMS'+(t.sms.from?' ('+t.sms.from+')':'')+':\n'+t.sms.body:'';go('add')}
-function accChoices(){return F.type==='exp'||F.type==='inc'?ACC:['debit','telda','cash']}
+function accChoices(){return F.type==='pay'?['debit','telda','cash']:ACC}
 function renderAdd(){if(!F)F=fresh('exp');
  document.querySelectorAll('#aType button').forEach(b=>b.classList.toggle('on',b.dataset.type===F.type));
  const ch=accChoices();if(!ch.includes(F.acc))F.acc=ch[0];
@@ -478,6 +497,7 @@ function info(){const el=$('aInfo'),amt=r2($('aAmt').value),d=$('aDate').value||
   const c=credit(),lim=+S.acc.credit.limit||0,et=editId&&tx.find(x=>x.id===editId),old=et?cost(et):0,av=r2(c.avail+old-(et&&et.plan?cost(et):amt));
   if(lim&&amt)h+=`<br>Available after this: <b${av<0?' class="neg"':''}>${egp(av)}</b>`}
  else if(F.type==='pay'){const c=credit();h=c.now?`Bill to pay: <b>${egp(c.now.amt)}</b> by ${fmtS(c.now.due)}. <button class="ib" data-fill="${c.now.amt}" style="margin-left:6px">Use this amount</button>`:`No unpaid bill right now. The next bill (${fmtS(c.open.stmt)}) is ${egp(c.open.rem)} so far; paying now counts toward it.`}
+ else if(F.type==='xfer'&&F.acc==='credit'){h=`Charged to your card: goes on the bill of <b>${fmt(stmtOf($('aDate').value||today))}</b>.`}
  else if(F.type!=='inc'||F.acc!=='credit'){const a=F.type==='xfer'||F.type==='pay'||F.type==='exp'?F.acc:null;
   if(a&&amt){const t=editId?tx.find(x=>x.id===editId):null,undo=t?-delta(t,a):0,after=r2(bal(a)+undo-amt);h=`${esc(accName(a))} after this: <b${after<0?' class="neg"':''}>${egp(after)}</b>`}}
  el.hidden=!h;el.innerHTML=h}
@@ -496,7 +516,7 @@ $('aDel').addEventListener('click',()=>{if(!editId)return;const b=$('aDel');if(b
  b.dataset.sure='';b.textContent='Delete';const t=tx.find(x=>x.id===editId);tx=tx.filter(x=>x.id!==editId);if(t&&t.sms)skip.push(t.sms.key);save();undo=t;toast('Entry deleted',true);closeAdd()});
 function closeAdd(){editId=null;if(history.length>1&&location.hash==='#add')history.back();else go(backTo)}
 $('addClose').addEventListener('click',closeAdd);
-$('aType').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const keepAmt=$('aAmt').value,ty=b.dataset.type,f=fresh(ty),ch=ty==='exp'||ty==='inc'?ACC:['debit','telda','cash'];if(ch.includes(F.acc))f.acc=F.acc;F=f;$('aAmt').value=keepAmt;renderAdd()});
+$('aType').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const keepAmt=$('aAmt').value,ty=b.dataset.type,f=fresh(ty),ch=ty==='pay'?['debit','telda','cash']:ACC;if(ch.includes(F.acc))f.acc=F.acc;F=f;$('aAmt').value=keepAmt;renderAdd()});
 $('aMode').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;F.mode=b.dataset.mode;renderAdd()});
 ['aAmt','aNote'].forEach(id=>$(id).addEventListener('input',info));
 $('aDate').addEventListener('input',renderAdd);
@@ -605,17 +625,146 @@ $('ccMore').addEventListener('click',()=>{ccN+=20;renderCredit()});
 
 /* ---------- forecast ---------- */
 function forecast(date){const c=credit();let s=addM(stmtOf(date),-2);for(let k=0;k<5&&dueOf(s)<date;k++)s=addM(s,1);
- const b=c.bills.find(x=>x.stmt===s)||{stmt:s,due:dueOf(s),full:[],inst:[],billed:0,covered:0,rem:0};
+ const b=c.bills.find(x=>x.stmt===s)||{stmt:s,due:dueOf(s),full:[],inst:[],billed:0,covered:0,rem:0,base:0};
  const older=c.bills.filter(x=>x.stmt<s&&x.stmt<today&&x.rem>0);return{b,older}}
 function renderForecast(){const d=$('fcDate').value;if(!d){$('fcOut').innerHTML='';return}
  const{b,older}=forecast(d),fs=r2(b.full.reduce((a,x)=>a+x.amt,0)),is=r2(b.inst.reduce((a,x)=>a+x.amt,0)),open=b.stmt>=today;
  $('fcOut').innerHTML=`<div class="due" style="margin:6px 0 10px;border-left-color:var(--credit);background:var(--soft)"><div class="t"><small>Due ${dow(b.due)} ${fmt(b.due)}${b.due!==d?` (first due date on or after ${fmtS(d)})`:''}</small><span class="big">${egp(b.rem)}</span><small>Bill of ${fmt(b.stmt)}${open?' · still open, purchases until then will be added':''}</small></div></div>
+  ${b.base?`<div class="kv"><span>Total due on your bank statement</span><b>${egp(b.base)}</b></div>`:''}
   <div class="kv"><span>Purchases to pay in full (${b.full.length})</span><b>${egp(fs)}</b></div>
   <div class="kv"><span>Installments (${b.inst.length})</span><b>${egp(is)}</b></div>
   ${b.inst.map(x=>`<div class="kv" style="padding-left:14px;font-size:14px;color:var(--mute)"><span>${esc(x.t.note||catName(x.t))} · ${x.i} of ${x.n}</span><b>${money(x.amt)}</b></div>`).join('')}
   ${b.covered?`<div class="kv"><span>Already paid</span><b>− ${egp(b.covered)}</b></div>`:''}
   ${older.length?`<div class="msg">Not included: ${egp(older.reduce((a,x)=>a+x.rem,0))} still unpaid from the bill due ${fmtS(older.at(-1).due)}.</div>`:''}`}
 $('fcDate').addEventListener('input',renderForecast);
+
+
+/* ---------- bank statement PDFs ---------- */
+let pdfReady=null;
+function loadPdf(){if(window.pdfjsLib)return Promise.resolve();if(pdfReady)return pdfReady;
+ const add=src=>new Promise((res,rej)=>{const e=document.createElement('script');e.src=src;e.onload=res;e.onerror=()=>rej(new Error('Could not load the PDF reader'));document.head.appendChild(e)});
+ return pdfReady=add('vendor/pdf.worker.js').then(()=>add('vendor/pdf.js')).catch(e=>{pdfReady=null;throw e})}
+async function pdfLines(buf,password){await loadPdf();
+ const doc=await pdfjsLib.getDocument({data:buf,password:password||undefined,isEvalSupported:false}).promise,out=[];
+ for(let n=1;n<=doc.numPages;n++){const pg=await doc.getPage(n),tc=await pg.getTextContent(),rows=[];
+  for(const it of tc.items){if(!it.str||!it.str.trim())continue;const x=it.transform[4],y=it.transform[5];let r=rows.find(r=>Math.abs(r.y-y)<2.5);if(!r){r={y,items:[]};rows.push(r)}r.items.push({x,s:it.str,w:it.width})}
+  rows.sort((a,b)=>b.y-a.y);
+  for(const r of rows){r.items.sort((a,b)=>a.x-b.x);let t='',end=null;for(const i of r.items){if(end!=null)t+=i.x-end>8?'  ':i.x-end>1?' ':'';t+=i.s;end=i.x+i.w}out.push({p:n,t:t.replace(/\s+$/,'')})}}
+ return out}
+const MON3={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+const numv=x=>x==null?null:parseFloat(String(x).replace(/,/g,''));
+function parseCibCredit(lines){
+ const T=lines.map(l=>l.t),get=re=>{for(const t of T){const m=t.match(re);if(m)return m}return null};
+ const sd=get(/^Statement Date\s+([A-Za-z]{3})-(\d{2})\b/);if(!sd||!get(/^Card Limit/))return null;
+ const sm=MON3[sd[1].toLowerCase()],sy=2000+ +sd[2];if(!sm)return null;
+ const st={kind:'credit',stmt:mk(sy,sm-1,S.stmt),limit:numv((get(/^Card Limit\s+([\d,.]+)/)||[])[1]),due:numv((get(/^Total Amount Due\s+([\d,.]+)/)||[])[1]),
+  min:numv((get(/^Minimum Payment Due\s+([\d,.]+)/)||[])[1]),dueDate:(get(/^Payment Due Date\s+(\d{4}-\d{2}-\d{2})/)||[])[1]||null,
+  card:(get(/^Card Number\s+(?:[\d*]{4}\s+){3}(\d{4})/)||[])[1]||'',closing:numv((get(/CLOSING BALANCE\s+([\d,.]+)/)||[])[1]),
+  opening:numv((get(/OPENING BALANCE\s+([\d,.]+)/)||[])[1]),lines:[],inst:[]};
+ const yearFor=m=>m>sm?sy-1:sy;
+ const seen={};
+ for(const t of T){const m=t.match(/^(\d{2})-(\d{2})\s+(\d{2})-(\d{2})\s+(.+?)\s+([\d,]+\.\d{2})(\s*CR)?$/);if(!m)continue;
+  const date=`${yearFor(+m[2])}-${m[2]}-${m[1]}`,post=`${yearFor(+m[4])}-${m[4]}-${m[3]}`,desc=m[5].replace(/\s{2,}/g,' ').trim(),amt=numv(m[6]),cr=!!m[7];
+  const k0=`${date}|${desc}|${amt}|${cr}`;seen[k0]=(seen[k0]||0)+1;
+  st.lines.push({date,post,desc,amt,cr,key:'stm:'+hash(st.stmt+'|'+k0+'|'+seen[k0])})}
+ /* installment summary: merchant (may wrap onto the next lines), enrolled dd/mm, principal, interest, total, number, out of */
+ let cur=null;
+ for(const t of T){const m=t.match(/^(.+?)\s+(\d{2})\/(\d{2})\s+([\d,]*\.?\d+)\s+([\d,]*\.?\d+)\s+([\d,]*\.?\d+)\s+(\d{1,3})\s+(\d{1,3})$/);
+  if(m){cur={name:m[1].trim(),dd:m[2],mm:m[3],principal:numv(m[4]),interest:numv(m[5]),each:numv(m[6]),k:+m[7],n:+m[8]};st.inst.push(cur);continue}
+  if(cur&&t.length<=28&&!/\d{3,}|https?:|visit|points|loyalty/i.test(t))cur.name+=' '+t.trim();else cur=null}
+ for(const i of st.inst){i.name=i.name.replace(/\s+/g,' ').replace(/\s*-\s*/g,' - ').replace(/ - $/,'').trim();
+  i.first=addM(st.stmt,-(i.k-1));let y=+st.stmt.slice(0,4);let d=`${y}-${i.mm}-${i.dd}`;if(d>i.first)d=`${y-1}-${i.mm}-${i.dd}`;i.date=d;
+  i.key='inst:'+hash([i.name,i.dd,i.mm,i.n,i.each].join('|'))}
+ return st}
+/* category guesses for common Egyptian merchants (only when you haven't picked one for that merchant before) */
+const GUESS=[[/uber|careem|didi|indrive|swvl|\bmetro\b|wataniya|petrol|gas station|total ?energies|mobil\b|chill ?out/i,'trans'],
+ [/talabat|elmenus|breadfast|instashop|rabbit|mrsool|otlob/i,'deliv'],
+ [/mcdonald|kfc|pizza|burger|cafe|coffee|starbucks|costa|restaurant|cozy corner|hardee|cinnabon|dunkin|buffalo|koshary|shawerma|rojada|cook door/i,'food'],
+ [/carrefour|spinneys|hyper|kazyon|gomla|seoudi|oscar|kheir zaman|grocery|supermarket|metro market|el ?farah|fathalla/i,'groc'],
+ [/we-mobile|we mobile|vodafone|orange|etisalat|dream telecom|telecom egypt/i,'phone'],
+ [/pharm|el ?ezaby|seif|19011|roshdy|tarshouby/i,'pharm']];
+function guessCat(desc){const k=S.merch['exp:'+mkey(desc)];if(k&&S.exp.some(c=>c.id===k&&!c.hidden))return k;
+ for(const[re,id]of GUESS)if(re.test(desc)&&S.exp.some(c=>c.id===id&&!c.hidden))return id;return null}
+const FEERE=/\bfees?\b|interest|insurance fee|late (?:payment )?charge|\bvat\b|stamp/i;
+function feeCat(list){let c=S.exp.find(c=>/fees/i.test(c.n));if(c){c.hidden=false;return c.id}const id='fees';if(!S.exp.some(c=>c.id===id))S.exp.push({id,n:'Bank fees & interest'});else S.exp.find(c=>c.id===id).hidden=false;return id}
+/* work out every change on a copy, so it can be shown before anything is saved */
+function planImport(sts){
+ const N=clone(tx),R={stm:[],add:0,match:0,telda:0,pay:0,refund:0,fees:0,skipped:0,known:0,instNew:0,instConv:0,instUpd:0,review:0,base:null,card:''};
+ const linked=new Set(N.filter(t=>t.stmtKey).map(t=>t.stmtKey)),instKeys=new Set(N.filter(t=>t.instKey).map(t=>t.instKey));
+ const near=(x,date,days)=>Math.abs(dayDiff(x.date,date))<=days;
+ for(const st of [...sts].sort((a,b)=>a.stmt.localeCompare(b.stmt))){
+  R.stm.push(st.stmt);if(st.card)R.card=st.card;
+  const instInt=r2(st.inst.reduce((a,i)=>a+(i.interest||0),0));
+  /* reversed pairs (e.g. 1.00 and 1.00 CR at the same shop the same day) cancel out */
+  const drop=new Set();st.lines.forEach((l,i)=>{if(!l.cr||drop.has(i))return;const j=st.lines.findIndex((o,k)=>k!==i&&!o.cr&&!drop.has(k)&&o.desc===l.desc&&o.amt===l.amt&&o.date===l.date);if(j>=0){drop.add(i);drop.add(j)}});
+  st.lines.forEach((l,i)=>{
+   if(drop.has(i)){R.skipped++;return}
+   if(linked.has(l.key)){R.known++;return}
+   let type='exp',acc='credit',cat=null,to=null;
+   if(l.cr){if(/payment|سداد/i.test(l.desc)){type='pay';acc='debit'}else{type='inc';cat='refund'}}
+   else if(/telda/i.test(l.desc)&&!FEERE.test(l.desc)){type='xfer';to='telda'}
+   else if(FEERE.test(l.desc)){if(/interest/i.test(l.desc)&&instInt&&Math.abs(l.amt-instInt)<0.02){R.skipped++;return}cat=feeCat()}
+   else cat=guessCat(l.desc);
+   /* already in the app (from SMS or typed by hand)? */
+   const free=x=>!x.stmtKey&&x.amt===l.amt&&near(x,l.date,4);
+   let x=null;
+   if(type==='exp'||type==='inc')x=N.find(x=>free(x)&&x.type===type&&x.acc==='credit');
+   if(!x&&type==='xfer')x=N.find(x=>free(x)&&((x.type==='xfer'&&x.acc==='credit')||(x.type==='exp'&&x.acc==='credit'&&x.review)||(x.type==='inc'&&x.acc==='telda'&&x.review)));
+   if(!x&&type==='pay')x=N.find(x=>free(x)&&(x.type==='pay'||(x.type==='exp'&&x.acc!=='credit'&&x.review)));
+   if(x){
+    if(type==='xfer'&&x.type!=='xfer'){x.type='xfer';x.acc='credit';x.to='telda';delete x.cat;x.review=false}
+    if(type==='pay'&&x.type!=='pay'){x.type='pay';delete x.cat;x.review=false}
+    if(x.review&&cat&&(x.type==='exp'||x.type==='inc')){x.cat=cat;x.review=false}
+    if(x.type!=='pay')x.bill=st.stmt;x.stmtKey=l.key;linked.add(l.key);R.match++;return}
+   const t={id:uid(),type,acc,amt:l.amt,date:l.date,note:l.desc,created:Date.parse(l.date)||Date.now(),stmtKey:l.key};
+   if(type!=='pay')t.bill=st.stmt;
+   if(type==='xfer'){t.to=to;R.telda++}else if(type==='pay')R.pay++;else if(type==='inc'){t.cat=cat;R.refund++}
+   else{if(cat){t.cat=cat;if(FEERE.test(l.desc))R.fees++}else{t.cat=null;t.review=true;R.review++}}
+   N.push(t);linked.add(l.key);R.add++});
+  for(const i of st.inst){
+   const amt=r2(i.principal*i.n),pl={months:i.n,each:r2(i.each),first:i.first};
+   let x=N.find(x=>x.instKey===i.key)||N.find(x=>x.plan&&x.acc==='credit'&&x.plan.months===i.n&&Math.abs(x.plan.each-i.each)<0.05&&!x.instKey);
+   if(x){x.plan=pl;x.instKey=i.key;R.instUpd++;continue}
+   x=N.find(x=>x.type==='exp'&&x.acc==='credit'&&!x.plan&&Math.abs(x.amt-amt)<=Math.max(1,i.n*0.01)&&Math.abs(dayDiff(x.date,i.date))<=25);
+   if(x){x.plan=pl;x.instKey=i.key;R.instConv++;continue}
+   const cat=guessCat(i.name),t={id:uid(),type:'exp',acc:'credit',amt,date:i.date,note:i.name,created:Date.parse(i.date)||Date.now(),plan:pl,instKey:i.key,bill:stmtOf(i.date)};
+   if(cat)t.cat=cat;else{t.cat=null;t.review=true;R.review++}
+   N.push(t);R.instNew++}
+  if(st.closing!=null&&st.due!=null&&(!R.base||st.stmt>=R.base.stmt))R.base={stmt:st.stmt,due:st.due,closing:st.closing,dueDate:st.dueDate,min:st.min,limit:st.limit,imported:true};
+ }
+ return{N,R}}
+let stmPending=null;
+async function readStatements(files,passwords){const out=[],problems=[];
+ for(const f of files){
+  try{const buf=new Uint8Array(await f.arrayBuffer());const lines=await pdfLines(buf,passwords[f.name]);const st=parseCibCredit(lines);
+   if(st)out.push(st);else problems.push({f,msg:/account statement|current account|savings|telda/i.test(lines.map(l=>l.t).join(' '))?'This looks like a debit / account statement. Only CIB credit card statements can be read for now — send one of these to Claude so it can be added.':'This doesn\'t look like a CIB credit card statement.'})}
+  catch(e){if(e&&e.name==='PasswordException')problems.push({f,pw:true,msg:passwords[f.name]?'Wrong password.':'This PDF has a password.'});else problems.push({f,msg:'Could not read this PDF ('+(e&&e.message||'error')+').'})}}
+ return{out,problems}}
+async function handleStatements(files,passwords){const box=$('stmOut');box.innerHTML='<div class="msg">Reading statements…</div>';
+ const{out,problems}=await readStatements(files,passwords||{});
+ let h=problems.map((p,i)=>`<div class="msg warn"><b>${esc(p.f.name)}</b>: ${esc(p.msg)}${p.pw?`<div class="catrow" style="margin-top:8px"><input type="password" id="pw${i}" placeholder="PDF password"><button class="ib" data-pwretry="${i}">Open</button></div>`:''}</div>`).join('');
+ window.__stmRetry={problems,passwords:passwords||{}};
+ if(!out.length){box.innerHTML=h||'<div class="msg warn">Nothing to import.</div>';return}
+ const{N,R}=planImport(out);stmPending={N,R};
+ const B=R.base;
+ h+=`<div class="msg"><b>${out.length} statement${out.length===1?'':'s'}</b> (${R.stm.map(x=>fmt(x)).join(', ')})<br>
+  ${R.add?`• ${R.add} new entr${R.add===1?'y':'ies'}${R.telda?` (incl. ${R.telda} Telda top-up${R.telda===1?'':'s'} from the card${R.pay?`, ${R.pay} payment${R.pay===1?'':'s'}`:''}${R.refund?`, ${R.refund} refund${R.refund===1?'':'s'}`:''})`:''}<br>`:''}
+  ${R.match?`• ${R.match} already in the app (from SMS or typed) — matched, not added again<br>`:''}
+  ${R.known?`• ${R.known} imported before — skipped<br>`:''}
+  ${R.skipped?`• ${R.skipped} skipped (reversed pairs, or installment interest already counted)<br>`:''}
+  ${R.instNew+R.instConv+R.instUpd?`• Installments: ${R.instNew} new, ${R.instConv} purchases turned into installments, ${R.instUpd} updated<br>`:''}
+  ${R.review?`• ${R.review} need a category — they'll be on Home<br>`:''}
+  ${B?`• Card position from ${fmt(B.stmt)}: total due <b>${egp(B.due)}</b> by ${B.dueDate?fmt(B.dueDate):'—'}, balance ${egp(B.closing)}, limit ${egp(B.limit||0)}`:''}
+  <div class="btns" style="margin-top:10px"><button class="btn" data-stm="apply">Import</button><button class="btn ghost" data-stm="cancel">Cancel</button></div></div>`;
+ box.innerHTML=h}
+$('stmFile').addEventListener('change',ev=>{const files=[...ev.target.files];ev.target.value='';if(files.length)handleStatements(files)});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-stm],[data-pwretry]');if(!b)return;
+ if(b.dataset.pwretry!=null){const r=window.__stmRetry;if(!r)return;const p=r.problems[+b.dataset.pwretry];r.passwords[p.f.name]=$('pw'+b.dataset.pwretry).value;handleStatements(r.problems.filter(x=>x.pw).map(x=>x.f),r.passwords);return}
+ if(b.dataset.stm==='cancel'){stmPending=null;$('stmOut').innerHTML='';return}
+ if(b.dataset.stm==='apply'&&stmPending){const{N,R}=stmPending;stmPending=null;tx=N;
+  if(R.base&&(!S.ccBase||R.base.stmt>=S.ccBase.stmt)){S.ccBase=R.base;if(R.base.limit)S.acc.credit.limit=R.base.limit}
+  if(R.card){const k=kwList('credit');if(!k.includes(R.card))S.sms.kw.credit=[S.sms.kw.credit,R.card].filter(Boolean).join(', ')}
+  save();pushSmsConfig();$('stmOut').innerHTML=`<div class="msg">Imported. ${R.review?`${R.review} entries need a category — see Home.`:''}</div>`;toast('Statement imported',false)}});
 
 /* ---------- bank SMS ---------- */
 const HAS_SMS=!!(window.Android&&typeof Android.smsTake==='function');
@@ -669,8 +818,8 @@ function pair(t){
  const nc=a=>a!=='credit';
  for(const x of tx){if(!x.sms||x.amt!==t.amt||Math.abs(x.sms.ts-t.sms.ts)>36e5)continue;
   if(x.type===t.type&&x.sms.ip!==t.sms.ip){if(x.sms.ip){x.acc=t.acc;x.sms.ip=false}return true}
-  if(t.type==='inc'&&x.type==='exp'&&x.review&&nc(t.acc)&&nc(x.acc)&&x.acc!==t.acc){x.type='xfer';x.to=t.acc;delete x.cat;x.review=false;return true}
-  if(t.type==='exp'&&x.type==='inc'&&x.review&&nc(t.acc)&&nc(x.acc)&&x.acc!==t.acc){x.type='xfer';x.to=x.acc;x.acc=t.acc;delete x.cat;x.review=false;return true}
+  if(t.type==='inc'&&x.type==='exp'&&x.review&&nc(t.acc)&&x.acc!==t.acc){x.type='xfer';x.to=t.acc;delete x.cat;x.review=false;return true}
+  if(t.type==='exp'&&x.type==='inc'&&x.review&&nc(x.acc)&&x.acc!==t.acc){x.type='xfer';x.to=x.acc;x.acc=t.acc;delete x.cat;x.review=false;return true}
   if(t.type==='pay'&&x.type==='exp'&&x.review&&nc(x.acc)){x.type='pay';delete x.cat;x.review=false;return true}
   if(t.type==='exp'&&t.review&&nc(t.acc)&&x.type==='pay'&&x.sms.guess){x.acc=t.acc;x.sms.guess=false;return true}}
  return false}
@@ -686,6 +835,8 @@ function ingest(list){const r={added:0,merged:0,known:0,failed:0};
    if(c&&S[p.type].some(x=>x.id===c))t.cat=c;else if(p.type==='inc'&&p.acc==='credit')t.cat='refund';else{t.cat=null;t.review=true}}
   if(p.type==='xfer')t.to='cash';
   if(p.type==='pay'){t.acc='debit';t.sms.guess=true}
+  const st=tx.find(x=>x.stmtKey&&!x.sms&&x.amt===t.amt&&Math.abs(dayDiff(x.date,t.date))<=4&&(x.type===t.type||(t.type==='exp'&&x.type==='xfer'&&x.acc===t.acc)));
+  if(st){st.sms=t.sms;skip.push(key);r.merged++;continue}
   if(pair(t)){skip.push(key);r.merged++}else{tx.push(t);r.added++}}
  if(r.added||r.merged||r.failed)save();return r}
 function pushSmsConfig(){if(!HAS_SMS)return;

@@ -46,6 +46,7 @@ jobs:
           A=android/app/src/main
           mkdir -p $A/assets $A/res/mipmap-xxxhdpi
           cp index.html manifest.json icon-192.png icon-512.png $A/assets/
+          cp -r vendor $A/assets/
           cp icon-192.png $A/res/mipmap-xxxhdpi/ic_launcher.png
 
       - name: Build APK

@@ -91,6 +91,10 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
 .fab{position:fixed;right:max(18px,calc(50vw - 470px));bottom:calc(18px + env(safe-area-inset-bottom));z-index:4;border:0;border-radius:999px;background:var(--acc);color:#fff;font:800 17px system-ui,sans-serif;padding:0 24px;min-height:58px;box-shadow:0 6px 18px rgb(0 0 0/.25);cursor:pointer}
 .toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--card);padding:10px 12px 10px 16px;border-radius:12px;display:none;align-items:center;gap:12px;z-index:6;max-width:92vw}
 .toast.show{display:flex}.toast button{background:var(--acc);color:#fff;border:0;border-radius:8px;min-height:38px;padding:0 12px;font-weight:700;cursor:pointer}
+.setbtn{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--card);border:0;border-radius:14px;padding:14px 16px;margin-bottom:8px;color:var(--ink);font:inherit;cursor:pointer;min-height:64px}
+.setbtn .ic{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;background:var(--soft);flex:none}
+.setbtn .t{flex:1}.setbtn .t b{display:block;font-size:16px}.setbtn .t small{color:var(--mute);font-size:13px}.setbtn .go{color:var(--mute);font-size:22px}
+.switch{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px}
 .catrow{display:flex;gap:8px;align-items:center;margin-bottom:8px}.catrow input{flex:1}
 .upbox{position:relative;display:block;overflow:hidden;border-radius:12px}.upbox input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;min-height:0;padding:0;border:0}
 .upbox:focus-within{outline:3px solid var(--acc);outline-offset:2px}
@@ -226,7 +230,15 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
 
 <!-- SETTINGS -->
 <section id="v-settings" hidden>
- <div class="card">
+ <div id="setMenu"></div>
+ <div id="setHead" hidden style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><button class="ib" id="setBack">‹ Settings</button><h2 id="setTitle" style="margin:0"></h2></div>
+ <div class="card" data-sec="sec">
+  <h2>Lock</h2>
+  <div id="lockBox"></div>
+  <h2 style="margin-top:18px">Appearance</h2>
+  <div class="seg" id="themeSeg" style="grid-template-columns:repeat(3,minmax(0,1fr))"><button data-theme="system">Phone setting</button><button data-theme="light">Light</button><button data-theme="dark">Dark</button></div>
+ </div>
+ <div class="card" data-sec="acc">
   <h2>Accounts</h2>
   <p class="note" style="margin-top:-6px">Balance now is what's in each account today. Change it to correct the app; only entries after that count on top of it.</p>
   <div id="accSet"></div>
@@ -236,23 +248,23 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
   <p class="note">Already owe something on the card or have running installments? Add them as credit card purchases with their real date, then tap Installments on the purchase and set the first due date. Installments already billed are counted automatically.</p>
   <button class="btn" id="sSave">Save</button>
  </div>
- <div class="grid2" style="margin-bottom:14px">
+ <div class="grid2" style="margin-bottom:14px" data-sec="cats">
   <div class="card"><h2>Expense categories</h2><div id="expCats"></div><div class="catrow"><input id="newExp" placeholder="New category" maxlength="40"><button class="ib" data-addcat="exp">Add</button></div></div>
   <div class="card"><h2>Income categories</h2><div id="incCats"></div><div class="catrow"><input id="newInc" placeholder="New category" maxlength="40"><button class="ib" data-addcat="inc">Add</button></div></div>
  </div>
- <div class="card" id="stmCard">
+ <div class="card" id="stmCard" data-sec="stm">
   <h2>Bank statements (PDF)</h2>
   <p class="note" style="margin-top:-6px">Choose your CIB credit card statements. The app adds the transactions it doesn't have yet, matches the ones it already found in your SMS, registers your active installments, and takes your card position (amount due, due date, balance, limit) from the newest statement. Nothing changes until you tap Import.</p>
   <div class="upbox"><span class="btn" style="display:flex;align-items:center;justify-content:center" aria-hidden="true">Choose statement PDFs</span><input type="file" id="stmFile" accept="application/pdf,.pdf" multiple aria-label="Choose statement PDF files"></div>
   <div id="stmOut"></div>
  </div>
- <div class="card" id="payCard">
+ <div class="card" id="payCard" data-sec="pay">
   <h2>Payslips</h2>
   <p class="note" style="margin-top:-6px">Choose the payslip files from your email (.htm). The net paid is added as Salary to your debit account on the day you choose. A salary already found in your SMS or statement is matched, not added twice.</p>
   <div class="upbox"><span class="btn ghost" style="display:flex;align-items:center;justify-content:center" aria-hidden="true">Choose payslip files</span><input type="file" id="payFile" multiple aria-label="Choose payslip files"></div>
   <div id="payOut"></div>
  </div>
- <div class="card" id="smsCard">
+ <div class="card" id="smsCard" data-sec="sms">
   <h2>Read bank SMS</h2>
   <p class="note" style="margin-top:-6px">Every bank SMS that mentions one of your numbers below is added automatically to the right card. Type the last 4 digits of each card and your account numbers, separated by commas.</p>
   <div id="kwRows"></div>
@@ -267,14 +279,14 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
   <div id="smsTestOut"></div>
   <div id="smsFails"></div>
  </div>
- <div class="card" id="driveCard" hidden>
+ <div class="card" id="driveCard" data-sec="drive" hidden>
   <h2>Google Drive backup</h2>
   <p class="note" style="margin-top:-6px">Sign in once and the app backs up every day to an "Expenses Backups" folder in your Google Drive. The newest 30 backups are kept.</p>
   <div id="driveState"></div>
   <div class="btns" id="driveBtns" style="margin-top:12px"></div>
   <div id="driveMsg"></div>
  </div>
- <div class="card">
+ <div class="card" data-sec="backup">
   <h2>Backup file</h2>
   <p class="note" style="margin-top:-6px">Save everything in one file, or restore from one. Restoring adds and updates entries; it never deletes anything.</p>
   <div class="btns"><button class="btn" id="bkExport">Export backup</button><div class="upbox"><span class="btn ghost" style="display:flex;align-items:center;justify-content:center" aria-hidden="true">Restore from file</span><input type="file" id="bkFile" aria-label="Restore from backup file"></div></div>
@@ -504,7 +516,7 @@ function migrate(){tx.forEach(fixPlan);
 function merge(s){const o=clone(DEF);if(!s)return o;
  for(const k of ['stmt','due','remind'])if(s[k]!=null)o[k]=s[k];
  if(s.acc)for(const a of ACC)o.acc[a]={...o.acc[a],...(s.acc[a]||{})};
- if(s.sms){const kw={...o.sms.kw};for(const[k,v]of Object.entries(s.sms.kw||{}))if(String(v||'').trim())kw[k]=v;o.sms={...o.sms,...s.sms,kw}}if(s.payDay)o.payDay=s.payDay;if(s.balChecked)o.balChecked=s.balChecked;if(Array.isArray(s.subs))o.subs=s.subs;if(Array.isArray(s.goals))o.goals=s.goals;if(Array.isArray(s.gam))o.gam=s.gam;if(s.charity)o.charity={...o.charity,...s.charity};if(s.merch&&typeof s.merch==='object')o.merch=s.merch;if(s.ccBase)o.ccBase=s.ccBase;
+ if(s.sms){const kw={...o.sms.kw};for(const[k,v]of Object.entries(s.sms.kw||{}))if(String(v||'').trim())kw[k]=v;o.sms={...o.sms,...s.sms,kw}}if(s.payDay)o.payDay=s.payDay;if(s.balChecked)o.balChecked=s.balChecked;if(s.theme)o.theme=s.theme;if(Array.isArray(s.subs))o.subs=s.subs;if(Array.isArray(s.goals))o.goals=s.goals;if(Array.isArray(s.gam))o.gam=s.gam;if(s.charity)o.charity={...o.charity,...s.charity};if(s.merch&&typeof s.merch==='object')o.merch=s.merch;if(s.ccBase)o.ccBase=s.ccBase;
  if(Array.isArray(s.exp))o.exp=s.exp;if(Array.isArray(s.inc))o.inc=s.inc;return o}
 const backupJSON=()=>JSON.stringify({app:'expenses',version:1,exported:new Date().toISOString(),settings:S,tx,skip},null,1);
 function teldaLoads(){for(const t of tx){if(t.type!=='xfer'||t.to!=='telda'||t.toAmt!=null)continue;const x=t.amt/1.02;if(Math.abs(x-Math.round(x))<0.005&&t.amt>=50)t.toAmt=Math.round(x)}}
@@ -600,7 +612,7 @@ function renderSettings(){
  $('accSet').innerHTML=ACC.map(a=>`<div class="row"><div><label for="n-${a}">Name</label><input id="n-${a}" value="${esc(accName(a))}" maxlength="30"></div>${a==='credit'?'<div></div>':`<div><label for="o-${a}">Balance now</label><input id="o-${a}" type="number" inputmode="decimal" step="0.01" value="${bal(a)}"></div>`}</div>${a==='od'?`<div class="row"><div><label for="l-od">Overdraft limit</label><input id="l-od" type="number" inputmode="decimal" min="0" value="${+S.acc.od.limit||''}"></div><div></div></div>`:''}`).join('');
  $('sLimit').value=+S.acc.credit.limit||'';$('sRemind').value=S.remind;$('sStmt').value=S.stmt;$('sDue').value=S.due;
  const cats=k=>catList(k).map(c=>`<div class="catrow"><input value="${esc(c.n)}" data-ren="${k}:${esc(c.id)}" maxlength="40" aria-label="Category name"><button class="ib" data-rmcat="${k}:${esc(c.id)}">Remove</button></div>`).join('');
- $('expCats').innerHTML=cats('exp');$('incCats').innerHTML=cats('inc');driveRender();renderSms();
+ $('expCats').innerHTML=cats('exp');$('incCats').innerHTML=cats('inc');driveRender();renderSms();showSettingsPage();
 }
 $('sSave').addEventListener('click',()=>{
  const st=parseInt($('sStmt').value),du=parseInt($('sDue').value),rm=parseInt($('sRemind').value);
@@ -1238,6 +1250,42 @@ $('chSave').addEventListener('click',()=>{S.charity.pct=+$('chPct').value||0;if(
 document.addEventListener('click',e=>{const b=e.target.closest('[data-chpay]');if(!b)return;const ym=b.dataset.chpay,r=charityMonths().find(x=>x.ym===ym);if(!r||r.left<=0)return;
  const acc=$('chFrom-'+ym).value;tx.push({id:uid(),type:'exp',acc,amt:r.left,date:today,cat:'charity',note:`Church · ${monthLbl(ym)}`,created:Date.now(),charYm:ym});S.charity.acc=acc;save();toast(`${egp(r.left)} given from ${accName(acc)}`,false)});
 
+
+/* ---------- settings pages ---------- */
+const SECS=[['sec','🔒','Lock & appearance','Fingerprint lock, light or dark'],['acc','🏦','Accounts & credit card','Balances, limit, bill and due days'],['cats','🏷️','Categories','Add, rename or remove'],
+ ['stm','📄','Bank statements','Import CIB PDF statements'],['pay','💵','Payslips','Add your salary from payslips'],['sms','✉️','Bank SMS','Card numbers, reading messages'],
+ ['drive','☁️','Google Drive backup','Daily backup to your Drive'],['backup','💾','Backup file','Export or restore everything']];
+let setSub=null;
+function showSettingsPage(){
+ const avail=SECS.filter(([id])=>id!=='drive'||HAS_DRIVE);
+ $('setMenu').hidden=!!setSub;$('setHead').hidden=!setSub;
+ if(!setSub)$('setMenu').innerHTML=avail.map(([id,ic,t,d])=>`<button class="setbtn" data-setgo="${id}"><span class="ic">${ic}</span><span class="t"><b>${t}</b><small>${d}</small></span><span class="go">›</span></button>`).join('');
+ else $('setTitle').textContent=(SECS.find(x=>x[0]===setSub)||[])[2]||'';
+ document.querySelectorAll('#v-settings [data-sec]').forEach(el=>{el.hidden=(el.dataset.sec!==setSub&&!window.__showAll)||(el.dataset.sec==='drive'&&!HAS_DRIVE)});
+ if(setSub==='sec')renderSecurity()}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-setgo]');if(b)location.hash='settings-'+b.dataset.setgo});
+$('setBack').addEventListener('click',()=>{if(history.length>1)history.back();else go('settings')});
+
+/* ---------- appearance ---------- */
+let sysNight=null;
+function applyTheme(){const want=S.theme||'system';let dark;
+ if(want==='system'){if(window.Android&&Android.isNight){try{dark=sysNight!=null?sysNight:Android.isNight()}catch(e){dark=false}}else dark=matchMedia('(prefers-color-scheme: dark)').matches}else dark=want==='dark';
+ document.documentElement.style.colorScheme=dark?'dark':'light';const m=document.querySelector('meta[name=theme-color]');if(m)m.content=dark?'#111513':'#e6ebe8';
+ if(window.Android&&Android.setTheme)try{Android.setTheme(dark?'dark':'light')}catch(e){}
+ document.querySelectorAll('#themeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.theme===want))}
+window.onNight=n=>{sysNight=!!n;applyTheme()};
+try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',applyTheme)}catch(e){}
+$('themeSeg').addEventListener('click',e=>{const b=e.target.closest('[data-theme]');if(!b)return;S.theme=b.dataset.theme;save();applyTheme()});
+
+/* ---------- fingerprint lock (Android app) ---------- */
+function renderSecurity(msg){const box=$('lockBox');
+ if(!(window.Android&&Android.lockState)){box.innerHTML='<p class="note" style="margin-top:-6px">The fingerprint lock works in the Android app.</p>';return}
+ let st={};try{st=JSON.parse(Android.lockState())}catch(e){}
+ box.innerHTML=`<div class="switch"><span><b>Lock with fingerprint</b><br><span class="note">${st.on?'On — the app asks for your fingerprint (or screen lock) when you open it, and again after 30 seconds away.':st.available?'Off':'Set a fingerprint or screen lock in your phone settings first.'}</span></span>
+  <button class="btn${st.on?' ghost':''}" style="width:auto;white-space:nowrap" data-lock="${st.on?'off':'on'}"${!st.available&&!st.on?' disabled':''}>${st.on?'Turn off':'Turn on'}</button></div>${msg?`<div class="msg${msg.warn?' warn':''}">${esc(msg.text)}</div>`:''}`}
+window.onLock=ev=>{renderSecurity(ev.error?{text:ev.error,warn:true}:{text:ev.on?'Lock turned on.':'Lock turned off.'})};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-lock]');if(!b)return;if(b.dataset.lock==='on')Android.lockEnable();else Android.lockDisable()});
+
 /* ---------- bank SMS ---------- */
 const HAS_SMS=!!(window.Android&&typeof Android.smsTake==='function');
 const digits=s=>String(s??'').replace(/[٠-٩]/g,d=>d.charCodeAt(0)-1632).replace(/[۰-۹]/g,d=>d.charCodeAt(0)-1776).replace(/٫/g,'.').replace(/٬/g,',');
@@ -1372,7 +1420,7 @@ function scanSms(days){const box=()=>$('smsMsg');if(location.hash==='#settings')
   S.sms.scanned=true;const r=ingest(l);if(!(r.added||r.merged||r.failed))save();
   const txt=`Found ${l.length} bank message${l.length===1?'':'s'}: ${r.added} added${r.merged?`, ${r.merged} joined with another message (transfers, card payments, InstaPay)`:''}${r.known?`, ${r.known} already here`:''}${r.failed?`, ${r.failed} couldn't be read (listed below)`:''}.`;
   if(location.hash==='#settings')box().innerHTML=`<div class="msg">${txt}</div>`;else toast(`Added ${r.added+r.merged} transactions from past SMS`,false)},30)}
-function smsOn(){S.sms.on=true;saveKw();go('settings');renderSettings();scanSms(3650)}
+function smsOn(){S.sms.on=true;saveKw();renderSettings();scanSms(3650)}
 window.onSms=ev=>{if(ev.type!=='perm')return;if(ev.granted)smsOn();else{renderSms();$('smsMsg').innerHTML=blockedHelp}};
 document.addEventListener('click',e=>{const b=e.target.closest('[data-sms]');if(!b)return;const a=b.dataset.sms;
  if(a==='savekw'){saveKw();toast('Numbers saved',false)}
@@ -1388,7 +1436,7 @@ window.onResumeApp=pollSms;setInterval(pollSms,20000);document.addEventListener(
 /* ---------- routing ---------- */
 const V=['home','credit','cash','goals','gam','charity','subs','reports','settings','add','plan'];
 function go(v){if(location.hash!=='#'+v)location.hash=v;else route()}
-function route(){const h=location.hash.slice(1),v=V.includes(h)?h:'home';
+function route(){const h0=location.hash.slice(1),h=h0.startsWith('settings-')?'settings':h0,v=V.includes(h)?h:'home';setSub=h0.startsWith('settings-')?h0.slice(9):null;
  if(v!=='add'&&v!=='plan')backTo=v;else if(v==='add'&&!F)F=fresh('exp');
  V.forEach(k=>{$('v-'+k).hidden=k!==v;const t=$('t-'+k);if(t)t.classList.toggle('on',k===v)});
  $('fab').hidden=['add','plan','settings','goals','gam','charity'].includes(v);document.querySelector('nav').hidden=v==='add'||v==='plan';
@@ -1397,7 +1445,7 @@ function route(){const h=location.hash.slice(1),v=V.includes(h)?h:'home';
 function renderAll(){const v=location.hash.slice(1);if(v==='add'||v==='plan')return;route()}
 window.addEventListener('hashchange',route);
 window.__app={get tx(){return tx},monthStats};
-load();route();pushReminder();pushSmsConfig();pollSms();
+load();applyTheme();route();pushReminder();pushSmsConfig();pollSms();
 if(HAS_SMS&&S.sms.on&&!S.sms.scanned&&Android.smsPermission()==='granted')scanSms(3650);
 if(!window.Android)$('status').textContent='Saved in this browser';
 }

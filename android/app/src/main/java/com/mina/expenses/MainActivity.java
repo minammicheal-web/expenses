@@ -2,6 +2,19 @@ package com.mina.expenses;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.KeyguardManager;
+import android.content.res.Configuration;
+import android.graphics.Color;
+import android.hardware.biometrics.BiometricManager;
+import android.hardware.biometrics.BiometricPrompt;
+import android.os.CancellationSignal;
+import android.view.Gravity;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.provider.Settings;
@@ -37,12 +50,24 @@ public class MainActivity extends Activity {
     private WebView web;
     private ValueCallback<Uri[]> fileCallback;
     private volatile String pendingAction = "";
+    private static final int LOCK = 6;
+    private LinearLayout lockView;
+    private TextView lockMsg;
+    private boolean unlocked = false, authing = false;
+    private long leftAt = 0;
+    private String authPurpose = "unlock";
+    private boolean darkUi = false;
 
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         web = new WebView(this);
-        setContentView(web);
+        FrameLayout root = new FrameLayout(this);
+        root.addView(web, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        lockView = buildLockView();
+        root.addView(lockView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        lockView.setVisibility(lockOn() ? View.VISIBLE : View.GONE);
+        setContentView(root);
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
@@ -92,6 +117,11 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int req, int res, Intent data) {
         super.onActivityResult(req, res, data);
+        if (req == LOCK) {
+            authing = false;
+            if (res == RESULT_OK) authOk(); else authFailed("Not unlocked.");
+            return;
+        }
         if (req == AUTH) {
             try {
                 AuthorizationResult r = Identity.getAuthorizationClient(this).getAuthorizationResultFromIntent(data);
@@ -123,9 +153,141 @@ public class MainActivity extends Activity {
         try { sendJs("window.onSms&&window.onSms(" + new JSONObject().put("type", "perm").put("granted", smsGranted()).toString() + ")"); } catch (Exception ignored) { }
     }
 
+    /* ---------- fingerprint / screen-lock protection ---------- */
+
+    private SharedPreferences lockPrefs() { return getSharedPreferences("lock", MODE_PRIVATE); }
+
+    private boolean lockOn() { return lockPrefs().getBoolean("on", false); }
+
+    private boolean deviceSecure() {
+        KeyguardManager km = (KeyguardManager) getSystemService(KEYGUARD_SERVICE);
+        return km != null && km.isDeviceSecure();
+    }
+
+    private LinearLayout buildLockView() {
+        LinearLayout v = new LinearLayout(this);
+        v.setOrientation(LinearLayout.VERTICAL);
+        v.setGravity(Gravity.CENTER);
+        v.setBackgroundColor(Color.rgb(16, 35, 28));
+        v.setClickable(true);
+        TextView t = new TextView(this);
+        t.setText("Expenses is locked");
+        t.setTextColor(Color.WHITE);
+        t.setTextSize(24);
+        t.setGravity(Gravity.CENTER);
+        v.addView(t);
+        lockMsg = new TextView(this);
+        lockMsg.setText("Use your fingerprint or screen lock to open it.");
+        lockMsg.setTextColor(Color.rgb(180, 200, 190));
+        lockMsg.setTextSize(15);
+        lockMsg.setGravity(Gravity.CENTER);
+        lockMsg.setPadding(48, 24, 48, 40);
+        v.addView(lockMsg);
+        Button b = new Button(this);
+        b.setText("Unlock");
+        b.setOnClickListener(x -> auth("unlock"));
+        v.addView(b);
+        return v;
+    }
+
+    private void auth(String purpose) {
+        if (authing) return;
+        authPurpose = purpose;
+        if (!deviceSecure()) {
+            if ("unlock".equals(purpose)) { authOk(); return; }
+            authFailed("Set a fingerprint or screen lock in your phone's settings first.");
+            return;
+        }
+        authing = true;
+        String title = "unlock".equals(purpose) ? "Unlock Expenses" : "enable".equals(purpose) ? "Turn on the lock" : "Turn off the lock";
+        try {
+            if (Build.VERSION.SDK_INT >= 28) {
+                BiometricPrompt.Builder b = new BiometricPrompt.Builder(this).setTitle(title)
+                        .setSubtitle("Fingerprint, face or your screen lock");
+                if (Build.VERSION.SDK_INT >= 30) {
+                    b.setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_WEAK | BiometricManager.Authenticators.DEVICE_CREDENTIAL);
+                } else if (Build.VERSION.SDK_INT >= 29) {
+                    b.setDeviceCredentialAllowed(true);
+                } else {
+                    b.setNegativeButton("Cancel", getMainExecutor(), (d, w) -> { authing = false; authFailed("Not unlocked."); });
+                }
+                b.build().authenticate(new CancellationSignal(), getMainExecutor(), new BiometricPrompt.AuthenticationCallback() {
+                    @Override
+                    public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult r) { authing = false; authOk(); }
+
+                    @Override
+                    public void onAuthenticationError(int code, CharSequence msg) { authing = false; authFailed(String.valueOf(msg)); }
+                });
+            } else {
+                KeyguardManager km = (KeyguardManager) getSystemService(KEYGUARD_SERVICE);
+                Intent i = km.createConfirmDeviceCredentialIntent(title, "Use your screen lock");
+                if (i == null) { authing = false; authOk(); return; }
+                startActivityForResult(i, LOCK);
+            }
+        } catch (Exception e) {
+            authing = false;
+            authFailed(e.getMessage() == null ? "Could not ask for your fingerprint." : e.getMessage());
+        }
+    }
+
+    private void authOk() {
+        if ("enable".equals(authPurpose)) lockPrefs().edit().putBoolean("on", true).apply();
+        else if ("disable".equals(authPurpose)) lockPrefs().edit().putBoolean("on", false).apply();
+        unlocked = true;
+        lockView.setVisibility(View.GONE);
+        if (!"unlock".equals(authPurpose)) sendLock(null);
+    }
+
+    private void authFailed(String why) {
+        if ("unlock".equals(authPurpose)) { lockMsg.setText(why + "\nTap Unlock to try again."); return; }
+        sendLock(why);
+    }
+
+    private void sendLock(String error) {
+        try {
+            JSONObject o = new JSONObject().put("on", lockOn()).put("available", deviceSecure());
+            if (error != null) o.put("error", error);
+            sendJs("window.onLock&&window.onLock(" + o + ")");
+        } catch (Exception ignored) { }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        leftAt = System.currentTimeMillis();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (lockOn() && leftAt > 0 && System.currentTimeMillis() - leftAt > 30000) unlocked = false;
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration c) {
+        super.onConfigurationChanged(c);
+        if (web != null) web.evaluateJavascript("window.onNight&&window.onNight(" + isNight() + ")", null);
+    }
+
+    private boolean isNight() {
+        return (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+    }
+
+    private void applyBars(boolean dark) {
+        darkUi = dark;
+        getWindow().setStatusBarColor(dark ? Color.rgb(17, 21, 19) : Color.rgb(230, 235, 232));
+        if (Build.VERSION.SDK_INT >= 23) {
+            View d = getWindow().getDecorView();
+            int f = d.getSystemUiVisibility();
+            d.setSystemUiVisibility(dark ? (f & ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR) : (f | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR));
+        }
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
+        if (lockOn() && !unlocked) { lockView.setVisibility(View.VISIBLE); auth("unlock"); }
+        else lockView.setVisibility(View.GONE);
         if (web != null) web.evaluateJavascript("window.onResumeApp&&window.onResumeApp()", null);
     }
 
@@ -249,6 +411,23 @@ public class MainActivity extends Activity {
         public void storeBackup(String json) {
             try { DriveSync.saveSnapshot(MainActivity.this, json); } catch (Exception ignored) { }
         }
+
+        @JavascriptInterface
+        public String lockState() {
+            try { return new JSONObject().put("on", lockOn()).put("available", deviceSecure()).toString(); } catch (Exception e) { return "{}"; }
+        }
+
+        @JavascriptInterface
+        public void lockEnable() { runOnUiThread(() -> auth("enable")); }
+
+        @JavascriptInterface
+        public void lockDisable() { runOnUiThread(() -> auth("disable")); }
+
+        @JavascriptInterface
+        public boolean isNight() { return MainActivity.this.isNight(); }
+
+        @JavascriptInterface
+        public void setTheme(String mode) { runOnUiThread(() -> applyBars("dark".equals(mode))); }
 
         @JavascriptInterface
         public String smsPermission() { return smsGranted() ? "granted" : "denied"; }

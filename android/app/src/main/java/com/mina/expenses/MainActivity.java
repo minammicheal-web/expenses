@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.KeyguardManager;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.hardware.biometrics.BiometricManager;
 import android.hardware.biometrics.BiometricPrompt;
 import android.os.CancellationSignal;
@@ -185,10 +186,25 @@ public class MainActivity extends Activity {
         v.addView(lockMsg);
         Button b = new Button(this);
         b.setText("Unlock");
+        b.setAllCaps(false);
+        b.setTextSize(17);
+        b.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        b.setTextColor(Color.rgb(11, 23, 18));
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(Color.rgb(60, 196, 146));
+        bg.setCornerRadius(dp(16));
+        b.setBackground(bg);
+        b.setStateListAnimator(null);
+        b.setPadding(dp(40), 0, dp(40), 0);
+        b.setMinWidth(dp(160));
         b.setOnClickListener(x -> auth("unlock"));
-        v.addView(b);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(54));
+        lp.gravity = Gravity.CENTER_HORIZONTAL;
+        v.addView(b, lp);
         return v;
     }
+
+    private int dp(float x) { return Math.round(x * getResources().getDisplayMetrics().density); }
 
     private void auth(String purpose) {
         if (authing) return;

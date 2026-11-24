@@ -108,6 +108,19 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
 .grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
 .grid2>.card{margin-bottom:0}
 [hidden]{display:none!important}
+/* Material-style dropdowns: the real <select> stays for its value, a button shows it, a rounded menu picks */
+select.ddn{position:absolute!important;opacity:0!important;pointer-events:none!important;width:1px!important;height:1px!important;min-height:0!important;padding:0!important;border:0!important;margin:0!important}
+.dd{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;font:16px system-ui,sans-serif;padding:11px 12px 11px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--soft);color:var(--ink);min-height:46px;cursor:pointer;position:relative;overflow:hidden}
+.dd:focus-visible{outline:3px solid var(--acc);outline-offset:1px}.dd.open{border-color:var(--acc)}
+.dd .v{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dd.ph .v{color:var(--mute)}
+.dd .ch{flex:none;color:var(--mute);transition:transform .2s}.dd.open .ch{transform:rotate(180deg);color:var(--acc)}
+.ddshade{position:fixed;inset:0;z-index:19}
+.ddmenu{position:fixed;z-index:20;background:var(--card);color:var(--ink);border-radius:18px;box-shadow:0 12px 32px rgb(0 0 0/.28),0 2px 8px rgb(0 0 0/.14);padding:6px;overflow-y:auto;overscroll-behavior:contain;transform-origin:top center;animation:ddIn .16s ease-out}
+.ddmenu.up{transform-origin:bottom center}
+@keyframes ddIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:none}}
+.ddmenu button{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;color:inherit;text-align:left;font:16px system-ui,sans-serif;padding:11px 14px;border-radius:12px;min-height:46px;cursor:pointer;position:relative;overflow:hidden}
+.ddmenu button.sel{background:color-mix(in srgb,var(--acc) 15%,transparent);color:var(--acc);font-weight:700}
+.ddmenu .ck{margin-left:auto;font-weight:800}
 /* motion: pages slide in, taps ripple */
 @keyframes inR{from{transform:translateX(36px);opacity:0}to{transform:none;opacity:1}}
 @keyframes inL{from{transform:translateX(-36px);opacity:0}to{transform:none;opacity:1}}
@@ -1434,10 +1447,42 @@ const menuBtn=(go,ic,title,sub,right)=>`<button class="setbtn" data-go="${go}"><
 
 
 /* ripple from the touch point */
-const RIPPLE='.gear,nav a,.btn,.setbtn,.chip,.ib,.acc,.seg button,.list li.tx,.fab,.tile';
+const RIPPLE='.dd,.ddmenu button,.gear,nav a,.btn,.setbtn,.chip,.ib,.acc,.seg button,.list li.tx,.fab,.tile';
 document.addEventListener('pointerdown',e=>{if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;const el=e.target.closest(RIPPLE);if(!el||el.disabled)return;
  el.classList.add('rp');if(getComputedStyle(el).position==='static')el.classList.add('rpr');const r=el.getBoundingClientRect(),d=Math.max(r.width,r.height)*2.2,sp=document.createElement('span');sp.className='ripple';
  sp.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px`;el.appendChild(sp);setTimeout(()=>sp.remove(),600)},{passive:true});
+
+
+/* ---------- Material-style dropdowns instead of Android's picker ---------- */
+const ddOf=new WeakMap();let ddCur=null;
+function ddSync(sel){const b=ddOf.get(sel);if(!b)return;const o=sel.selectedOptions&&sel.selectedOptions[0];b.querySelector('.v').textContent=o?o.textContent:'Choose…';b.classList.toggle('ph',!o||o.disabled);b.disabled=sel.disabled}
+{const d=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value'),d2=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'selectedIndex');
+ Object.defineProperty(HTMLSelectElement.prototype,'value',{configurable:true,get(){return d.get.call(this)},set(v){d.set.call(this,v);ddSync(this)}});
+ Object.defineProperty(HTMLSelectElement.prototype,'selectedIndex',{configurable:true,get(){return d2.get.call(this)},set(v){d2.set.call(this,v);ddSync(this)}})}
+function ddEnhance(sel){if(ddOf.has(sel)||sel.multiple)return;const b=document.createElement('button');b.type='button';b.className='dd';
+ b.innerHTML='<span class="v"></span><svg class="ch" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg>';
+ sel.classList.add('ddn');sel.tabIndex=-1;sel.after(b);ddOf.set(sel,b);
+ if(sel.id){b.id=sel.id+'-dd';const l=document.querySelector(`label[for="${sel.id}"]`);if(l)l.htmlFor=b.id}
+ const al=sel.getAttribute('aria-label');if(al)b.setAttribute('aria-label',al);
+ b.addEventListener('click',()=>ddOpen(sel,b));sel.addEventListener('change',()=>ddSync(sel));
+ new MutationObserver(()=>ddSync(sel)).observe(sel,{childList:true,subtree:true,attributes:true,characterData:true});ddSync(sel)}
+function ddClose(){if(!ddCur)return;ddCur.m.remove();ddCur.sh.remove();ddCur.b.classList.remove('open');ddCur=null}
+function ddOpen(sel,b){const same=ddCur&&ddCur.sel===sel;ddClose();if(same||sel.disabled)return;
+ const opts=[...sel.options].filter(o=>!o.disabled&&!o.hidden);if(!opts.length)return;
+ const sh=document.createElement('div');sh.className='ddshade';sh.addEventListener('click',ddClose);
+ const m=document.createElement('div');m.className='ddmenu';m.setAttribute('role','listbox');
+ m.innerHTML=opts.map(o=>`<button type="button" role="option" data-v="${esc(o.value)}"${o.selected?' class="sel" aria-selected="true"':''}><span>${esc(o.textContent)}</span>${o.selected?'<span class="ck">✓</span>':''}</button>`).join('');
+ document.body.append(sh,m);
+ const r=b.getBoundingClientRect(),w=Math.max(200,Math.min(r.width,300)),below=innerHeight-r.bottom-14,above=r.top-14,need=Math.min(360,m.scrollHeight),down=below>=need||below>=above;
+ m.style.width=w+'px';m.style.left=Math.max(8,Math.min(r.left,innerWidth-w-8))+'px';m.style.maxHeight=Math.min(360,down?below:above)+'px';
+ if(down)m.style.top=(r.bottom+6)+'px';else{m.style.bottom=(innerHeight-r.top+6)+'px';m.classList.add('up')}
+ b.classList.add('open');ddCur={sel,b,m,sh};const cur=m.querySelector('.sel');if(cur)cur.scrollIntoView({block:'nearest'});
+ m.addEventListener('click',e=>{const x=e.target.closest('[data-v]');if(!x)return;const v=x.dataset.v;ddClose();
+  if(sel.value!==v){sel.value=v;sel.dispatchEvent(new Event('input',{bubbles:true}));sel.dispatchEvent(new Event('change',{bubbles:true}))}})}
+window.addEventListener('hashchange',ddClose);window.addEventListener('resize',ddClose);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')ddClose()});
+document.querySelectorAll('select').forEach(ddEnhance);
+new MutationObserver(ms=>{for(const mu of ms)for(const n of mu.addedNodes){if(n.nodeType!==1)continue;if(n.tagName==='SELECT')ddEnhance(n);else if(n.querySelectorAll)n.querySelectorAll('select').forEach(ddEnhance)}}).observe(document.body,{childList:true,subtree:true});
 
 /* ---------- bank SMS ---------- */
 const HAS_SMS=!!(window.Android&&typeof Android.smsTake==='function');

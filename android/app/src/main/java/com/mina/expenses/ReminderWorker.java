@@ -60,27 +60,27 @@ public class ReminderWorker extends Worker {
         else if (days == 1) text = "EGP " + amount + " is due tomorrow.";
         else if (days == 0) text = "EGP " + amount + " is due today.";
         else text = "EGP " + amount + " was due " + (-days) + " day" + (days == -1 ? "" : "s") + " ago.";
-        notify(c, "Credit card bill", text);
+        notify(c, 1, CHANNEL, "Credit card bill", "Credit card bill", text);
         p.edit().putString("shown", today).apply();
     }
 
-    static void notify(Context c, String title, String text) {
+    static void notify(Context c, int id, String channel, String channelName, String title, String text) {
         NotificationManager m = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
         if (m == null) return;
         Notification.Builder n;
         if (Build.VERSION.SDK_INT >= 26) {
-            m.createNotificationChannel(new NotificationChannel(CHANNEL, "Credit card bill", NotificationManager.IMPORTANCE_DEFAULT));
-            n = new Notification.Builder(c, CHANNEL);
+            m.createNotificationChannel(new NotificationChannel(channel, channelName, NotificationManager.IMPORTANCE_DEFAULT));
+            n = new Notification.Builder(c, channel);
         } else {
             n = new Notification.Builder(c);
         }
         Intent open = new Intent(c, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        PendingIntent pi = PendingIntent.getActivity(c, 0, open, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pi = PendingIntent.getActivity(c, id, open, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         n.setSmallIcon(android.R.drawable.ic_popup_reminder)
                 .setContentTitle(title)
                 .setContentText(text)
                 .setContentIntent(pi)
                 .setAutoCancel(true);
-        try { m.notify(1, n.build()); } catch (SecurityException ignored) { }
+        try { m.notify(id, n.build()); } catch (SecurityException ignored) { }
     }
 }

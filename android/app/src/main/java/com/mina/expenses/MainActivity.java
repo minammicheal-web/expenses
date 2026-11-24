@@ -3,6 +3,9 @@ package com.mina.expenses;
 import android.Manifest;
 import android.app.Activity;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.provider.Settings;
+import android.provider.Telephony;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -25,6 +28,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class MainActivity extends Activity {
@@ -110,6 +114,26 @@ public class MainActivity extends Activity {
         }
         fileCallback.onReceiveValue(out);
         fileCallback = null;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int req, String[] perms, int[] res) {
+        super.onRequestPermissionsResult(req, perms, res);
+        if (req != 4) return;
+        try { sendJs("window.onSms&&window.onSms(" + new JSONObject().put("type", "perm").put("granted", smsGranted()).toString() + ")"); } catch (Exception ignored) { }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (web != null) web.evaluateJavascript("window.onResumeApp&&window.onResumeApp()", null);
+    }
+
+    private void sendJs(String code) { runOnUiThread(() -> web.evaluateJavascript(code, null)); }
+
+    private boolean smsGranted() {
+        return checkSelfPermission(Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED
+                && checkSelfPermission(Manifest.permission.RECEIVE_SMS) == PackageManager.PERMISSION_GRANTED;
     }
 
     @Override
@@ -224,6 +248,57 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void storeBackup(String json) {
             try { DriveSync.saveSnapshot(MainActivity.this, json); } catch (Exception ignored) { }
+        }
+
+        @JavascriptInterface
+        public String smsPermission() { return smsGranted() ? "granted" : "denied"; }
+
+        @JavascriptInterface
+        public void smsRequest() {
+            runOnUiThread(() -> requestPermissions(new String[]{ Manifest.permission.READ_SMS, Manifest.permission.RECEIVE_SMS }, 4));
+        }
+
+        @JavascriptInterface
+        public void openAppSettings() {
+            runOnUiThread(() -> {
+                try {
+                    startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + getPackageName())));
+                } catch (Exception ignored) { }
+            });
+        }
+
+        @JavascriptInterface
+        public void smsConfig(String json) {
+            try {
+                JSONObject o = new JSONObject(json);
+                JSONArray w = o.optJSONArray("words");
+                SmsReceiver.prefs(MainActivity.this).edit().putBoolean("on", o.optBoolean("on", false))
+                        .putString("words", w == null ? "[]" : w.toString()).apply();
+            } catch (Exception ignored) { }
+        }
+
+        @JavascriptInterface
+        public String smsTake() { return SmsReceiver.take(MainActivity.this); }
+
+        @JavascriptInterface
+        public String smsScan(int days) {
+            JSONArray out = new JSONArray();
+            if (!smsGranted()) return "{\"error\":\"SMS permission is off.\"}";
+            String since = String.valueOf(System.currentTimeMillis() - days * 86400000L);
+            try (Cursor cur = getContentResolver().query(Telephony.Sms.Inbox.CONTENT_URI,
+                    new String[]{ "address", "body", "date" }, "date>?", new String[]{ since }, "date ASC")) {
+                if (cur != null) {
+                    while (cur.moveToNext()) {
+                        String body = cur.getString(1);
+                        if (!SmsReceiver.matches(MainActivity.this, body)) continue;
+                        String from = cur.getString(0);
+                        out.put(new JSONObject().put("from", from == null ? "" : from).put("body", body).put("ts", cur.getLong(2)));
+                    }
+                }
+            } catch (Exception e) {
+                try { return new JSONObject().put("error", String.valueOf(e.getMessage())).toString(); } catch (Exception ignored) { return "[]"; }
+            }
+            return out.toString();
         }
 
         @JavascriptInterface

@@ -52,7 +52,7 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
 .acc{background:var(--card);border-radius:16px;padding:14px 16px;border:0;border-top:5px solid var(--c);text-align:left;color:var(--ink);font:inherit;cursor:pointer;display:block;width:100%}
 .acc.on{outline:2.5px solid var(--c);outline-offset:-2px}
 .acc .k{font-size:14px;color:var(--mute);font-weight:600}
-.acc .v{font:800 clamp(22px,5vw,28px)/1.15 system-ui,sans-serif;margin:4px 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acc .v{font:800 clamp(16px,4.4vw,28px)/1.15 system-ui,sans-serif;margin:4px 0 2px;white-space:nowrap;letter-spacing:-.01em}
 .acc .s{font-size:13px;color:var(--mute)}
 .accs .acc:last-child:nth-child(odd){grid-column:1/-1}
 .check{display:flex;align-items:center;gap:10px;font-weight:500;color:var(--ink);min-height:44px;cursor:pointer;margin-bottom:10px}.check input{width:22px;height:22px;min-height:0;accent-color:var(--acc);flex:none}
@@ -92,6 +92,8 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
 .fab{position:fixed;right:max(18px,calc(50vw - 470px));bottom:calc(18px + env(safe-area-inset-bottom));z-index:4;border:0;border-radius:999px;background:var(--acc);color:var(--on);font:800 17px system-ui,sans-serif;padding:0 24px;min-height:58px;box-shadow:0 6px 18px rgb(0 0 0/.25);cursor:pointer}
 .toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--card);padding:10px 12px 10px 16px;border-radius:12px;display:none;align-items:center;gap:12px;z-index:6;max-width:92vw}
 .toast.show{display:flex}.toast button{background:var(--acc);color:var(--on);border:0;border-radius:8px;min-height:38px;padding:0 12px;font-weight:700;cursor:pointer}
+.subhead{display:flex;align-items:center;gap:10px;margin-bottom:12px}.subhead h2{margin:0}
+.setbtn .amt{font-size:15px}.setbtn .bar{margin-top:6px}
 .setbtn{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--card);border:0;border-radius:14px;padding:14px 16px;margin-bottom:8px;color:var(--ink);font:inherit;cursor:pointer;min-height:64px}
 .setbtn .ic{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;background:var(--soft);flex:none}
 .setbtn .t{flex:1}.setbtn .t b{display:block;font-size:16px}.setbtn .t small{color:var(--mute);font-size:13px}.setbtn .go{color:var(--mute);font-size:22px}
@@ -103,6 +105,18 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
 .grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
 .grid2>.card{margin-bottom:0}
 [hidden]{display:none!important}
+/* motion: pages slide in, taps ripple */
+@keyframes inR{from{transform:translateX(36px);opacity:0}to{transform:none;opacity:1}}
+@keyframes inL{from{transform:translateX(-36px);opacity:0}to{transform:none;opacity:1}}
+@keyframes inUp{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
+.anim-r{animation:inR .26s cubic-bezier(.2,.8,.2,1)}.anim-l{animation:inL .26s cubic-bezier(.2,.8,.2,1)}.anim-u{animation:inUp .24s cubic-bezier(.2,.8,.2,1)}
+.rp{overflow:hidden;-webkit-tap-highlight-color:transparent}.rp.rpr{position:relative}
+.ripple{position:absolute;border-radius:50%;pointer-events:none;background:currentColor;opacity:.22;transform:scale(0);animation:rip .55s ease-out forwards}
+@keyframes rip{to{transform:scale(1);opacity:0}}
+nav a{transition:background-color .25s,color .25s}
+.btn,.setbtn,.chip,.ib,.acc,.seg button{transition:transform .12s ease,background-color .2s}
+.btn:active,.setbtn:active,.acc:active,.ib:active{transform:scale(.98)}
+@media(prefers-reduced-motion:reduce){.anim-r,.anim-l,.anim-u,.ripple{animation:none!important}.ripple{display:none}.btn:active,.setbtn:active,.acc:active,.ib:active{transform:none}}
 @media(max-width:700px){.grid2{grid-template-columns:minmax(0,1fr)}.grid2>.card{margin-bottom:0}}
 @media(max-width:380px){nav a{font-size:13px;padding:10px 10px}.seg button{font-size:13px}}
 </style>
@@ -114,33 +128,53 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
 
 <!-- HOME -->
 <section id="v-home">
+ <div data-main>
  <div id="dueBox"></div>
  <div class="card" id="balCheck" hidden style="border:2px solid var(--acc)"><h2>Check your balances</h2><p class="note" style="margin-top:-6px">The app can't see every movement (e.g. Telda card purchases send no SMS). Type what your bank and Telda apps show now; the app continues from these numbers.</p><div id="balRows"></div><div class="btns"><button class="btn" id="balSave">Save balances</button><button class="btn ghost" id="balOk">They're right</button></div></div>
  <div class="accs" id="accs"></div>
  <div class="tiles" id="monthTiles"></div>
- <div class="card" id="reviewCard" hidden style="border:2px solid var(--warn)"><h2 id="reviewTitle">Needs a category</h2><p class="note" style="margin-top:-6px">Found in your SMS or statements and already counted in your balances. Tap each one to pick a category; the app remembers it for that name next time.</p><ul class="list" id="reviewList"></ul></div>
+ <div id="homeMenu"></div>
+ <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px"><h2 style="margin:0">Latest</h2><button class="ib" data-go="home-all">See all</button></div><ul class="list" id="homeLatest"></ul></div>
+ </div>
+ <div data-sub="review" data-title="Needs a category">
+ <div class="card" id="reviewCard" style="border:2px solid var(--warn)"><h2 id="reviewTitle">Needs a category</h2><p class="note" style="margin-top:-6px">Found in your SMS or statements and already counted in your balances. Tap each one to pick a category; the app remembers it for that name next time.</p><ul class="list" id="reviewList"></ul></div>
+ </div>
+ <div data-sub="all" data-title="All entries">
+ <div class="chips" id="allAccs" style="margin-bottom:12px"></div>
  <div class="card">
   <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px"><h2 id="listTitle" style="margin:0">Latest</h2><button class="ib" id="clearAcc" hidden>Show all</button></div>
   <ul class="list" id="homeList"></ul>
   <button class="btn ghost" id="more" hidden style="margin-top:10px">Show more</button>
  </div>
+ </div>
 </section>
 
 <!-- CREDIT -->
 <section id="v-credit" hidden>
+ <div data-main>
  <div id="dueBox2"></div>
- <div class="grid2" style="margin-bottom:14px">
-  <div class="card" id="limitCard"></div>
-  <div class="card" id="openCard"></div>
- </div>
+ <div class="card" id="limitCard"></div>
  <p class="note" id="stmHint" style="margin:-4px 0 14px">Got a statement PDF? <a href="#settings" style="color:var(--credit);font-weight:700">Import it in Settings</a> to set your card position and installments.</p>
+ <div id="creditMenu"></div>
+ </div>
+ <div data-sub="inst" data-title="Installments">
+ <div class="card"><h2>Installments</h2><ul class="list" id="instList"></ul></div>
+ </div>
+ <div data-sub="bill" data-title="Next bill"><div class="card" id="openCard"></div></div>
+ <div data-sub="owe" data-title="What will I owe?">
+ <div class="card"><h2>What will I owe?</h2><div class="row" style="margin-bottom:6px"><div><label for="fcDate">Due date</label><input id="fcDate" type="date"></div><div></div></div><div id="fcOut"></div></div>
+ </div>
+ <div data-sub="counted" data-title="What's counted">
  <div class="card"><h2>What's counted</h2><p class="note" style="margin-top:-6px">Every payment and purchase the app is counting since your last statement. Something wrong? Tap it to fix or delete it.</p>
   <div class="seg two" id="cntSeg"><button data-cnt="pay" class="on">Payments &amp; refunds</button><button data-cnt="buy">Purchases on the next bill</button></div>
   <ul class="list" id="cntList"></ul></div>
- <div class="card"><h2>What will I owe?</h2><div class="row" style="margin-bottom:6px"><div><label for="fcDate">Due date</label><input id="fcDate" type="date"></div><div></div></div><div id="fcOut"></div></div>
- <div class="card"><h2>Installments</h2><ul class="list" id="instList"></ul></div>
+ </div>
+ <div data-sub="buys" data-title="Card purchases">
  <div class="card"><h2>Card purchases</h2><p class="note" style="margin-top:-6px">Turned one of these into installments at the bank? Tap <b>Installments</b> next to it. The others stay as pay-in-full.</p><ul class="list" id="ccList"></ul><button class="btn ghost" id="ccMore" hidden style="margin-top:10px">Show more</button></div>
+ </div>
+ <div data-sub="bills" data-title="Bill history">
  <div class="card"><h2>Bills</h2><p class="note" style="margin-top:-6px">Each bill is issued on the <span id="sDayTxt">11</span>th and is due on the <span id="dDayTxt">5</span>th. Payments and refunds cover the oldest bill first.</p><ul class="list" id="billList"></ul></div>
+ </div>
 </section>
 
 <!-- CASH -->
@@ -158,7 +192,8 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
 
 <!-- GOALS -->
 <section id="v-goals" hidden>
- <div id="goalList"></div>
+ <div data-main>
+ <div id="goalRows"></div>
  <button class="btn ghost" id="goalAddBtn" style="margin-bottom:14px">+ New savings goal</button>
  <div class="card" id="goalForm" hidden>
   <h2 id="goalFormTitle">New goal</h2>
@@ -166,17 +201,23 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
   <div class="row"><div><label for="glDate">By</label><input id="glDate" type="date"></div><div><label for="glSaved">Already saved (EGP)</label><input id="glSaved" type="number" inputmode="decimal" min="0" value="0"></div></div>
   <div class="btns"><button class="btn" id="glSave">Save goal</button><button class="btn ghost" id="glCancel">Cancel</button><button class="btn danger" id="glDel" hidden>Delete goal</button></div>
  </div>
+ <button class="setbtn" data-go="goals-ai"><span class="ic">✨</span><span class="t"><b>Claude for planning</b><small id="aiKeyShort">Optional — add your API key</small></span><span class="go">›</span></button>
+ </div>
+ <div data-sub="detail" data-title="Goal"><div id="goalList"></div></div>
+ <div data-sub="ai" data-title="Claude for planning">
  <div class="card"><h2>Claude for planning (optional)</h2>
   <p class="note" style="margin-top:-6px">The plans above are worked out on your phone from your own numbers. To also get a written plan from Claude, paste an Anthropic API key (from console.anthropic.com — a paid, pay-as-you-go account; a plan costs a few cents). Needs internet. Only totals per category, income, commitments and your goal are sent — no names, card numbers or messages. The key stays on this phone and is not put in backups.</p>
   <div class="catrow"><input id="aiKey" type="password" placeholder="sk-ant-…" autocomplete="off"><button class="ib" id="aiKeySave">Save key</button></div>
   <div id="aiKeyState" class="note"></div>
  </div>
+ </div>
 </section>
 
 <!-- GAM3YA -->
 <section id="v-gam" hidden>
+ <div data-main>
  <div class="tiles" id="gamTiles"></div>
- <div id="gamList"></div>
+ <div id="gamRows"></div>
  <button class="btn ghost" id="gamAddBtn" style="margin-bottom:14px">+ Add a gam3ya</button>
  <div class="card" id="gamForm" hidden>
   <h2 id="gamFormTitle">New gam3ya</h2>
@@ -187,22 +228,33 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
   <div class="info" id="gmInfo" style="--c:var(--acc)"></div>
   <div class="btns"><button class="btn" id="gmSave">Save</button><button class="btn ghost" id="gmCancel">Cancel</button><button class="btn danger" id="gmDel" hidden>Delete</button></div>
  </div>
+ </div>
+ <div data-sub="detail" data-title="Gam3ya"><div id="gamList"></div></div>
 </section>
 
 <!-- CHARITY -->
 <section id="v-charity" hidden>
+ <div data-main>
  <div id="chNow"></div>
+ <button class="setbtn" data-go="charity-months"><span class="ic">📅</span><span class="t"><b>Month by month</b><small id="chMonthsShort">Due and given per salary</small></span><span class="go">›</span></button>
+ <button class="setbtn" data-go="charity-set"><span class="ic">⚙️</span><span class="t"><b>Charity settings</b><small id="chSetShort">Percentage and account</small></span><span class="go">›</span></button>
+ </div>
+ <div data-sub="months" data-title="Month by month">
+ <div class="card"><h2>Month by month</h2><p class="note" style="margin-top:-6px">Due = the percentage of the salary received that month. Future months use your latest salary.</p><ul class="list" id="chList"></ul></div>
+ </div>
+ <div data-sub="set" data-title="Charity settings">
  <div class="card">
   <h2>Settings</h2>
   <div class="row"><div><label for="chFrom">Count from salary of</label><input id="chFrom" type="month"></div><div class="note" style="align-self:end">Salaries before this month are treated as already given.</div></div>
   <div class="row"><div><label for="chPct">Percentage of salary</label><input id="chPct" type="number" min="0" max="100" step="0.5" inputmode="decimal"></div><div><label for="chAcc">Usually paid from</label><select id="chAcc"></select></div></div>
   <button class="btn ghost" id="chSave">Save</button>
  </div>
- <div class="card"><h2>Month by month</h2><p class="note" style="margin-top:-6px">Due = the percentage of the salary received that month. Future months use your latest salary.</p><ul class="list" id="chList"></ul></div>
+ </div>
 </section>
 
 <!-- SUBSCRIPTIONS -->
 <section id="v-subs" hidden>
+ <div data-main>
  <div class="tiles" id="subTiles"></div>
  <div class="card"><h2>Your subscriptions</h2><p class="note" style="margin-top:-6px">Charges are found in your SMS, statements and entries by the words of each subscription. A 3% foreign exchange fee is added on top, as the bank charges it.</p><ul class="list" id="subList"></ul><button class="btn ghost" id="subAddBtn" style="margin-top:10px">+ Add a subscription</button></div>
  <div class="card" id="subForm" hidden>
@@ -213,20 +265,24 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
   <label class="check"><input type="checkbox" id="sbFx" checked> Add 3% foreign exchange fee</label>
   <div class="btns"><button class="btn" id="sbSave">Save</button><button class="btn ghost" id="sbCancel">Cancel</button><button class="btn danger" id="sbDel" hidden>Remove</button></div>
  </div>
+ <button class="setbtn" data-go="subs-charges"><span class="ic">🧾</span><span class="t"><b>All charges</b><small id="subChShort">Every subscription payment</small></span><span class="go">›</span></button>
+ </div>
+ <div data-sub="charges" data-title="Subscription charges">
  <div class="card"><h2>Charges</h2><ul class="list" id="subCharges"></ul></div>
+ </div>
 </section>
 
 <!-- REPORTS -->
 <section id="v-reports" hidden>
+ <div data-main>
  <div class="card row" style="margin-bottom:14px">
   <div><label for="rMonth">Period</label><select id="rMonth"></select></div>
   <div><label for="rAcc">Account</label><select id="rAcc"></select></div>
  </div>
  <div class="tiles" id="rTiles"></div>
- <div class="grid2">
-  <div class="card"><h2>Spending by category</h2><div id="rCats"></div></div>
-  <div class="card"><h2 id="rListTitle">All spending</h2><ul class="list" id="rList"></ul></div>
+ <div class="card"><h2>Spending by category</h2><p class="note" style="margin-top:-6px">Tap a category to see its entries.</p><div id="rCats"></div><button class="btn ghost" data-go="reports-list" id="rAllBtn" style="margin-top:6px">See all spending</button></div>
  </div>
+ <div data-sub="list" data-title="Entries"><div class="card"><h2 id="rListTitle">All spending</h2><ul class="list" id="rList"></ul></div></div>
 </section>
 
 <!-- SETTINGS -->
@@ -550,8 +606,11 @@ function renderHome(){renderBalCheck();
  const ym=today.slice(0,7),inM=tx.filter(t=>t.date.startsWith(ym));
  const sp=r2(inM.filter(t=>t.type==='exp'&&t.cat!=='gam3ya').reduce((s,t)=>s+cost(t),0)),inc=r2(inM.filter(t=>t.type==='inc'&&t.cat!=='gam3ya').reduce((s,t)=>s+t.amt,0));
  $('monthTiles').innerHTML=`<div class="tile"><div class="k">Spent in ${MONTHS[+ym.slice(5)-1]}</div><div class="v" style="color:var(--out)">${money(sp)}</div></div><div class="tile"><div class="k">Income</div><div class="v" style="color:var(--in)">${money(inc)}</div></div><div class="tile"><div class="k">Net</div><div class="v">${money(inc-sp)}</div></div>`;
- const rv=tx.filter(t=>t.review&&!isCheck(t)).sort(byDate);$('reviewCard').hidden=!rv.length;
- if(rv.length){$('reviewTitle').textContent=`${rv.length} need${rv.length===1?'s':''} a category`;$('reviewList').innerHTML=rv.slice(0,20).map(t=>row(t,null)).join('')}
+ const rv=tx.filter(t=>t.review&&!isCheck(t)).sort(byDate);
+ $('reviewTitle').textContent=rv.length?`${rv.length} need${rv.length===1?'s':''} a category`:'All sorted';$('reviewList').innerHTML=rv.length?rv.slice(0,200).map(t=>row(t,null)).join(''):'<li class="empty" style="display:block;border:0">Nothing waiting for a category.</li>';
+ $('homeMenu').innerHTML=(rv.length?menuBtn('home-review','🏷️',`${rv.length} need${rv.length===1?'s':''} a category`,'Tap to sort them — similar ones can be done together'):'');
+ $('homeLatest').innerHTML=tx.length?grouped([...tx].filter(t=>!isCheck(t)).sort(byDate).slice(0,8),null):'<li class="empty" style="display:block;border:0">Nothing here yet. Tap <b>+ Add</b> to record your first expense.</li>';
+ $('allAccs').innerHTML=[['','All'],...ACC.map(a=>[a,accName(a)])].map(([a,n])=>`<button class="chip${(homeAcc||'')===a?' on':''}" ${a?`style="--c:${ACOL[a]}"`:''} data-allacc="${a}">${esc(n)}</button>`).join('');
  const list=tx.filter(t=>!homeAcc||touches(t,homeAcc)).sort(byDate);
  $('listTitle').textContent=homeAcc?accName(homeAcc):'Latest';$('clearAcc').hidden=!homeAcc;
  $('homeList').innerHTML=list.length?grouped(list.slice(0,homeN),homeAcc):'<li class="empty" style="display:block;border:0">Nothing here yet. Tap <b>+ Add</b> to record your first expense.</li>';
@@ -562,6 +621,14 @@ function renderHome(){renderBalCheck();
 function renderCredit(){
  const c=credit(),lim=+S.acc.credit.limit||0;$('sDayTxt').textContent=S.stmt;$('dDayTxt').textContent=S.due;
  $('dueBox2').innerHTML=dueHTML(c,true);$('stmHint').hidden=!!base();
+ {const plans=tx.filter(t=>t.type==='exp'&&t.acc==='credit'&&t.plan),act=plans.filter(t=>schedule(t).some(p=>p.stmt>=today)),mon=r2(c.open.inst.reduce((a,x)=>a+x.amt,0)),left=r2(act.reduce((a,t)=>a+schedule(t).filter(p=>p.stmt>=today).reduce((b,p)=>b+p.amt,0),0));
+  const cp=tx.filter(t=>t.type==='exp'&&t.acc==='credit'&&!t.plan).length,nb=c.bills.filter(b=>b.billed>0&&b.stmt<today).length;
+  $('creditMenu').innerHTML=menuBtn('credit-inst','🗓️','Installments',`${act.length} active · ${money(mon)} on the next bill · ${money(left)} left in total`)
+   +menuBtn('credit-bill','🧾',`Next bill · ${fmtS(c.open.stmt)}`,`Still open · due ${fmtS(c.open.due)}`,money(c.open.rem))
+   +menuBtn('credit-owe','🔮','What will I owe?','Pick any due date')
+   +menuBtn('credit-counted','✅',"What's counted",'Payments and purchases since your statement')
+   +menuBtn('credit-buys','🛍️','Card purchases',`${cp} purchases · turn one into installments`)
+   +menuBtn('credit-bills','📚','Bill history',`${nb} past bill${nb===1?'':'s'}`)}
  $('limitCard').innerHTML=`<h2>${esc(accName('credit'))}</h2><div class="kv"><span>Limit</span><b>${lim?egp(lim):'Not set'}</b></div><div class="kv"><span>Outstanding balance (incl. remaining installments)</span><b>${egp(Math.max(0,c.used))}</b></div><div class="kv tot"><span>Available</span><b>${lim?egp(c.avail):'—'}</b></div>${(()=>{const a=bankAvail();return a?`<div class="kv"><span>Available in your last bank SMS (${fmtS(iso(new Date(a.ts)))}, before fees the bank adds later)</span><b>${egp(a.v)}</b></div>`:''})()}${lim?`<div class="bar" style="--c:var(--credit)"><i style="width:${Math.min(100,Math.max(0,c.used/lim*100))}%"></i></div>`:''}${c.used<0?`<div class="msg">You have ${egp(-c.used)} extra paid on the card.</div>`:''}${base()?`<p class="note" style="margin:10px 0 0">Your statement of ${fmt(base().stmt)}: balance ${egp(base().closing)} · total due ${egp(base().due)}${base().min!=null?` · minimum ${egp(base().min)}`:''}${base().avail!=null?` · available ${egp(base().avail)}`:''}. Available now = that, minus what you spent since, plus what you paid since.</p>`:''}`;renderCounted(c);
  const o=c.open,fs=r2(o.full.reduce((s,x)=>s+x.amt,0)),is=r2(o.inst.reduce((s,x)=>s+x.amt,0));
  $('openCard').innerHTML=`<h2>Next bill · ${fmtS(o.stmt)}</h2><p class="note" style="margin-top:-6px">Still open · due ${dow(o.due)} ${fmtS(o.due)}</p><div class="kv"><span>Purchases to pay in full</span><b>${egp(fs)}</b></div><div class="kv"><span>Installments this month (${o.inst.length})</span><b>${egp(is)}</b></div>${o.covered?`<div class="kv"><span>Already paid ahead</span><b>− ${egp(o.covered)}</b></div>`:''}<div class="kv tot"><span>So far</span><b>${egp(o.rem)}</b></div>`;
@@ -714,18 +781,19 @@ $('quickCatAdd').addEventListener('click',()=>{const id=addCat(F.type,$('quickCa
 
 /* ---------- clicks ---------- */
 let undo=null;
+document.addEventListener('click',e=>{const f=e.target.closest('[data-allacc]');if(f){homeAcc=f.dataset.allacc||null;homeN=40;renderHome()}});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-plan],[data-tx],[data-acc],[data-aacc],[data-ato],[data-acat],[data-months],[data-paynow],[data-fill],[data-rcat],[data-addcat],[data-rmcat],#newCatChip');if(!b)return;
  const d=b.dataset;
  if(d.plan)openPlan(d.plan);
  else if(d.tx)openEdit(d.tx);
- else if(d.acc){homeAcc=homeAcc===d.acc?null:d.acc;homeN=40;renderHome()}
+ else if(d.acc){homeAcc=d.acc;homeN=40;location.hash='home-all'}
  else if(d.aacc){F.acc=d.aacc;if(F.type==='xfer'&&F.to===F.acc)F.to=null;renderAdd()}
  else if(d.ato){F.to=d.ato;renderAdd()}
  else if(d.acat){F.cat=d.acat;renderAdd()}
  else if(b.id==='newCatChip'){$('quickCat').hidden=false;$('quickCatIn').focus()}
  else if(d.paynow){const c=credit();openAdd('pay',null,c.now?c.now.amt:'')}
  else if(d.fill){$('aAmt').value=d.fill;info()}
- else if(d.rcat){rCat=rCat===d.rcat?null:d.rcat;renderReports()}
+ else if(d.rcat){rCat=d.rcat;location.hash='reports-list'}
  else if(d.addcat){const inp=$(d.addcat==='exp'?'newExp':'newInc');if(addCat(d.addcat,inp.value)){inp.value='';save();toast('Category added',false)}}
  else if(d.rmcat){if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Sure?';return}
   const[k,id]=d.rmcat.split(':'),used=tx.some(t=>t.type===k&&t.cat===id);
@@ -740,6 +808,7 @@ $('cashIn').addEventListener('click',()=>openAdd('inc','cash'));
 $('cashOut').addEventListener('click',()=>openAdd('exp','cash'));
 $('cashMonth').addEventListener('change',renderCash);
 ['rMonth','rAcc'].forEach(id=>$(id).addEventListener('change',()=>{rCat=null;renderReports()}));
+$('rAllBtn').addEventListener('click',()=>{rCat=null});
 $('toastB').addEventListener('click',()=>{if(undo){tx.push(undo);if(undo.sms)skip=skip.filter(k=>k!==undo.sms.key);undo=null;save();toast('Restored',false)}});
 let tt;function toast(t,u){$('toastT').textContent=t;$('toastB').hidden=!u;$('toast').classList.add('show');clearTimeout(tt);tt=setTimeout(()=>$('toast').classList.remove('show'),5000)}
 
@@ -1110,6 +1179,7 @@ function renderSubs(){
  $('subList').innerHTML=infos.length?infos.map(({sb,last,price,next})=>{const paid=last&&last.date.startsWith(ym),late=next&&next<today;
   return `<li class="tx" data-subedit="${sb.id}" style="--c:${ACOL[sb.acc]||'var(--credit)'}"><span class="dot"></span><span class="t"><b>${esc(sb.n)}</b> ${paid?'<span class="pill paid">Charged this month</span>':next?`<span class="pill ${late?'due':'open'}">${late?'Expected':'Next'} ~${fmtS(next)}</span>`:'<span class="pill">No charge found yet</span>'}<small>${price?`${money(price)} ${sb.cycle==='y'?'a year':'a month'}${last&&last.fxFee?` (${money(r2(last.amt-last.fxFee))} + ${money(last.fxFee)} FX fee)`:sb.fx?' incl. 3% FX fee':''} · `:''}${esc(accName(sb.acc))}${last?` · last ${fmtS(last.date)}`:''}</small></span><span class="amt">${price?money(price):'—'}</span></li>`}).join(''):'<li class="empty" style="display:block;border:0">No subscriptions yet.</li>';
  const all=tx.filter(t=>t.type==='exp'&&(t.sub||t.cat==='subs')).sort(byDate).slice(0,60);
+ $('subChShort').textContent=`${all.length} charge${all.length===1?'':'s'} found`;
  $('subCharges').innerHTML=all.length?grouped(all,null):'<li class="empty" style="display:block;border:0">No charges found yet. They appear here from your SMS and statements.</li>';
  $('sbAcc').innerHTML=ACC.filter(a=>a!=='cash').map(a=>`<option value="${a}">${esc(accName(a))}</option>`).join('')}
 function openSub(id){subEdit=id||null;const sb=id?S.subs.find(x=>x.id===id):{n:'',kw:'',price:0,fx:true,acc:'credit',cycle:'m'};
@@ -1159,7 +1229,8 @@ function goalPlan(g){const st=monthStats(),months=Math.max(1,ymDiff(ymOf(today),
  return{st,months,need,per,free,out,cuts,gap,ok:free>=per,reachable:gap<=0,canMonth,realMonths}}
 function renderGoals(){
  const list=S.goals;
- $('goalList').innerHTML=list.length?list.map(g=>{const P=goalPlan(g),pct=Math.min(100,(g.saved||0)/g.target*100);
+ $('goalRows').innerHTML=list.length?list.map(g=>{const P=goalPlan(g),pct=Math.min(100,(g.saved||0)/g.target*100);return `<button class="setbtn" data-go="goals-detail-${g.id}"><span class="ic">🎯</span><span class="t"><b>${esc(g.name)}</b><small>${money(g.saved||0)} of ${money(g.target)} · ${egp(P.per)} a month · by ${fmtS(g.date)}</small><span class="bar" style="display:block"><i style="width:${pct}%"></i></span></span><span class="go">›</span></button>`}).join(''):'<div class="card empty">No goals yet. Add the amount you want to reach and by when — the app works out how much to set aside each month and where to cut.</div>';
+ {const sel=list.filter(g=>g.id===pageArg);$('goalList').innerHTML=sel.length?sel.map(g=>{const P=goalPlan(g),pct=Math.min(100,(g.saved||0)/g.target*100);
   return `<div class="card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><h2 style="margin:0">${esc(g.name)}</h2><button class="ib" data-goaledit="${g.id}">Edit</button></div>
   <p class="note" style="margin:4px 0 10px">${egp(g.target)} by ${fmt(g.date)} · ${P.months} month${P.months===1?'':'s'} left</p>
   <div class="bar" style="height:12px"><i style="width:${pct}%"></i></div>
@@ -1174,9 +1245,9 @@ function renderGoals(){
   <div class="row" style="margin-bottom:8px"><div><label for="gadd-${g.id}">Add to savings</label><input id="gadd-${g.id}" type="number" inputmode="decimal" placeholder="EGP"></div><div style="align-self:end"><button class="btn ghost" data-goaladd="${g.id}">Add</button></div></div>
   <div class="btns"><button class="btn" data-goalai="${g.id}" style="background:var(--credit)">Ask Claude for a plan</button></div>
   <div id="gai-${g.id}">${g.ai?`<div class="msg" style="white-space:pre-wrap;margin-top:12px">${esc(g.ai.text)}<div class="note" style="margin-top:8px">Claude · ${esc(fmt(g.ai.date))}</div></div>`:''}</div></div>`}).join('')
-  :'<div class="card empty">No goals yet. Add the amount you want to reach and by when — the app works out how much to set aside each month and where to cut.</div>';
+  :'<div class="card empty">Goal not found.</div>';}
  let k='';try{k=localStorage.getItem('exp-ai-key')||''}catch(e){}
- $('aiKeyState').textContent=k?'A key is saved on this phone.':'No key saved — the built-in plan still works.'}
+ $('aiKeyState').textContent=k?'A key is saved on this phone.':'No key saved — the built-in plan still works.';$('aiKeyShort').textContent=k?'Key saved — ask from any goal':'Optional — add your API key'}
 function openGoal(id){goalEdit=id;const g=id?S.goals.find(x=>x.id===id):{name:'',target:'',date:mk(+today.slice(0,4)+1,+today.slice(5,7)-1,1),saved:0};
  $('goalForm').hidden=false;$('goalFormTitle').textContent=id?'Edit goal':'New goal';$('glName').value=g.name;$('glTarget').value=g.target;$('glDate').value=g.date;$('glSaved').value=g.saved||0;$('glDel').hidden=!id;$('goalForm').scrollIntoView({behavior:'smooth'})}
 $('goalAddBtn').addEventListener('click',()=>openGoal(null));
@@ -1184,7 +1255,7 @@ $('glCancel').addEventListener('click',()=>{$('goalForm').hidden=true});
 $('glSave').addEventListener('click',()=>{const v={name:$('glName').value.trim()||'Savings goal',target:r2($('glTarget').value),date:$('glDate').value,saved:r2($('glSaved').value)};
  if(!(v.target>0)||!v.date||v.date<=today){toast('Enter the amount and a future date',false);return}
  if(goalEdit)Object.assign(S.goals.find(x=>x.id===goalEdit),v);else S.goals.push({id:'g'+uid(),...v});$('goalForm').hidden=true;save();toast('Goal saved',false)});
-$('glDel').addEventListener('click',()=>{S.goals=S.goals.filter(x=>x.id!==goalEdit);$('goalForm').hidden=true;save()});
+$('glDel').addEventListener('click',()=>{S.goals=S.goals.filter(x=>x.id!==goalEdit);$('goalForm').hidden=true;save();go('goals')});
 $('aiKeySave').addEventListener('click',()=>{const k=$('aiKey').value.trim();try{if(k)localStorage.setItem('exp-ai-key',k);else localStorage.removeItem('exp-ai-key')}catch(e){}$('aiKey').value='';renderGoals();toast(k?'Key saved on this phone':'Key removed',false)});
 async function askClaude(g){const box=$('gai-'+g.id);let key='';try{key=localStorage.getItem('exp-ai-key')||''}catch(e){}
  if(!key){box.innerHTML='<div class="msg warn">Add your Anthropic API key at the bottom of this page first.</div>';return}
@@ -1201,7 +1272,7 @@ async function askClaude(g){const box=$('gai-'+g.id);let key='';try{key=localSto
   const text=(j.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('\n').trim();g.ai={text,date:today};save();if(location.hash==='#goals')renderGoals()}
  catch(e){box.innerHTML=`<div class="msg warn">Claude couldn't be reached: ${esc(e.message||'no internet?')}</div>`}}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-goaledit],[data-goaladd],[data-goalai]');if(!b)return;
- if(b.dataset.goaledit)openGoal(b.dataset.goaledit);
+ if(b.dataset.goaledit){const id=b.dataset.goaledit;if(location.hash!=='#goals'){go('goals');setTimeout(()=>openGoal(id),50)}else openGoal(id)}
  else if(b.dataset.goaladd){const g=S.goals.find(x=>x.id===b.dataset.goaladd),v=r2($('gadd-'+g.id).value);if(!v)return;g.saved=r2((g.saved||0)+v);save();toast(`${egp(v)} added to ${g.name}`,false)}
  else if(b.dataset.goalai)askClaude(S.goals.find(x=>x.id===b.dataset.goalai))});
 
@@ -1217,7 +1288,9 @@ function renderGam(){
  const monthly=r2(all.filter(x=>x.paid.length<x.g.months).reduce((a,x)=>a+x.each,0)),owe=r2(all.filter(x=>x.got).reduce((a,x)=>a+x.left,0)),toGet=r2(all.filter(x=>!x.got).reduce((a,x)=>a+gamPayout(x.g),0));
  $('gamTiles').innerHTML=`<div class="tile"><div class="k">Paying monthly</div><div class="v">${money(monthly)}</div></div><div class="tile"><div class="k">Still to pay after payout</div><div class="v" style="color:var(--out)">${money(owe)}</div></div><div class="tile"><div class="k">Payouts to come</div><div class="v" style="color:var(--in)">${money(toGet)}</div></div>`;
  const cur=ymOf(today);
- $('gamList').innerHTML=all.length?all.map(({g,paid,got,paidAmt,each,left})=>{const turnYm=addYm(g.start,g.turn-1),idx=ymDiff(g.start,cur)+1,nextI=paid.length,done=nextI>=g.months,acc=accName(g.acc);
+ $('gamRows').innerHTML=all.length?all.map(({g,paid,got,each,left})=>`<button class="setbtn" data-go="gam-detail-${g.id}"><span class="ic">🤝</span><span class="t"><b>${esc(g.name)}</b><small>${paid.length} of ${g.months} paid · ${got?`payout received · ${money(left)} still to pay`:`payout ${money(gamPayout(g))} in ${monthLbl(addYm(g.start,g.turn-1))}`}</small><span class="bar" style="display:block"><i style="width:${paid.length/g.months*100}%"></i></span></span><span class="amt">${money(each)}<br><small class="note">/ month</small></span><span class="go">›</span></button>`).join(''):'<div class="card empty">No gam3ya yet. Add one with the monthly amount, the number of months and your turn.</div>';
+ const sel=all.filter(x=>x.g.id===pageArg);
+ $('gamList').innerHTML=sel.length?sel.map(({g,paid,got,paidAmt,each,left})=>{const turnYm=addYm(g.start,g.turn-1),idx=ymDiff(g.start,cur)+1,nextI=paid.length,done=nextI>=g.months,acc=accName(g.acc);
   const cells=Array.from({length:g.months},(_,i)=>{const ym=addYm(g.start,i),isPaid=i<paid.length,isTurn=i===g.turn-1;return `<span class="pill ${isPaid?'paid':ym<cur?'over':ym===cur?'due':''}" title="${monthLbl(ym)}" style="${isTurn?'outline:2px solid var(--acc);':''}">${MONTHS[+ym.slice(5)-1].slice(0,3)}${isTurn?' ★':''}</span>`}).join(' ');
   return `<div class="card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><h2 style="margin:0">${esc(g.name)}</h2><button class="ib" data-gamedit="${g.id}">Edit</button></div>
   <p class="note" style="margin:4px 0 10px">${money(each)} × ${g.months} months = <b>${egp(gamPayout(g))}</b> · your turn: month ${g.turn} (${monthLbl(turnYm)}) · ${esc(acc)}</p>
@@ -1227,7 +1300,7 @@ function renderGam(){
   <div class="kv tot"><span>${got?'Payout received':'Payout'}</span><b>${got?`${egp(got.amt)} on ${fmtS(got.date)}`:`${egp(gamPayout(g))} in ${monthLbl(turnYm)}`}</b></div>
   ${got&&left>0?`<div class="msg">You got the money already — you still owe ${egp(left)} over ${g.months-paid.length} month${g.months-paid.length===1?'':'s'}.</div>`:''}
   <div class="btns" style="margin-top:10px">${done?'<span class="pill paid">All paid</span>':`<button class="btn" data-gampay="${g.id}">Pay ${monthLbl(addYm(g.start,nextI))} · ${money(each)}</button>`}${!got&&idx>=g.turn-1?`<button class="btn" style="background:var(--in)" data-gamget="${g.id}">I received ${money(gamPayout(g))}</button>`:''}</div></div>`}).join('')
-  :'<div class="card empty">No gam3ya yet. Add one with the monthly amount, the number of months and your turn.</div>';
+  :'<div class="card empty">Gam3ya not found.</div>';
  $('gmAcc').innerHTML=NONCC.map(a=>`<option value="${a}">${esc(accName(a))}</option>`).join('')}
 function gmInfo(){const a=r2($('gmAmt').value),n=+$('gmMonths').value,sh=+$('gmShares').value||1,t=+$('gmTurn').value,st=$('gmStart').value;
  $('gmInfo').innerHTML=a&&n?`You pay ${egp(a*sh)} a month for ${n} months and get <b>${egp(a*n*sh)}</b>${t&&st?` in ${monthLbl(addYm(st,t-1))}`:''}.${t&&t<n?` After that you keep paying ${egp(a*sh*(n-t))}.`:''}`:'Enter the monthly amount and the number of months.'}
@@ -1239,9 +1312,9 @@ $('gmCancel').addEventListener('click',()=>{$('gamForm').hidden=true});
 $('gmSave').addEventListener('click',()=>{const v={name:$('gmName').value.trim()||'Gam3ya',amt:r2($('gmAmt').value),months:+$('gmMonths').value,start:$('gmStart').value,turn:+$('gmTurn').value,acc:$('gmAcc').value,shares:+$('gmShares').value||1,day:+$('gmDay').value||1};
  if(!(v.amt>0)||!(v.months>=2)||!v.start||!(v.turn>=1&&v.turn<=v.months)){toast('Check the amount, months, first month and your turn',false);return}
  if(gamEdit)Object.assign(S.gam.find(x=>x.id===gamEdit),v);else S.gam.push({id:'m'+uid(),...v});$('gamForm').hidden=true;save();toast('Gam3ya saved',false)});
-$('gmDel').addEventListener('click',()=>{const b=$('gmDel');if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again (payments stay in your history)';return}b.dataset.sure='';b.textContent='Delete';S.gam=S.gam.filter(x=>x.id!==gamEdit);$('gamForm').hidden=true;save()});
+$('gmDel').addEventListener('click',()=>{const b=$('gmDel');if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again (payments stay in your history)';return}b.dataset.sure='';b.textContent='Delete';S.gam=S.gam.filter(x=>x.id!==gamEdit);$('gamForm').hidden=true;save();go('gam')});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-gamedit],[data-gampay],[data-gamget]');if(!b)return;
- if(b.dataset.gamedit){openGam(b.dataset.gamedit);return}
+ if(b.dataset.gamedit){const id=b.dataset.gamedit;if(location.hash!=='#gam'){go('gam');setTimeout(()=>openGam(id),50)}else openGam(id);return}
  const g=S.gam.find(x=>x.id===(b.dataset.gampay||b.dataset.gamget));if(!g)return;
  if(b.dataset.gampay){const i=gamPays(g).length,ym=addYm(g.start,i),d=ym<=ymOf(today)?(ym===ymOf(today)?today:gamDate(g,i)):today;
   tx.push({id:uid(),type:'exp',acc:g.acc,amt:r2(g.amt*(g.shares||1)),date:d,cat:'gam3ya',note:`${g.name} · ${monthLbl(ym)}`,created:d<today?Date.parse(d+'T12:00'):Date.now(),gam:g.id,gamYm:ym});save();toast(`Paid ${monthLbl(ym)} from ${accName(g.acc)}`,false)}
@@ -1263,6 +1336,7 @@ function renderCharity(){const rows=charityMonths(),cur=ymOf(today),now=rows.fil
  $('chNow').innerHTML=now.length?now.map(r=>`<div class="due" style="border-left-color:var(--acc)"><div class="t"><small>Church · ${monthLbl(r.ym)} (${pct}% of ${money(r.salary)})</small><span class="big">${egp(r.left)}</span>${r.paid?`<small>${money(r.paid)} already given</small>`:''}
   <div class="catrow" style="margin-top:8px"><select id="chFrom-${r.ym}" aria-label="Pay from">${opts}</select><button class="btn" style="width:auto" data-chpay="${r.ym}">Pay now</button></div></div></div>`).join('')
   :`<div class="due ok"><div class="t"><small>Church</small><b>Nothing due right now.</b><small>${(()=>{const n=rows.find(r=>r.ym>cur||r.est);return n?`Next: about ${egp(n.due)} in ${monthLbl(n.ym)}${n.est?' (estimated from your last salary)':''}`:'Add your salary (payslip, SMS or statement) to see what is due.'})()}</small></div></div>`;
+ {const given=r2(rows.reduce((a,r)=>a+r.paid,0));$('chMonthsShort').textContent=`${rows.filter(r=>!r.est).length} months · ${money(given)} given so far`;$('chSetShort').textContent=`${pct}% of salary · from ${accName(S.charity.acc)}`}
  $('chList').innerHTML=[...rows].reverse().map(r=>`<li><span class="t"><b>${monthLbl(r.ym)}</b> ${r.est?'<span class="pill open">Estimated</span>':r.due===0?'':r.left<=0?'<span class="pill paid">Given</span>':r.paid?'<span class="pill part">Part given</span>':'<span class="pill due">Due</span>'}<small>${r.salary?`${pct}% of salary ${money(r.salary)}`:'No salary this month'}${r.paid?` · given ${money(r.paid)}`:''}</small></span><span class="amt">${money(r.due)}</span></li>`).join('')}
 $('chSave').addEventListener('click',()=>{S.charity.pct=+$('chPct').value||0;if($('chFrom').value)S.charity.from=$('chFrom').value;S.charity.acc=$('chAcc').value;save();toast('Saved',false)});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-chpay]');if(!b)return;const ym=b.dataset.chpay,r=charityMonths().find(x=>x.ym===ym);if(!r||r.left<=0)return;
@@ -1303,6 +1377,25 @@ function renderSecurity(msg){const box=$('lockBox');
   <button class="btn${st.on?' ghost':''}" style="width:auto;white-space:nowrap" data-lock="${st.on?'off':'on'}"${!st.available&&!st.on?' disabled':''}>${st.on?'Turn off':'Turn on'}</button></div>${msg?`<div class="msg${msg.warn?' warn':''}">${esc(msg.text)}</div>`:''}`}
 window.onLock=ev=>{renderSecurity(ev.error?{text:ev.error,warn:true}:{text:ev.on?'Lock turned on.':'Lock turned off.'})};
 document.addEventListener('click',e=>{const b=e.target.closest('[data-lock]');if(!b)return;if(b.dataset.lock==='on')Android.lockEnable();else Android.lockDisable()});
+
+
+/* ---------- sub pages inside a tab: #tab-page-arg ---------- */
+let pageSub=null,pageArg=null;
+function applySub(v){const sec=$('v-'+v);if(!sec)return;const main=sec.querySelector(':scope>[data-main]');if(!main)return;const sub=pageSub;
+ const el=sub&&sec.querySelector(`:scope>[data-sub="${sub}"]`);const show=sub&&el?sub:null;
+ main.hidden=!!show;sec.querySelectorAll(':scope>[data-sub]').forEach(x=>x.hidden=x.dataset.sub!==show);
+ let hd=sec.querySelector(':scope>.subhead');if(!hd){hd=document.createElement('div');hd.className='subhead';hd.innerHTML='<button class="ib" data-back="1">‹ Back</button><h2></h2>';sec.prepend(hd)}
+ hd.hidden=!show;if(show){hd.querySelector('h2').textContent=el.dataset.title||'';const h=el.querySelector('.card>h2');if(h&&h.textContent.trim()===(el.dataset.title||'').trim())h.hidden=true}}
+document.addEventListener('click',e=>{if(e.target.closest('[data-back]')){if(history.length>1)history.back();else go(location.hash.slice(1).split('-')[0]);return}
+ const g=e.target.closest('[data-go]');if(g){e.preventDefault();location.hash=g.dataset.go}});
+const menuBtn=(go,ic,title,sub,right)=>`<button class="setbtn" data-go="${go}"><span class="ic">${ic}</span><span class="t"><b>${title}</b><small>${sub}</small></span>${right?`<span class="amt">${right}</span>`:''}<span class="go">›</span></button>`;
+
+
+/* ripple from the touch point */
+const RIPPLE='nav a,.btn,.setbtn,.chip,.ib,.acc,.seg button,.list li.tx,.fab,.tile';
+document.addEventListener('pointerdown',e=>{if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;const el=e.target.closest(RIPPLE);if(!el||el.disabled)return;
+ el.classList.add('rp');if(getComputedStyle(el).position==='static')el.classList.add('rpr');const r=el.getBoundingClientRect(),d=Math.max(r.width,r.height)*2.2,sp=document.createElement('span');sp.className='ripple';
+ sp.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px`;el.appendChild(sp);setTimeout(()=>sp.remove(),600)},{passive:true});
 
 /* ---------- bank SMS ---------- */
 const HAS_SMS=!!(window.Android&&typeof Android.smsTake==='function');
@@ -1454,13 +1547,19 @@ window.onResumeApp=pollSms;setInterval(pollSms,20000);document.addEventListener(
 /* ---------- routing ---------- */
 const V=['home','credit','cash','goals','gam','charity','subs','reports','settings','add','plan'];
 function go(v){if(location.hash!=='#'+v)location.hash=v;else route()}
-function route(){const h0=location.hash.slice(1),h=h0.startsWith('settings-')?'settings':h0,v=V.includes(h)?h:'home';setSub=h0.startsWith('settings-')?h0.slice(9):null;
+const TABS=['home','credit','cash','goals','gam','charity','subs','reports','settings'];let lastView=null,lastDepth=0;
+function animate(el,cls){if(!el)return;el.classList.remove('anim-r','anim-l','anim-u');void el.offsetWidth;el.classList.add(cls)}
+function route(){const h0=location.hash.slice(1),parts=h0.split('-'),h=parts[0],v=V.includes(h)?h:'home';setSub=v==='settings'?parts[1]||null:null;pageSub=v==='settings'?null:parts[1]||null;pageArg=parts.slice(2).join('-')||null;
  if(v!=='add'&&v!=='plan')backTo=v;else if(v==='add'&&!F)F=fresh('exp');
  V.forEach(k=>{$('v-'+k).hidden=k!==v;const t=$('t-'+k);if(t)t.classList.toggle('on',k===v)});
  $('fab').hidden=['add','plan','settings','goals','gam','charity'].includes(v);document.querySelector('nav').hidden=v==='add'||v==='plan';
  if(v==='home')renderHome();else if(v==='credit')renderCredit();else if(v==='cash')renderCash();else if(v==='reports')renderReports();else if(v==='subs')renderSubs();else if(v==='goals')renderGoals();else if(v==='gam')renderGam();else if(v==='charity')renderCharity();else if(v==='settings')renderSettings();else if(v==='plan')renderPlan();else renderAdd();
+ applySub(v);
+ {const depth=h0.split('-').length>1?1:0,sec=$('v-'+v),i=TABS.indexOf(v),j=TABS.indexOf(lastView);let cls;
+  if(v==='add'||v==='plan')cls='anim-u';else if(lastView===v)cls=depth>lastDepth?'anim-r':depth<lastDepth?'anim-l':null;else cls=i<0||j<0?'anim-u':i>j?'anim-r':'anim-l';
+  if(cls&&lastView!==null)animate(sec,cls);lastView=v;lastDepth=depth}
  window.scrollTo(0,0);const on=$('t-'+v);if(on)on.scrollIntoView({inline:'center',block:'nearest'})}
-function renderAll(){const v=location.hash.slice(1);if(v==='add'||v==='plan')return;route()}
+function renderAll(){const v=location.hash.slice(1);if(v==='add'||v==='plan')return;const y=window.scrollY;route();window.scrollTo(0,y)}
 window.addEventListener('hashchange',route);
 window.__app={get tx(){return tx},monthStats};
 load();applyTheme();route();pushReminder();pushSmsConfig();pollSms();

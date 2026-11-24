@@ -333,16 +333,23 @@ function billOf(t){if(t.bill)return t.bill;const B=base(),s=stmtOf(t.date);
  if(B&&B.imported&&s===B.stmt&&!t.stmtKey&&dayDiff(t.date,B.stmt)<7)return addM(B.stmt,1);return s}
 const isCharge=t=>(t.type==='exp'||t.type==='xfer')&&t.acc==='credit';
 const isCredit=t=>t.type==='pay'||(t.type==='inc'&&t.acc==='credit');
+/* a payment/refund counts against the newest statement's bill if the statement doesn't already include it */
+function voidPairs(B){const v=new Set();
+ for(const r of tx){if(!(r.type==='inc'&&r.acc==='credit')||!creditAfter(r,B))continue;
+  const c=tx.find(c=>!v.has(c)&&c.type==='exp'&&c.acc==='credit'&&!c.plan&&c.amt===r.amt&&dayDiff(c.date,r.date)>=0&&dayDiff(c.date,r.date)<=7&&(!B||billOf(c)>B.stmt)&&mkey(c.note||'').split(' ')[0]===mkey(r.note||'').split(' ')[0]);
+  if(c){v.add(c);v.add(r)}}
+ return v}
+const creditAfter=(t,B)=>!B||(t.bill?t.bill>B.stmt:t.ccStm?t.ccStm>B.stmt:t.date>=B.stmt);
 function credit(){
  const B=base(),after=x=>!B||x>B.stmt;
  const map=new Map(),bill=x=>{if(!map.has(x))map.set(x,{stmt:x,due:B&&x===B.stmt&&B.dueDate?B.dueDate:dueOf(x),full:[],inst:[],billed:0,base:0});return map.get(x)};
- let charged=0,pool=0;
- for(const t of tx){
+ let charged=0,pool=0;const voids=voidPairs(B);
+ for(const t of tx){if(voids.has(t))continue;
   if(isCharge(t)){
    if(t.type==='exp'&&t.plan){if(after(billOf(t)))charged+=cost(t);   /* bought before the statement: already in its closing balance */
     schedule(t).forEach(p=>{if(after(p.stmt)){const b=bill(p.stmt);b.inst.push({t,...p});b.billed+=p.amt}})}
    else{const x=billOf(t);if(after(x)){charged+=t.amt;const b=bill(x);b.full.push({t,amt:t.amt});b.billed+=t.amt}}}
-  else if(isCredit(t)){if(!B||(t.bill?t.bill>B.stmt:t.date>B.stmt))pool+=t.amt}
+  else if(isCredit(t)){if(creditAfter(t,B))pool+=t.amt}
  }
  if(B){const b=bill(B.stmt);b.base=r2(B.due);b.billed+=b.base}
  const openS=stmtOf(today);bill(openS);
@@ -397,6 +404,19 @@ function migrate(){tx.forEach(fixPlan);
   if(ipnOut||ipnIn){t.cat=peopleCat(t.type,t.note==='InstaPay transfer'?'':t.note);t.review=false}});
  tx.forEach(t=>{if(t.cat==='apt'&&(t.stmtKey||t.note==='InstaPay fee')&&/\bfees?\b|interest|insurance|overdraft/i.test(t.note||''))t.cat=feeCat()});
  if(!S.exp.some(c=>c.id==='subs'))S.exp.push({id:'subs',n:'Subscriptions'});
+ {const g=S.subs.find(x=>x.id==='gone');if(g&&!/google google o/.test(g.kw))g.kw+=', google google o'}
+ /* v2–v8 read statement notices and "installment" messages as payments, and code messages as extra purchases */
+ const drop=new Set(),insts=[];
+ for(const t of tx){if(!t.sms||!t.sms.body)continue;const b=norm(t.sms.body);
+  if(NOTICE.test(b)&&!/charged|خصم|debited/.test(b)&&t.type==='pay'){drop.add(t);skip.push(t.sms.key);continue}
+  const m=b.match(INSTRE);if(m&&!t.plan){drop.add(t);skip.push(t.sms.key);insts.push({p:parseSms(t.sms.body),ts:t.sms.ts,key:t.sms.key});continue}
+  if(OTPBUY.test(b)&&!t.sms.otp2){t.sms.otp2=true}}
+ tx=tx.filter(t=>!drop.has(t));
+ for(const t of tx){if(!t.sms||!t.sms.otp2||t.stmtKey)continue;
+  const twin=tx.find(x=>x!==t&&!drop.has(x)&&x.acc===t.acc&&x.type===t.type&&baseAmt(x)===baseAmt(t)&&(x.stmtKey||(x.sms&&!x.sms.otp2&&Math.abs(x.sms.ts-t.sms.ts)<=15*60e3)));
+  if(twin){drop.add(t);skip.push(t.sms.key)}}
+ tx=tx.filter(t=>!drop.has(t));
+ for(const q of insts)if(q.p&&q.p.inst)applyInstSms(q.p,q.ts,q.key);
  tagSubs()}
 function merge(s){const o=clone(DEF);if(!s)return o;
  for(const k of ['stmt','due','remind'])if(s[k]!=null)o[k]=s[k];
@@ -413,7 +433,8 @@ function pushReminder(){if(!window.Android||!Android.setReminder)return;
 
 /* ---------- home ---------- */
 let homeAcc=null,homeN=40;
-function paidSince(){const B=base();if(!B)return 0;return r2(tx.filter(t=>isCredit(t)&&(t.bill?t.bill>B.stmt:t.date>B.stmt)).reduce((a,t)=>a+t.amt,0))}
+function bankAvail(){let best=null;for(const t of tx){if(t.acc!=='credit'||!t.sms||!t.sms.body)continue;const m=norm(t.sms.body).match(/available limit is\s*(?:egp)?\s*([\d,]+(?:\.\d+)?)/);if(m&&(!best||t.sms.ts>best.ts))best={ts:t.sms.ts,v:numv(m[1])}}return best}
+function paidSince(){const B=base();if(!B)return 0;return r2(tx.filter(t=>isCredit(t)&&creditAfter(t,B)&&!voidPairs(B).has(t)).reduce((a,t)=>a+t.amt,0))}
 function minLine(c){const B=base();if(!B||B.min==null||!c.now||c.now.stmt!==B.stmt)return '';const left=r2(Math.max(0,B.min-paidSince()));
  return `<small>Minimum due: <b>${egp(left)}</b>${left<B.min?` (of ${egp(B.min)} — part already paid)`:''}</small>`}
 function dueHTML(c,withBtn){
@@ -441,7 +462,7 @@ function renderHome(){
 function renderCredit(){
  const c=credit(),lim=+S.acc.credit.limit||0;$('sDayTxt').textContent=S.stmt;$('dDayTxt').textContent=S.due;
  $('dueBox2').innerHTML=dueHTML(c,true);$('stmHint').hidden=!!base();
- $('limitCard').innerHTML=`<h2>${esc(accName('credit'))}</h2><div class="kv"><span>Limit</span><b>${lim?egp(lim):'Not set'}</b></div><div class="kv"><span>Used (incl. remaining installments)</span><b>${egp(Math.max(0,c.used))}</b></div><div class="kv tot"><span>Available</span><b>${lim?egp(c.avail):'—'}</b></div>${lim?`<div class="bar" style="--c:var(--credit)"><i style="width:${Math.min(100,Math.max(0,c.used/lim*100))}%"></i></div>`:''}${c.used<0?`<div class="msg">You have ${egp(-c.used)} extra paid on the card.</div>`:''}${base()?`<p class="note" style="margin:10px 0 0">Your statement of ${fmt(base().stmt)}: balance ${egp(base().closing)} · total due ${egp(base().due)}${base().min!=null?` · minimum ${egp(base().min)}`:''}${base().avail!=null?` · available ${egp(base().avail)}`:''}. Available now = that, minus what you spent since, plus what you paid since.</p>`:''}`;renderCounted(c);
+ $('limitCard').innerHTML=`<h2>${esc(accName('credit'))}</h2><div class="kv"><span>Limit</span><b>${lim?egp(lim):'Not set'}</b></div><div class="kv"><span>Used (incl. remaining installments)</span><b>${egp(Math.max(0,c.used))}</b></div><div class="kv tot"><span>Available</span><b>${lim?egp(c.avail):'—'}</b></div>${(()=>{const a=bankAvail();return a?`<div class="kv"><span>Available per your last bank SMS (${fmtS(iso(new Date(a.ts)))})</span><b>${egp(a.v)}</b></div>`:''})()}${lim?`<div class="bar" style="--c:var(--credit)"><i style="width:${Math.min(100,Math.max(0,c.used/lim*100))}%"></i></div>`:''}${c.used<0?`<div class="msg">You have ${egp(-c.used)} extra paid on the card.</div>`:''}${base()?`<p class="note" style="margin:10px 0 0">Your statement of ${fmt(base().stmt)}: balance ${egp(base().closing)} · total due ${egp(base().due)}${base().min!=null?` · minimum ${egp(base().min)}`:''}${base().avail!=null?` · available ${egp(base().avail)}`:''}. Available now = that, minus what you spent since, plus what you paid since.</p>`:''}`;renderCounted(c);
  const o=c.open,fs=r2(o.full.reduce((s,x)=>s+x.amt,0)),is=r2(o.inst.reduce((s,x)=>s+x.amt,0));
  $('openCard').innerHTML=`<h2>Next bill · ${fmtS(o.stmt)}</h2><p class="note" style="margin-top:-6px">Still open · due ${dow(o.due)} ${fmtS(o.due)}</p><div class="kv"><span>Purchases to pay in full</span><b>${egp(fs)}</b></div><div class="kv"><span>Installments this month (${o.inst.length})</span><b>${egp(is)}</b></div>${o.covered?`<div class="kv"><span>Already paid ahead</span><b>− ${egp(o.covered)}</b></div>`:''}<div class="kv tot"><span>So far</span><b>${egp(o.rem)}</b></div>`;
  const plans=tx.filter(t=>t.type==='exp'&&t.acc==='credit'&&t.plan).sort(byDate);
@@ -678,7 +699,7 @@ $('ccMore').addEventListener('click',()=>{ccN+=20;renderCredit()});
 $('cntSeg').addEventListener('click',e=>{const b=e.target.closest('[data-cnt]');if(!b)return;cntView=b.dataset.cnt;renderCredit()});
 function renderCounted(c){document.querySelectorAll('#cntSeg button').forEach(b=>b.classList.toggle('on',b.dataset.cnt===cntView));
  const B=base();let list,total;
- if(cntView==='pay'){list=tx.filter(t=>isCredit(t)&&(!B||(t.bill?t.bill>B.stmt:t.date>B.stmt))).sort(byDate);total=r2(list.reduce((a,t)=>a+t.amt,0))}
+ if(cntView==='pay'){list=tx.filter(t=>isCredit(t)&&creditAfter(t,B)).sort(byDate);total=r2(list.reduce((a,t)=>a+t.amt,0))}
  else{list=c.open.full.map(x=>x.t).sort(byDate);total=r2(list.reduce((a,t)=>a+t.amt,0))}
  $('cntList').innerHTML=(list.length?`<li style="border:0;padding-top:0"><span class="t note">${list.length} entr${list.length===1?'y':'ies'}${B&&cntView==='pay'?` after ${fmtS(B.stmt)}`:''}</span><b>${egp(total)}</b></li>`+grouped(list,'credit'):'<li class="empty" style="display:block;border:0">Nothing here.</li>')}
 
@@ -840,9 +861,9 @@ function planImport(sts){
     if(type==='xfer'&&x.type!=='xfer'){x.type='xfer';x.acc='credit';x.to='telda';delete x.cat;x.review=false}
     if(type==='pay'&&x.type!=='pay'){x.type='pay';delete x.cat;x.review=false}
     if(x.review&&cat&&(x.type==='exp'||x.type==='inc')){x.cat=cat;x.review=false}
-    if(x.type!=='pay')x.bill=st.stmt;x.stmtKey=l.key;linked.add(l.key);R.match++;return}
+    if(x.type!=='pay')x.bill=st.stmt;else x.ccStm=st.stmt;x.stmtKey=l.key;linked.add(l.key);R.match++;return}
    const t={id:uid(),type,acc,amt:l.amt,date:l.date,note:l.desc,created:Date.parse(l.date)||Date.now(),stmtKey:l.key};
-   if(type!=='pay')t.bill=st.stmt;
+   if(type!=='pay')t.bill=st.stmt;else t.ccStm=st.stmt;
    if(type==='xfer'){t.to=to;R.telda++}else if(type==='pay')R.pay++;else if(type==='inc'){t.cat=cat;R.refund++}
    else{if(cat){t.cat=cat;if(FEERE.test(l.desc))R.fees++}else{t.cat=null;t.review=true;R.review++}}
    N.push(t);linked.add(l.key);R.add++});
@@ -953,6 +974,8 @@ function tagSubs(){let changed=false;
  for(const t of tx){if(!t.sub||t.fxFee)continue;const base=t.amt,want=FX(base);
   const f=tx.find(f=>f!==t&&f.type==='exp'&&f.acc===t.acc&&/foreign exchange|fx fee/i.test(f.note||'')&&Math.abs(f.amt-want)<=0.02&&Math.abs(dayDiff(f.date,t.date))<=3);
   if(f){t.fxFee=f.amt;t.amt=r2(t.amt+f.amt);if(f.stmtKey)t.fxKey=f.stmtKey;tx=tx.filter(x=>x!==f);changed=true}}
+ /* charges known only from SMS: the bank adds its 3% later, so add it now */
+ for(const t of tx){if(!t.sub||t.fxFee||t.stmtKey||!t.sms)continue;const sb=S.subs.find(x=>x.id===t.sub);if(sb&&sb.fx){t.fxFee=FX(t.amt);t.amt=r2(t.amt+t.fxFee);changed=true}}
  return changed}
 const subCharges=id=>tx.filter(t=>t.type==='exp'&&t.sub===id).sort(byDate);
 const nextDate=(d,cycle)=>{const[y,m,dd]=parts(d);return mk(y,m-1+(cycle==='y'?12:1),dd)};
@@ -1007,11 +1030,19 @@ const PAYW=/payment received|payment of|repayment|received.*payment|سداد|ت�
 const ATMW=/\batm\b|cash withdrawal|سحب نقدي|ماكينة|ماكينه/;
 function merchantOf(body){
  const s=digits(body).replace(/\s+/g,' ');
+ {const m=s.match(/\bat\s+(.+?)\s+on\s+\d{1,2}\/\d{1,2}/i);if(m&&!/\d{6,}/.test(m[1]))return m[1].trim()}
  const re=/(?:\b(?:at|from|to|merchant)\b|لدى|لدي|عند|لصالح|إلى|الى|من)\s*:?\s+([^,;:\n]{2,40}?)(?=\s+(?:on|at|in|using|via|with|ref|dated|date|card|account|في|بتاريخ|يوم|بطاقة|بطاقه|حساب|رقم)(?:\s|$)|[.,;:\n]|$)/gi;
  let m;while((m=re.exec(s))){const v=m[1].replace(/\s+(?:successfully|successful|has been.*|was.*|بنجاح.*)$/i,'').trim();if(/\d{3,}|card|account|\bacc|a\/c|بطاق|حساب|egp|جنيه|your|you\b/i.test(v))continue;return v}
  return ''}
+/* CIB messages that are not transactions by themselves */
+const NOTICE=/كشف حساب شهر|statement (?:of|for) .{0,40}(?:card|account)|الحد الأدنى للسداد|minimum (?:payment|amount) due/i;
+const INSTRE=/تقسيط مبلغ\s*([\d,]+(?:\.\d+)?)\s*(?:جم|جنيه|egp)?\s*من\s*(.+?)\s*على\s*بطاقت.*?بقسط\s*شهري\s*([\d,]+(?:\.\d+)?)\s*(?:جم|جنيه|egp)?\s*على\s*(\d+)\s*(?:شهر|اشهر|أشهر).*?(?:أول|اول)\s*قسط\s*(?:يوم|في)?\s*(\d{1,2})\/(\d{1,2})\/(\d{4})/i;
+const OTPBUY=/الرقم السري المتغير|كلمة (?:السر|المرور) (?:المؤقتة|لمرة واحدة)|one[- ]?time (?:password|pin)|\botp\b/i;
 function parseSms(body){
  const b=norm(body);
+ if(NOTICE.test(b)&&!/charged|خصم|debited/.test(b))return{err:'Statement notice',ignore:true};
+ {const m=b.match(INSTRE);if(m)return{inst:true,acc:'credit',amt:numv(m[1]),m:m[2].trim(),each:numv(m[3]),months:+m[4],firstDue:`${m[7]}-${pad(+m[6])}-${pad(+m[5])}`}}
+ const isOtp=OTPBUY.test(b);
  let acc=null,ip=false;
  for(const a of SMS_ACC)if(kwList(a).some(k=>hasKw(b,k))){acc=a;break}
  if(!acc&&IPRE.test(b)){acc=S.sms.ipAcc||'debit';ip=true}
@@ -1027,17 +1058,28 @@ function parseSms(body){
  if(acc==='credit')type=REFW.test(b)?'inc':(PAYW.test(b)||(inI>=0&&(outI<0||inI<=outI)))?'pay':'exp';
  else if(REFW.test(b)||(inI>=0&&(outI<0||inI<=outI)))type='inc';
  else type=ATMW.test(b)?'xfer':'exp';
- return{type,acc,amt,m:mer,ip,ipn:IPRE.test(b)&&(type==='exp'||type==='xfer')&&acc!=='credit'}}
+ return{type:isOtp?'exp':type,acc,amt,m:isOtp?(b.match(/من\s+(.+?)\s+لبطاقة/)||[])[1]||mer:mer,ip,otp2:isOtp,ipn:!isOtp&&IPRE.test(b)&&(type==='exp'||type==='xfer')&&acc!=='credit'}}
 function describe(p){if(p.err)return p.err;
  const what={exp:`Expense from ${accName(p.acc)}`,inc:p.acc==='credit'?`Refund on ${accName(p.acc)}`:`Income to ${accName(p.acc)}`,pay:`Credit card payment (from the account whose SMS for it arrives too, otherwise ${accName('debit')})`,xfer:`Cash withdrawal: ${accName(p.acc)} → ${accName('cash')}`}[p.type];
  return `${what} · <b>${egp(p.ipn?p.amt+ipFee(p.amt):p.amt)}</b>${p.ipn?` (${money(p.amt)} + ${money(ipFee(p.amt))} InstaPay fee)`:''}${p.m?` · ${esc(p.m)}`:''}${p.ip?' · InstaPay':''}`}
 /* the same money seen in two messages (bank + InstaPay, or both sides of a transfer / card payment) */
 const baseAmt=x=>r2(x.amt-(x.ipFee||0));
+/* "تم تقسيط مبلغ …": the bank turned a card purchase into installments */
+function billForDue(due){let x=addM(stmtOf(due),-2);for(let k=0;k<4;k++,x=addM(x,1))if(dueOf(x)===due)return x;return addM(stmtOf(due),-1)}
+function applyInstSms(p,ts,key){
+ const when=iso(new Date(ts)),first=billForDue(p.firstDue),pl={months:p.months,each:p.each,first};
+ const cands=tx.filter(x=>x.type==='exp'&&x.acc==='credit'&&Math.abs(baseAmt(x)-p.amt)<=1&&dayDiff(x.date,when)>=0&&dayDiff(x.date,when)<=45).sort((a,b)=>(a.sms&&a.sms.otp2?1:0)-(b.sms&&b.sms.otp2?1:0)||b.date.localeCompare(a.date));
+ const x=cands.find(x=>!x.plan)||cands[0];
+ if(x){x.plan=pl;x.instSms=key;if(!x.note)x.note=p.m;return x}
+ const t={id:uid(),type:'exp',acc:'credit',amt:p.amt,date:when,note:p.m,created:ts,plan:pl,instSms:key,cat:guessCat(p.m)||null};if(!t.cat)t.review=true;tx.push(t);return t}
+/* a one-time-password message and the "was charged" message for the same purchase are one purchase */
+const otpTwin=(a,b)=>a.acc===b.acc&&a.type===b.type&&baseAmt(a)===baseAmt(b)&&a.sms&&b.sms&&Math.abs(a.sms.ts-b.sms.ts)<=15*60e3&&!!a.sms.otp2!==!!b.sms.otp2;
 /* an InstaPay fee stays an expense of the account it left, when the transfer itself becomes a move between own accounts */
 function splitFee(x,from){if(!x.ipFee)return;tx.push({id:uid(),type:'exp',acc:from,amt:x.ipFee,date:x.date,cat:feeCat(),note:'InstaPay fee',created:(x.created||0)+1});x.amt=baseAmt(x);delete x.ipFee}
 function pair(t){
  const nc=a=>a!=='credit';
  for(const x of tx){if(!x.sms||baseAmt(x)!==baseAmt(t)||Math.abs(x.sms.ts-t.sms.ts)>36e5)continue;
+  if(otpTwin(x,t)){if(x.sms.otp2&&!x.stmtKey){skip.push(x.sms.key);Object.assign(x,{note:t.note,sms:t.sms});if(t.cat&&x.review){x.cat=t.cat;x.review=false}}return true}
   if(x.type===t.type&&x.sms.ip!==t.sms.ip){if(x.sms.ip){x.acc=t.acc;x.sms.ip=false}return true}
   if(t.type==='inc'&&x.type==='exp'&&x.review&&nc(t.acc)&&x.acc!==t.acc){x.type='xfer';x.to=t.acc;delete x.cat;x.review=false;splitFee(x,x.acc);return true}
   if(t.type==='exp'&&x.type==='inc'&&x.review&&nc(x.acc)&&x.acc!==t.acc){x.type='xfer';x.to=x.acc;x.acc=t.acc;delete x.cat;x.review=false;if(t.ipFee){x.ipFee=t.ipFee;x.amt=r2(x.amt+t.ipFee);splitFee(x,t.acc)}return true}
@@ -1049,7 +1091,8 @@ function ingest(list){const r={added:0,merged:0,known:0,failed:0};
  for(const msg of [...list].sort((a,b)=>a.ts-b.ts)){
   const key=hash(String(msg.from||'')+'|'+norm(msg.body));if(known.has(key)){r.known++;continue}known.add(key);
   const p=parseSms(msg.body);
-  if(p.otp){skip.push(key);continue}
+  if(p.otp||p.ignore){skip.push(key);continue}
+  if(p.inst){applyInstSms(p,msg.ts,key);skip.push(key);r.merged++;continue}
   if(p.noAmt){const sb=subMatch(norm(msg.body));if(sb&&sb.price>0)Object.assign(p,{err:null,type:'exp',amt:sb.price,m:sb.n,est:true})}
   if(p.err){fails.unshift({key,from:msg.from||'',body:msg.body,ts:msg.ts,err:p.err});fails=fails.slice(0,20);r.failed++;continue}
   const t={id:uid(),type:p.type,acc:p.acc,amt:p.amt,date:iso(new Date(msg.ts)),note:p.m||'',created:msg.ts,sms:{key,from:msg.from||'',body:msg.body,ts:msg.ts,m:p.m,ip:p.ip}};
@@ -1058,6 +1101,7 @@ function ingest(list){const r={added:0,merged:0,known:0,failed:0};
   if(p.type==='xfer')t.to='cash';
   if(p.type==='pay'){t.acc='debit';t.sms.guess=true}
   if(p.ipn){t.ipFee=ipFee(p.amt);t.amt=r2(p.amt+t.ipFee)}
+  if(p.otp2){t.sms.otp2=true;t.note=(t.note||'Online purchase')+' (from the one-time password message)'}
   if(t.type==='exp'){const sb=subMatch(norm(msg.body)+' '+(p.m||'').toLowerCase());if(sb){t.sub=sb.id;t.cat='subs';t.review=false;if(!p.m)t.note=sb.n;if(p.est)t.note=sb.n+' (amount in foreign currency — estimated)';if(sb.fx){t.fxFee=FX(t.amt);t.amt=r2(t.amt+t.fxFee)}}}
   const st=tx.find(x=>(x.stmtKey||x.payKey)&&!x.sms&&x.amt===t.amt&&Math.abs(dayDiff(x.date,t.date))<=(x.payKey?10:4)&&(x.type===t.type||(t.type==='exp'&&x.type==='xfer'&&x.acc===t.acc)));
   if(st){st.sms=t.sms;skip.push(key);r.merged++;continue}

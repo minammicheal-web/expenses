@@ -23,8 +23,9 @@ header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-be
 h1{font-size:clamp(28px,6vw,38px);letter-spacing:-.02em;font-weight:800}
 h1 b{color:var(--acc)}
 .status{font-size:13px;color:var(--mute)}
-nav{display:flex;gap:4px;background:var(--card);padding:4px;border-radius:14px;margin-bottom:16px;position:sticky;top:6px;z-index:3;box-shadow:0 2px 10px rgb(0 0 0/.06)}
-nav a{flex:1;text-align:center;padding:10px 1px;font-size:13.5px;border-radius:10px;color:var(--ink);text-decoration:none;font-weight:650;min-height:44px;display:flex;align-items:center;justify-content:center}
+nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;background:var(--card);padding:4px;border-radius:14px;margin-bottom:16px;position:sticky;top:6px;z-index:3;box-shadow:0 2px 10px rgb(0 0 0/.06)}
+nav::-webkit-scrollbar{display:none}
+nav a{flex:0 0 auto;text-align:center;padding:10px 13px;font-size:14px;border-radius:10px;color:var(--ink);text-decoration:none;font-weight:650;min-height:44px;display:flex;align-items:center;justify-content:center}
 nav a.on{background:var(--ink);color:var(--card)}
 .card{background:var(--card);border-radius:16px;padding:clamp(16px,3vw,24px);margin-bottom:14px}
 h2{font-size:19px;margin-bottom:12px;font-weight:750}
@@ -98,13 +99,13 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
 .grid2>.card{margin-bottom:0}
 [hidden]{display:none!important}
 @media(max-width:700px){.grid2{grid-template-columns:minmax(0,1fr)}.grid2>.card{margin-bottom:0}.tiles .tile .v{font-size:18px}}
-@media(max-width:380px){nav a{font-size:12px}.seg button{font-size:13px}}
+@media(max-width:380px){nav a{font-size:13px;padding:10px 10px}.seg button{font-size:13px}}
 </style>
 </head>
 <body>
 <div class="wrap">
 <header><h1>Expenses<b>.</b></h1><span class="status" id="status">Saved on this phone</span></header>
-<nav><a href="#home" id="t-home">Home</a><a href="#credit" id="t-credit">Credit</a><a href="#cash" id="t-cash">Cash</a><a href="#subs" id="t-subs">Subs</a><a href="#reports" id="t-reports">Reports</a><a href="#settings" id="t-settings">Settings</a></nav>
+<nav><a href="#home" id="t-home">Home</a><a href="#credit" id="t-credit">Credit</a><a href="#cash" id="t-cash">Cash</a><a href="#goals" id="t-goals">Goals</a><a href="#gam" id="t-gam">Gam3ya</a><a href="#charity" id="t-charity">Charity</a><a href="#subs" id="t-subs">Subs</a><a href="#reports" id="t-reports">Reports</a><a href="#settings" id="t-settings">Settings</a></nav>
 
 <!-- HOME -->
 <section id="v-home">
@@ -148,6 +149,51 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
   <div class="row" style="margin-bottom:6px"><div><label for="cashMonth">Month</label><select id="cashMonth"></select></div><div id="cashSum" style="align-self:end"></div></div>
   <ul class="list" id="cashList"></ul>
  </div>
+</section>
+
+<!-- GOALS -->
+<section id="v-goals" hidden>
+ <div id="goalList"></div>
+ <button class="btn ghost" id="goalAddBtn" style="margin-bottom:14px">+ New savings goal</button>
+ <div class="card" id="goalForm" hidden>
+  <h2 id="goalFormTitle">New goal</h2>
+  <div class="row"><div><label for="glName">What for</label><input id="glName" maxlength="40" placeholder="e.g. New car, emergency fund"></div><div><label for="glTarget">Amount I need (EGP)</label><input id="glTarget" type="number" inputmode="decimal" min="0"></div></div>
+  <div class="row"><div><label for="glDate">By</label><input id="glDate" type="date"></div><div><label for="glSaved">Already saved (EGP)</label><input id="glSaved" type="number" inputmode="decimal" min="0" value="0"></div></div>
+  <div class="btns"><button class="btn" id="glSave">Save goal</button><button class="btn ghost" id="glCancel">Cancel</button><button class="btn danger" id="glDel" hidden>Delete goal</button></div>
+ </div>
+ <div class="card"><h2>Claude for planning (optional)</h2>
+  <p class="note" style="margin-top:-6px">The plans above are worked out on your phone from your own numbers. To also get a written plan from Claude, paste an Anthropic API key (from console.anthropic.com — a paid, pay-as-you-go account; a plan costs a few cents). Needs internet. Only totals per category, income, commitments and your goal are sent — no names, card numbers or messages. The key stays on this phone and is not put in backups.</p>
+  <div class="catrow"><input id="aiKey" type="password" placeholder="sk-ant-…" autocomplete="off"><button class="ib" id="aiKeySave">Save key</button></div>
+  <div id="aiKeyState" class="note"></div>
+ </div>
+</section>
+
+<!-- GAM3YA -->
+<section id="v-gam" hidden>
+ <div class="tiles" id="gamTiles"></div>
+ <div id="gamList"></div>
+ <button class="btn ghost" id="gamAddBtn" style="margin-bottom:14px">+ Add a gam3ya</button>
+ <div class="card" id="gamForm" hidden>
+  <h2 id="gamFormTitle">New gam3ya</h2>
+  <div class="row"><div><label for="gmName">Name</label><input id="gmName" maxlength="40" placeholder="e.g. Work gam3ya"></div><div><label for="gmAmt">I pay every month (EGP)</label><input id="gmAmt" type="number" inputmode="decimal" min="0"></div></div>
+  <div class="row"><div><label for="gmMonths">Number of months (turns)</label><input id="gmMonths" type="number" min="2" max="60" inputmode="numeric"></div><div><label for="gmStart">First month</label><input id="gmStart" type="month"></div></div>
+  <div class="row"><div><label for="gmTurn">My turn (month number)</label><input id="gmTurn" type="number" min="1" max="60" inputmode="numeric"></div><div><label for="gmAcc">Pay from / receive into</label><select id="gmAcc"></select></div></div>
+  <div class="row"><div><label for="gmShares">My shares (usually 1)</label><input id="gmShares" type="number" min="1" max="10" value="1" inputmode="numeric"></div><div><label for="gmDay">Pay on day</label><input id="gmDay" type="number" min="1" max="28" value="1" inputmode="numeric"></div></div>
+  <div class="info" id="gmInfo" style="--c:var(--acc)"></div>
+  <div class="btns"><button class="btn" id="gmSave">Save</button><button class="btn ghost" id="gmCancel">Cancel</button><button class="btn danger" id="gmDel" hidden>Delete</button></div>
+ </div>
+</section>
+
+<!-- CHARITY -->
+<section id="v-charity" hidden>
+ <div id="chNow"></div>
+ <div class="card">
+  <h2>Settings</h2>
+  <div class="row"><div><label for="chFrom">Count from salary of</label><input id="chFrom" type="month"></div><div class="note" style="align-self:end">Salaries before this month are treated as already given.</div></div>
+  <div class="row"><div><label for="chPct">Percentage of salary</label><input id="chPct" type="number" min="0" max="100" step="0.5" inputmode="decimal"></div><div><label for="chAcc">Usually paid from</label><select id="chAcc"></select></div></div>
+  <button class="btn ghost" id="chSave">Save</button>
+ </div>
+ <div class="card"><h2>Month by month</h2><p class="note" style="margin-top:-6px">Due = the percentage of the salary received that month. Future months use your latest salary.</p><ul class="list" id="chList"></ul></div>
 </section>
 
 <!-- SUBSCRIPTIONS -->
@@ -281,10 +327,10 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
 {
 /* ---------- settings & data ---------- */
 const ACC=['debit','credit','od','telda','cash'],NONCC=ACC.filter(a=>a!=='credit');
-const DEF_EXP=[['food','Food'],['groc','Groceries'],['phone','Phone bill'],['elec','Electricity charge card'],['gas','Gas charge card'],['deliv','Delivery'],['pharm','Pharmacy'],['trans','Transportation'],['apt','Apartment fees'],['sent','Sent to people'],['subs','Subscriptions'],['other','Other']];
-const DEF_INC=[['salary','Salary'],['recv','Received from people'],['bonus','Bonus'],['gift','Gift'],['refund','Refund / cashback'],['other','Other']];
+const DEF_EXP=[['food','Food'],['groc','Groceries'],['phone','Phone bill'],['elec','Electricity charge card'],['gas','Gas charge card'],['deliv','Delivery'],['pharm','Pharmacy'],['trans','Transportation'],['apt','Apartment fees'],['sent','Sent to people'],['subs','Subscriptions'],['charity','Church (charity)'],['gam3ya','Gam3ya payments'],['other','Other']];
+const DEF_INC=[['salary','Salary'],['gam3ya','Gam3ya payout'],['recv','Received from people'],['bonus','Bonus'],['gift','Gift'],['refund','Refund / cashback'],['other','Other']];
 const DEF={acc:{debit:{n:'CIB Debit',open:0},credit:{n:'CIB Credit',limit:0},od:{n:'CIB Overdraft',open:0,limit:0},telda:{n:'Telda',open:0},cash:{n:'Cash',open:0}},
- stmt:11,due:5,remind:3,sms:{on:false,kw:{debit:'6396, 8659, 100044358659',credit:'3577',od:'5669, 100044925669',telda:'2501'},ipAcc:'debit'},payDay:28,subs:[{id:'claude',n:'Claude',kw:'claude, anthropic',price:0,fx:true,acc:'credit',cycle:'m'},{id:'netflix',n:'Netflix',kw:'netflix',price:0,fx:true,acc:'credit',cycle:'m'},{id:'spotify',n:'Spotify',kw:'spotify',price:0,fx:true,acc:'credit',cycle:'m'},{id:'gone',n:'Google One',kw:'google one, google storage, google *one',price:0,fx:true,acc:'credit',cycle:'m'}],merch:{},exp:DEF_EXP.map(([id,n])=>({id,n})),inc:DEF_INC.map(([id,n])=>({id,n}))};
+ stmt:11,due:5,remind:3,sms:{on:false,kw:{debit:'6396, 8659, 100044358659',credit:'3577',od:'5669, 100044925669',telda:'2501'},ipAcc:'debit'},payDay:28,goals:[],gam:[],charity:{pct:10,acc:'debit'},subs:[{id:'claude',n:'Claude',kw:'claude, anthropic',price:0,fx:true,acc:'credit',cycle:'m'},{id:'netflix',n:'Netflix',kw:'netflix',price:0,fx:true,acc:'credit',cycle:'m'},{id:'spotify',n:'Spotify',kw:'spotify',price:0,fx:true,acc:'credit',cycle:'m'},{id:'gone',n:'Google One',kw:'google one, google storage, google *one',price:0,fx:true,acc:'credit',cycle:'m'}],merch:{},exp:DEF_EXP.map(([id,n])=>({id,n})),inc:DEF_INC.map(([id,n])=>({id,n}))};
 const FEE_CAT={id:'_fee',n:'Installment interest & fees'};
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -411,6 +457,16 @@ const byDate=(x,y)=>y.date.localeCompare(x.date)||(y.created||0)-(x.created||0);
 /* ---------- storage ---------- */
 function load(){try{const j=JSON.parse(localStorage.getItem('exp-data')||'{}');tx=Array.isArray(j.tx)?j.tx:[];skip=j.skip||[];fails=j.fails||[];S=merge(j.settings)}catch(e){tx=[];S=clone(DEF)}
  try{migrate()}catch(e){console.error(e)}}
+/* the same money seen twice: an SMS and a statement line, or a card payment and the debit-side transfer that paid it */
+function dedupe(){const drop=new Set(),near=(a,b,d)=>Math.abs(dayDiff(a.date,b.date))<=d;
+ for(const y of tx){if(drop.has(y)||!y.sms||y.stmtKey||y.payKey)continue;
+  const x=tx.find(x=>x!==y&&!drop.has(x)&&x.stmtKey&&x.acc===y.acc&&(x.type===y.type||(x.type==='xfer'&&y.type==='exp'))&&baseAmt(x)===baseAmt(y)&&near(x,y,3)&&(!x.sms||x.sms.otp2));
+  if(x){if(!x.sms||x.sms.otp2)x.sms=y.sms;if((!x.note||/^InstaPay transfer$/.test(x.note))&&y.note)x.note=y.note;if(x.review&&y.cat){x.cat=y.cat;x.review=false}drop.add(y)}}
+ for(const P of tx){if(P.type!=='pay'||drop.has(P))continue;
+  const E=tx.find(E=>E!==P&&!drop.has(E)&&E.acc!=='credit'&&(E.type==='exp'||(E.type==='xfer'&&E.to==='debit'))&&E.sms&&/transfer to\s+another account/i.test(E.sms.body)&&baseAmt(E)===P.amt&&near(E,P,3)&&!E.stmtKey);
+  if(E){P.acc=E.acc;if(!P.sms)P.sms=E.sms;else P.sms2=E.sms.key;drop.add(E)}}
+ if(drop.size){drop.forEach(t=>{if(t.sms&&t.sms.key)skip.push(t.sms.key)});tx=tx.filter(t=>!drop.has(t))}
+ return drop.size}
 function migrate(){tx.forEach(fixPlan);
  /* v4 put imported bank fees under Apartment fees by mistake */
  for(const[k,id,n]of[['exp','sent','Sent to people'],['inc','recv','Received from people']])if(!S[k].some(c=>c.id===id))S[k].push({id,n});
@@ -418,6 +474,7 @@ function migrate(){tx.forEach(fixPlan);
   if(ipnOut||ipnIn){t.cat=peopleCat(t.type,t.note==='InstaPay transfer'?'':t.note);t.review=false}});
  tx.forEach(t=>{if(t.cat==='apt'&&(t.stmtKey||t.note==='InstaPay fee')&&/\bfees?\b|interest|insurance|overdraft/i.test(t.note||''))t.cat=feeCat()});
  if(!S.exp.some(c=>c.id==='subs'))S.exp.push({id:'subs',n:'Subscriptions'});
+ for(const[k,id,n]of[['exp','charity','Church (charity)'],['exp','gam3ya','Gam3ya payments'],['inc','gam3ya','Gam3ya payout']])if(!S[k].some(c=>c.id===id))S[k].push({id,n});
  {const g=S.subs.find(x=>x.id==='gone');if(g&&!/google google o/.test(g.kw))g.kw+=', google google o'}
  /* v2–v8 read statement notices and "installment" messages as payments, and code messages as extra purchases */
  const drop=new Set(),insts=[];
@@ -441,11 +498,13 @@ function migrate(){tx.forEach(fixPlan);
   if(p.type==='inc'&&t.type==='exp'&&t.acc!=='credit'){t.type='inc';t.amt=p.amt;delete t.ipFee;t.note=p.m||t.note;t.cat=peopleCat('inc',p.m);t.review=false}
   else if(p.type==='xfer'&&t.type==='exp'){t.type='xfer';t.to=p.to;delete t.cat;t.review=false}}
  tx=tx.filter(t=>!gone.has(t));teldaLoads();
+ for(const t of tx){if(t.sms&&t.sms.body&&!t.stmtKey){const p=parseSms(t.sms.body);if(p.err==='Advert'){gone.add(t);skip.push(t.sms.key)}}}
+ tx=tx.filter(t=>!gone.has(t));dedupe();
  tagSubs()}
 function merge(s){const o=clone(DEF);if(!s)return o;
  for(const k of ['stmt','due','remind'])if(s[k]!=null)o[k]=s[k];
  if(s.acc)for(const a of ACC)o.acc[a]={...o.acc[a],...(s.acc[a]||{})};
- if(s.sms){const kw={...o.sms.kw};for(const[k,v]of Object.entries(s.sms.kw||{}))if(String(v||'').trim())kw[k]=v;o.sms={...o.sms,...s.sms,kw}}if(s.payDay)o.payDay=s.payDay;if(s.balChecked)o.balChecked=s.balChecked;if(Array.isArray(s.subs))o.subs=s.subs;if(s.merch&&typeof s.merch==='object')o.merch=s.merch;if(s.ccBase)o.ccBase=s.ccBase;
+ if(s.sms){const kw={...o.sms.kw};for(const[k,v]of Object.entries(s.sms.kw||{}))if(String(v||'').trim())kw[k]=v;o.sms={...o.sms,...s.sms,kw}}if(s.payDay)o.payDay=s.payDay;if(s.balChecked)o.balChecked=s.balChecked;if(Array.isArray(s.subs))o.subs=s.subs;if(Array.isArray(s.goals))o.goals=s.goals;if(Array.isArray(s.gam))o.gam=s.gam;if(s.charity)o.charity={...o.charity,...s.charity};if(s.merch&&typeof s.merch==='object')o.merch=s.merch;if(s.ccBase)o.ccBase=s.ccBase;
  if(Array.isArray(s.exp))o.exp=s.exp;if(Array.isArray(s.inc))o.inc=s.inc;return o}
 const backupJSON=()=>JSON.stringify({app:'expenses',version:1,exported:new Date().toISOString(),settings:S,tx,skip},null,1);
 function teldaLoads(){for(const t of tx){if(t.type!=='xfer'||t.to!=='telda'||t.toAmt!=null)continue;const x=t.amt/1.02;if(Math.abs(x-Math.round(x))<0.005&&t.amt>=50)t.toAmt=Math.round(x)}}
@@ -475,7 +534,7 @@ function renderHome(){renderBalCheck();
   if(a==='credit'){const lim=+S.acc.credit.limit||0;return `<button class="acc${homeAcc===a?' on':''}" style="--c:${ACOL[a]}" data-acc="${a}"><div class="k">${esc(accName(a))}</div><div class="v">${egp(Math.max(0,c.used))}</div><div class="s">${lim?`outstanding · ${money(c.avail)} available`:'outstanding · set the limit in Settings'}</div>${lim?`<div class="bar"><i style="width:${Math.min(100,Math.max(0,c.used/lim*100))}%"></i></div>`:''}</button>`}
   const b=bal(a),lim=a==='od'?+S.acc.od.limit||0:0;return `<button class="acc${homeAcc===a?' on':''}" style="--c:${ACOL[a]}" data-acc="${a}"><div class="k">${esc(accName(a))}</div><div class="v${b<0?' neg':''}">${egp(b)}</div><div class="s">${lim?`balance · ${money(lim+b)} available`:'balance'}${(()=>{const A=anchorOf(a);return A?` · from ${A.src==='sms'?'bank SMS':A.src==='you'?'your balance':'statement'} ${fmtS(A.date)}`:''})()}</div></button>`}).join('');
  const ym=today.slice(0,7),inM=tx.filter(t=>t.date.startsWith(ym));
- const sp=r2(inM.filter(t=>t.type==='exp').reduce((s,t)=>s+cost(t),0)),inc=r2(inM.filter(t=>t.type==='inc').reduce((s,t)=>s+t.amt,0));
+ const sp=r2(inM.filter(t=>t.type==='exp'&&t.cat!=='gam3ya').reduce((s,t)=>s+cost(t),0)),inc=r2(inM.filter(t=>t.type==='inc'&&t.cat!=='gam3ya').reduce((s,t)=>s+t.amt,0));
  $('monthTiles').innerHTML=`<div class="tile"><div class="k">Spent in ${MONTHS[+ym.slice(5)-1]}</div><div class="v" style="color:var(--out)">${money(sp)}</div></div><div class="tile"><div class="k">Income</div><div class="v" style="color:var(--in)">${money(inc)}</div></div><div class="tile"><div class="k">Net</div><div class="v">${money(inc-sp)}</div></div>`;
  const rv=tx.filter(t=>t.review).sort(byDate);$('reviewCard').hidden=!rv.length;
  if(rv.length){$('reviewTitle').textContent=`${rv.length} need${rv.length===1?'s':''} a category`;$('reviewList').innerHTML=rv.slice(0,20).map(t=>row(t,null)).join('')}
@@ -525,7 +584,7 @@ function renderReports(){
  $('rMonth').innerHTML=ms.map(m=>`<option value="${m}">${monthLbl(m)}</option>`).join('')+ys.map(y=>`<option value="${y}">All of ${y}</option>`).join('');$('rMonth').value=cur;if(!$('rMonth').value)$('rMonth').value=today.slice(0,7);
  const ca=$('rAcc').value||'all';$('rAcc').innerHTML='<option value="all">All accounts</option>'+ACC.map(a=>`<option value="${a}">${esc(accName(a))}</option>`).join('');$('rAcc').value=ca;
  const p=$('rMonth').value,acc=ca==='all'?null:ca,inP=tx.filter(t=>t.date.startsWith(p)&&(!acc||t.acc===acc));
- const ex=inP.filter(t=>t.type==='exp'),sp=r2(ex.reduce((s,t)=>s+cost(t),0)),inc=r2(inP.filter(t=>t.type==='inc').reduce((s,t)=>s+t.amt,0));
+ const ex=inP.filter(t=>t.type==='exp'&&t.cat!=='gam3ya'),sp=r2(ex.reduce((s,t)=>s+cost(t),0)),inc=r2(inP.filter(t=>t.type==='inc'&&t.cat!=='gam3ya').reduce((s,t)=>s+t.amt,0));
  $('rTiles').innerHTML=`<div class="tile"><div class="k">Spent</div><div class="v" style="color:var(--out)">${money(sp)}</div></div><div class="tile"><div class="k">Income</div><div class="v" style="color:var(--in)">${money(inc)}</div></div><div class="tile"><div class="k">Net</div><div class="v">${money(inc-sp)}</div></div>`;
  const m=new Map();ex.forEach(t=>{m.set(t.cat,r2((m.get(t.cat)||0)+t.amt));if(fee(t)>0)m.set('_fee',r2((m.get('_fee')||0)+fee(t)))});
  const rows=[...m].sort((a,b)=>b[1]-a[1]),max=Math.max(1,...rows.map(r=>r[1]));
@@ -943,7 +1002,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-stm],[data
   if(R.base&&(!S.ccBase||R.base.stmt>=S.ccBase.stmt)){S.ccBase=R.base;if(R.base.limit)S.acc.credit.limit=R.base.limit}
   if(R.card){const k=kwList('credit');if(!k.includes(R.card))S.sms.kw.credit=[S.sms.kw.credit,R.card].filter(Boolean).join(', ')}
   for(const an of R.anchors){const A=S.acc[an.acc];if(!A.anchor||an.date>=A.anchor.date)A.anchor={date:an.date,bal:an.bal};if(!kwList(an.acc).includes(an.acct))S.sms.kw[an.acc]=[S.sms.kw[an.acc],an.acct].filter(Boolean).join(', ')}
-  tagSubs();save();pushSmsConfig();$('stmOut').innerHTML=`<div class="msg">Imported. ${R.review?`${R.review} entries need a category — see Home.`:''}</div>`;toast('Statement imported',false)}});
+  tagSubs();dedupe();save();pushSmsConfig();$('stmOut').innerHTML=`<div class="msg">Imported. ${R.review?`${R.review} entries need a category — see Home.`:''}</div>`;toast('Statement imported',false)}});
 
 
 /* ---------- payslips (same reader as the Time Sheet app) ---------- */
@@ -1039,6 +1098,146 @@ $('sbDel').addEventListener('click',()=>{const b=$('sbDel');if(b.dataset.sure!==
  S.subs=S.subs.filter(x=>x.id!==subEdit);tx.forEach(t=>{if(t.sub===subEdit)delete t.sub});$('subForm').hidden=true;subEdit=null;save();toast('Subscription removed (its charges stay in your history)',false)});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-subedit]');if(b)openSub(b.dataset.subedit)});
 
+
+/* ---------- helpers for monthly figures ---------- */
+const ymOf=d=>d.slice(0,7);
+const addYm=(ym,k)=>{const[y,m]=ym.split('-').map(Number);const d=new Date(y,m-1+k,1);return `${d.getFullYear()}-${pad(d.getMonth()+1)}`};
+const ymDiff=(a,b)=>{const[y1,m1]=a.split('-').map(Number),[y2,m2]=b.split('-').map(Number);return (y2-y1)*12+(m2-m1)};
+const NOT_SPEND=new Set(['gam3ya']);
+/* averages over the last 3 full months */
+function monthStats(n=3){const cur=ymOf(today),ms=Array.from({length:n},(_,i)=>addYm(cur,-(i+1)));
+ const inMs=t=>ms.includes(ymOf(t.date));
+ const inc=r2(tx.filter(t=>t.type==='inc'&&t.acc!=='credit'&&!NOT_SPEND.has(t.cat)&&inMs(t)).reduce((a,t)=>a+t.amt,0)/n);
+ const sal=r2(tx.filter(t=>t.type==='inc'&&t.cat==='salary'&&inMs(t)).reduce((a,t)=>a+t.amt,0)/n);
+ const cats={};for(const t of tx){if(t.type!=='exp'||NOT_SPEND.has(t.cat)||!inMs(t)||isCheck(t))continue;const k=t.cat||'_none';cats[k]=r2((cats[k]||0)+(t.plan?0:t.amt)/n)}
+ const instMonthly=r2(tx.filter(t=>t.plan).flatMap(t=>schedule(t)).filter(x=>ymOf(x.stmt)===addYm(cur,1)).reduce((a,x)=>a+x.amt,0));
+ const subsMonthly=r2(S.subs.map(sb=>subInfo(sb).monthly).reduce((a,b)=>a+b,0));
+ const gamMonthly=r2(S.gam.filter(g=>gamLeft(g)>0).reduce((a,g)=>a+g.amt*(g.shares||1),0));
+ const spend=r2(Object.values(cats).reduce((a,b)=>a+b,0));
+ return{ms,inc,sal,cats,spend,instMonthly,subsMonthly,gamMonthly,charity:r2(sal*(S.charity.pct||0)/100)}}
+const catLabel=k=>k==='_none'?'Not sorted yet':catName({type:'exp',cat:k});
+
+/* ---------- goals ---------- */
+let goalEdit=null;
+const FIXED=new Set(['apt','phone','elec','gas','fees','pharm','charity','gam3ya','_none']);
+function goalPlan(g){const st=monthStats(),months=Math.max(1,ymDiff(ymOf(today),ymOf(g.date))+(+g.date.slice(8)>=25?1:0)),need=r2(Math.max(0,g.target-(g.saved||0))),per=r2(need/months);
+ const out=r2(st.spend+st.instMonthly+st.gamMonthly+st.charity),free=r2(st.inc-out);
+ const flex=Object.entries(st.cats).filter(([k,v])=>!FIXED.has(k)&&v>0).sort((a,b)=>b[1]-a[1]);
+ let gap=r2(per-free),cuts=[];
+ for(const[k,v]of flex){if(gap<=0)break;const c=r2(Math.min(v*0.3,gap));if(c<1)continue;cuts.push({k,from:v,to:r2(v-c),cut:c});gap=r2(gap-c)}
+ const maxCut=r2(flex.reduce((a,[k,v])=>a+v*0.3,0)),canMonth=r2(free+maxCut),realMonths=canMonth>0?Math.ceil(need/canMonth):null;
+ return{st,months,need,per,free,out,cuts,gap,ok:free>=per,reachable:gap<=0,canMonth,realMonths}}
+function renderGoals(){
+ const list=S.goals;
+ $('goalList').innerHTML=list.length?list.map(g=>{const P=goalPlan(g),pct=Math.min(100,(g.saved||0)/g.target*100);
+  return `<div class="card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><h2 style="margin:0">${esc(g.name)}</h2><button class="ib" data-goaledit="${g.id}">Edit</button></div>
+  <p class="note" style="margin:4px 0 10px">${egp(g.target)} by ${fmt(g.date)} · ${P.months} month${P.months===1?'':'s'} left</p>
+  <div class="bar" style="height:12px"><i style="width:${pct}%"></i></div>
+  <div class="kv" style="margin-top:8px"><span>Saved</span><b>${egp(g.saved||0)} (${Math.round(pct)}%)</b></div>
+  <div class="kv tot"><span>Set aside every month</span><b>${egp(P.per)}</b></div>
+  <div class="kv"><span>Your income (3-month average)</span><b>${egp(P.st.inc)}</b></div>
+  <div class="kv"><span>Spending + installments + gam3ya + charity</span><b>− ${egp(P.out)}</b></div>
+  <div class="kv"><span>Left over each month now</span><b${P.free<0?' class="neg"':''}>${egp(P.free)}</b></div>
+  <div class="info" style="margin:12px 0;--c:${P.ok?'var(--in)':P.reachable?'var(--warn)':'var(--out)'}">${P.ok?`<b>You can do it as you are.</b> Move ${egp(P.per)} to savings right after your salary arrives each month, before spending.`
+   :P.reachable?`<b>Reachable with these monthly limits:</b><br>${P.cuts.map(c=>`• ${esc(catLabel(c.k))}: ${money(c.from)} → <b>${money(c.to)}</b> (−${money(c.cut)})`).join('<br>')}<br>Then move ${egp(P.per)} to savings right after your salary arrives.`
+   :`<b>Not reachable by ${fmtS(g.date)} even with 30% less on flexible spending.</b> At about ${egp(Math.max(0,P.canMonth))} a month you'd need ${P.realMonths?`${P.realMonths} months (around ${monthLbl(addYm(ymOf(today),P.realMonths))})`:'more income first'}.${P.cuts.length?`<br>Start with: ${P.cuts.slice(0,3).map(c=>`${esc(catLabel(c.k))} → ${money(c.to)}`).join(', ')}`:''}`}</div>
+  <div class="row" style="margin-bottom:8px"><div><label for="gadd-${g.id}">Add to savings</label><input id="gadd-${g.id}" type="number" inputmode="decimal" placeholder="EGP"></div><div style="align-self:end"><button class="btn ghost" data-goaladd="${g.id}">Add</button></div></div>
+  <div class="btns"><button class="btn" data-goalai="${g.id}" style="background:var(--credit)">Ask Claude for a plan</button></div>
+  <div id="gai-${g.id}">${g.ai?`<div class="msg" style="white-space:pre-wrap;margin-top:12px">${esc(g.ai.text)}<div class="note" style="margin-top:8px">Claude · ${esc(fmt(g.ai.date))}</div></div>`:''}</div></div>`}).join('')
+  :'<div class="card empty">No goals yet. Add the amount you want to reach and by when — the app works out how much to set aside each month and where to cut.</div>';
+ let k='';try{k=localStorage.getItem('exp-ai-key')||''}catch(e){}
+ $('aiKeyState').textContent=k?'A key is saved on this phone.':'No key saved — the built-in plan still works.'}
+function openGoal(id){goalEdit=id;const g=id?S.goals.find(x=>x.id===id):{name:'',target:'',date:mk(+today.slice(0,4)+1,+today.slice(5,7)-1,1),saved:0};
+ $('goalForm').hidden=false;$('goalFormTitle').textContent=id?'Edit goal':'New goal';$('glName').value=g.name;$('glTarget').value=g.target;$('glDate').value=g.date;$('glSaved').value=g.saved||0;$('glDel').hidden=!id;$('goalForm').scrollIntoView({behavior:'smooth'})}
+$('goalAddBtn').addEventListener('click',()=>openGoal(null));
+$('glCancel').addEventListener('click',()=>{$('goalForm').hidden=true});
+$('glSave').addEventListener('click',()=>{const v={name:$('glName').value.trim()||'Savings goal',target:r2($('glTarget').value),date:$('glDate').value,saved:r2($('glSaved').value)};
+ if(!(v.target>0)||!v.date||v.date<=today){toast('Enter the amount and a future date',false);return}
+ if(goalEdit)Object.assign(S.goals.find(x=>x.id===goalEdit),v);else S.goals.push({id:'g'+uid(),...v});$('goalForm').hidden=true;save();toast('Goal saved',false)});
+$('glDel').addEventListener('click',()=>{S.goals=S.goals.filter(x=>x.id!==goalEdit);$('goalForm').hidden=true;save()});
+$('aiKeySave').addEventListener('click',()=>{const k=$('aiKey').value.trim();try{if(k)localStorage.setItem('exp-ai-key',k);else localStorage.removeItem('exp-ai-key')}catch(e){}$('aiKey').value='';renderGoals();toast(k?'Key saved on this phone':'Key removed',false)});
+async function askClaude(g){const box=$('gai-'+g.id);let key='';try{key=localStorage.getItem('exp-ai-key')||''}catch(e){}
+ if(!key){box.innerHTML='<div class="msg warn">Add your Anthropic API key at the bottom of this page first.</div>';return}
+ const P=goalPlan(g),st=P.st;box.innerHTML='<div class="msg">Asking Claude…</div>';
+ const facts={goal:{for:g.name,target:g.target,by:g.date,alreadySaved:g.saved||0,monthsLeft:P.months,neededPerMonth:P.per},
+  averagesLast3Months:{income:st.inc,salary:st.sal,spendingByCategory:Object.fromEntries(Object.entries(st.cats).map(([k,v])=>[catLabel(k),v]))},
+  monthlyCommitments:{creditCardInstallments:st.instMonthly,subscriptions:st.subsMonthly,gam3ya:st.gamMonthly,churchCharity:st.charity},
+  creditCard:(()=>{const c=credit();return{billToPay:c.now?c.now.amt:0,outstanding:c.used,limit:S.acc.credit.limit}})(),
+  balances:Object.fromEntries(NONCC.map(a=>[accName(a),bal(a)])),currency:'EGP',country:'Egypt',today};
+ const prompt=`You are a careful personal finance coach. Using ONLY these figures, write a practical month-by-month plan for me to reach my goal. Be specific with EGP amounts: how much to set aside each month and when (right after salary), monthly limits per spending category, which commitments end soon and free up money, and 3-5 concrete tips. If the goal is not realistic by the date, say so plainly and give the realistic date or amount. Keep it under 300 words, plain text with short lines, no tables.\n\n${JSON.stringify(facts,null,1)}`;
+ try{const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+   body:JSON.stringify({model:'claude-sonnet-5-5',max_tokens:1200,messages:[{role:'user',content:prompt}]})});
+  const j=await r.json();if(!r.ok)throw new Error(j&&j.error&&j.error.message||('error '+r.status));
+  const text=(j.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('\n').trim();g.ai={text,date:today};save();if(location.hash==='#goals')renderGoals()}
+ catch(e){box.innerHTML=`<div class="msg warn">Claude couldn't be reached: ${esc(e.message||'no internet?')}</div>`}}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-goaledit],[data-goaladd],[data-goalai]');if(!b)return;
+ if(b.dataset.goaledit)openGoal(b.dataset.goaledit);
+ else if(b.dataset.goaladd){const g=S.goals.find(x=>x.id===b.dataset.goaladd),v=r2($('gadd-'+g.id).value);if(!v)return;g.saved=r2((g.saved||0)+v);save();toast(`${egp(v)} added to ${g.name}`,false)}
+ else if(b.dataset.goalai)askClaude(S.goals.find(x=>x.id===b.dataset.goalai))});
+
+/* ---------- gam3ya ---------- */
+let gamEdit=null;
+const gamPayout=g=>r2(g.amt*g.months*(g.shares||1));
+const gamPays=g=>tx.filter(t=>t.gam===g.id&&t.type==='exp');
+const gamGot=g=>tx.find(t=>t.gam===g.id&&t.type==='inc');
+const gamLeft=g=>Math.max(0,g.months-gamPays(g).length);
+function gamDate(g,i){const ym=addYm(g.start,i);return `${ym}-${pad(Math.min(g.day||1,28))}`}
+function renderGam(){
+ const all=S.gam.map(g=>{const paid=gamPays(g),got=gamGot(g),paidAmt=r2(paid.reduce((a,t)=>a+t.amt,0)),each=r2(g.amt*(g.shares||1));return{g,paid,got,paidAmt,each,left:r2((g.months-paid.length)*each)}});
+ const monthly=r2(all.filter(x=>x.paid.length<x.g.months).reduce((a,x)=>a+x.each,0)),owe=r2(all.filter(x=>x.got).reduce((a,x)=>a+x.left,0)),toGet=r2(all.filter(x=>!x.got).reduce((a,x)=>a+gamPayout(x.g),0));
+ $('gamTiles').innerHTML=`<div class="tile"><div class="k">Paying monthly</div><div class="v">${money(monthly)}</div></div><div class="tile"><div class="k">Still to pay after payout</div><div class="v" style="color:var(--out)">${money(owe)}</div></div><div class="tile"><div class="k">Payouts to come</div><div class="v" style="color:var(--in)">${money(toGet)}</div></div>`;
+ const cur=ymOf(today);
+ $('gamList').innerHTML=all.length?all.map(({g,paid,got,paidAmt,each,left})=>{const turnYm=addYm(g.start,g.turn-1),idx=ymDiff(g.start,cur)+1,nextI=paid.length,done=nextI>=g.months,acc=accName(g.acc);
+  const cells=Array.from({length:g.months},(_,i)=>{const ym=addYm(g.start,i),isPaid=i<paid.length,isTurn=i===g.turn-1;return `<span class="pill ${isPaid?'paid':ym<cur?'over':ym===cur?'due':''}" title="${monthLbl(ym)}" style="${isTurn?'outline:2px solid var(--acc);':''}">${MONTHS[+ym.slice(5)-1].slice(0,3)}${isTurn?' ★':''}</span>`}).join(' ');
+  return `<div class="card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><h2 style="margin:0">${esc(g.name)}</h2><button class="ib" data-gamedit="${g.id}">Edit</button></div>
+  <p class="note" style="margin:4px 0 10px">${money(each)} × ${g.months} months = <b>${egp(gamPayout(g))}</b> · your turn: month ${g.turn} (${monthLbl(turnYm)}) · ${esc(acc)}</p>
+  <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px">${cells}</div>
+  <div class="kv"><span>Paid</span><b>${paid.length} of ${g.months} · ${egp(paidAmt)}</b></div>
+  <div class="kv"><span>Left to pay</span><b>${egp(left)}</b></div>
+  <div class="kv tot"><span>${got?'Payout received':'Payout'}</span><b>${got?`${egp(got.amt)} on ${fmtS(got.date)}`:`${egp(gamPayout(g))} in ${monthLbl(turnYm)}`}</b></div>
+  ${got&&left>0?`<div class="msg">You got the money already — you still owe ${egp(left)} over ${g.months-paid.length} month${g.months-paid.length===1?'':'s'}.</div>`:''}
+  <div class="btns" style="margin-top:10px">${done?'<span class="pill paid">All paid</span>':`<button class="btn" data-gampay="${g.id}">Pay ${monthLbl(addYm(g.start,nextI))} · ${money(each)}</button>`}${!got&&idx>=g.turn-1?`<button class="btn" style="background:var(--in)" data-gamget="${g.id}">I received ${money(gamPayout(g))}</button>`:''}</div></div>`}).join('')
+  :'<div class="card empty">No gam3ya yet. Add one with the monthly amount, the number of months and your turn.</div>';
+ $('gmAcc').innerHTML=NONCC.map(a=>`<option value="${a}">${esc(accName(a))}</option>`).join('')}
+function gmInfo(){const a=r2($('gmAmt').value),n=+$('gmMonths').value,sh=+$('gmShares').value||1,t=+$('gmTurn').value,st=$('gmStart').value;
+ $('gmInfo').innerHTML=a&&n?`You pay ${egp(a*sh)} a month for ${n} months and get <b>${egp(a*n*sh)}</b>${t&&st?` in ${monthLbl(addYm(st,t-1))}`:''}.${t&&t<n?` After that you keep paying ${egp(a*sh*(n-t))}.`:''}`:'Enter the monthly amount and the number of months.'}
+['gmAmt','gmMonths','gmShares','gmTurn','gmStart'].forEach(id=>$(id).addEventListener('input',gmInfo));
+function openGam(id){gamEdit=id;const g=id?S.gam.find(x=>x.id===id):{name:'',amt:'',months:10,start:ymOf(today),turn:1,acc:'debit',shares:1,day:1};
+ $('gamForm').hidden=false;$('gamFormTitle').textContent=id?'Edit gam3ya':'New gam3ya';$('gmName').value=g.name;$('gmAmt').value=g.amt;$('gmMonths').value=g.months;$('gmStart').value=g.start;$('gmTurn').value=g.turn;$('gmAcc').value=g.acc;$('gmShares').value=g.shares||1;$('gmDay').value=g.day||1;$('gmDel').hidden=!id;gmInfo();$('gamForm').scrollIntoView({behavior:'smooth'})}
+$('gamAddBtn').addEventListener('click',()=>openGam(null));
+$('gmCancel').addEventListener('click',()=>{$('gamForm').hidden=true});
+$('gmSave').addEventListener('click',()=>{const v={name:$('gmName').value.trim()||'Gam3ya',amt:r2($('gmAmt').value),months:+$('gmMonths').value,start:$('gmStart').value,turn:+$('gmTurn').value,acc:$('gmAcc').value,shares:+$('gmShares').value||1,day:+$('gmDay').value||1};
+ if(!(v.amt>0)||!(v.months>=2)||!v.start||!(v.turn>=1&&v.turn<=v.months)){toast('Check the amount, months, first month and your turn',false);return}
+ if(gamEdit)Object.assign(S.gam.find(x=>x.id===gamEdit),v);else S.gam.push({id:'m'+uid(),...v});$('gamForm').hidden=true;save();toast('Gam3ya saved',false)});
+$('gmDel').addEventListener('click',()=>{const b=$('gmDel');if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again (payments stay in your history)';return}b.dataset.sure='';b.textContent='Delete';S.gam=S.gam.filter(x=>x.id!==gamEdit);$('gamForm').hidden=true;save()});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-gamedit],[data-gampay],[data-gamget]');if(!b)return;
+ if(b.dataset.gamedit){openGam(b.dataset.gamedit);return}
+ const g=S.gam.find(x=>x.id===(b.dataset.gampay||b.dataset.gamget));if(!g)return;
+ if(b.dataset.gampay){const i=gamPays(g).length,ym=addYm(g.start,i),d=ym<=ymOf(today)?(ym===ymOf(today)?today:gamDate(g,i)):today;
+  tx.push({id:uid(),type:'exp',acc:g.acc,amt:r2(g.amt*(g.shares||1)),date:d,cat:'gam3ya',note:`${g.name} · ${monthLbl(ym)}`,created:d<today?Date.parse(d+'T12:00'):Date.now(),gam:g.id,gamYm:ym});save();toast(`Paid ${monthLbl(ym)} from ${accName(g.acc)}`,false)}
+ else{tx.push({id:uid(),type:'inc',acc:g.acc,amt:gamPayout(g),date:today,cat:'gam3ya',note:`${g.name} payout`,created:Date.now(),gam:g.id});save();toast(`${egp(gamPayout(g))} added to ${accName(g.acc)}`,false)}});
+
+/* ---------- charity: a share of salary every month ---------- */
+function charityMonths(){const pct=+S.charity.pct||0,sal=tx.filter(t=>t.type==='inc'&&t.cat==='salary'),cur=ymOf(today);
+ if(!S.charity.from){const last=[...sal].sort(byDate)[0];S.charity.from=last?ymOf(last.date):cur}
+ const salBy={};sal.forEach(t=>{const k=ymOf(t.date);salBy[k]=r2((salBy[k]||0)+t.amt)});
+ const paidBy={};tx.filter(t=>t.type==='exp'&&t.cat==='charity').forEach(t=>{const k=t.charYm||ymOf(t.date);paidBy[k]=r2((paidBy[k]||0)+t.amt)});
+ const from=[S.charity.from,...Object.keys(paidBy)].sort()[0];
+ const lastSal=sal.sort(byDate)[0],rows=[];
+ for(let ym=from;ym<=addYm(cur,3);ym=addYm(ym,1)){const fut=ym>cur||(ym===cur&&!salBy[ym]&&today.slice(8)<String(S.payDay||28)),salary=salBy[ym]!=null?salBy[ym]:(fut&&lastSal?lastSal.amt:0),due=r2(salary*pct/100),paid=paidBy[ym]||0;
+  rows.push({ym,salary,est:salBy[ym]==null&&fut,due,paid,left:r2(Math.max(0,due-paid))})}
+ return rows}
+function renderCharity(){const rows=charityMonths(),cur=ymOf(today),now=rows.filter(r=>r.ym<=cur&&r.left>0&&!r.est),pct=+S.charity.pct||0;
+ $('chPct').value=pct;$('chFrom').value=S.charity.from;$('chAcc').innerHTML=NONCC.map(a=>`<option value="${a}"${S.charity.acc===a?' selected':''}>${esc(accName(a))}</option>`).join('');
+ const opts=NONCC.map(a=>`<option value="${a}"${S.charity.acc===a?' selected':''}>${esc(accName(a))}</option>`).join('');
+ $('chNow').innerHTML=now.length?now.map(r=>`<div class="due" style="border-left-color:var(--acc)"><div class="t"><small>Church · ${monthLbl(r.ym)} (${pct}% of ${money(r.salary)})</small><span class="big">${egp(r.left)}</span>${r.paid?`<small>${money(r.paid)} already given</small>`:''}
+  <div class="catrow" style="margin-top:8px"><select id="chFrom-${r.ym}" aria-label="Pay from">${opts}</select><button class="btn" style="width:auto" data-chpay="${r.ym}">Pay now</button></div></div></div>`).join('')
+  :`<div class="due ok"><div class="t"><small>Church</small><b>Nothing due right now.</b><small>${(()=>{const n=rows.find(r=>r.ym>cur||r.est);return n?`Next: about ${egp(n.due)} in ${monthLbl(n.ym)}${n.est?' (estimated from your last salary)':''}`:'Add your salary (payslip, SMS or statement) to see what is due.'})()}</small></div></div>`;
+ $('chList').innerHTML=[...rows].reverse().map(r=>`<li><span class="t"><b>${monthLbl(r.ym)}</b> ${r.est?'<span class="pill open">Estimated</span>':r.due===0?'':r.left<=0?'<span class="pill paid">Given</span>':r.paid?'<span class="pill part">Part given</span>':'<span class="pill due">Due</span>'}<small>${r.salary?`${pct}% of salary ${money(r.salary)}`:'No salary this month'}${r.paid?` · given ${money(r.paid)}`:''}</small></span><span class="amt">${money(r.due)}</span></li>`).join('')}
+$('chSave').addEventListener('click',()=>{S.charity.pct=+$('chPct').value||0;if($('chFrom').value)S.charity.from=$('chFrom').value;S.charity.acc=$('chAcc').value;save();toast('Saved',false)});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-chpay]');if(!b)return;const ym=b.dataset.chpay,r=charityMonths().find(x=>x.ym===ym);if(!r||r.left<=0)return;
+ const acc=$('chFrom-'+ym).value;tx.push({id:uid(),type:'exp',acc,amt:r.left,date:today,cat:'charity',note:`Church · ${monthLbl(ym)}`,created:Date.now(),charYm:ym});S.charity.acc=acc;save();toast(`${egp(r.left)} given from ${accName(acc)}`,false)});
+
 /* ---------- bank SMS ---------- */
 const HAS_SMS=!!(window.Android&&typeof Android.smsTake==='function');
 const digits=s=>String(s??'').replace(/[٠-٩]/g,d=>d.charCodeAt(0)-1632).replace(/[۰-۹]/g,d=>d.charCodeAt(0)-1776).replace(/٫/g,'.').replace(/٬/g,',');
@@ -1075,6 +1274,7 @@ function parseSms(body){
  if(NOTICE.test(b)&&!/charged|خصم|debited/.test(b))return{err:'Statement notice',ignore:true};
  {const m=b.match(INSTRE);if(m)return{inst:true,acc:'credit',amt:numv(m[1]),m:m[2].trim(),each:numv(m[3]),months:+m[4],firstDue:`${m[7]}-${pad(+m[6])}-${pad(+m[5])}`}}
  if(/تم رفض|declined|was rejected|لم تتم العملية/i.test(b))return{err:'Declined transaction',ignore:true};
+ if(/محتاج كاش|تقدر تحول|بسعر فائدة مخفض|عرض خاص|special offer|apply now|قدم الآن|استمتع ب/i.test(b)&&!/charged|تم خصم|debited|تم سحب|تم سداد/i.test(b))return{err:'Advert',ignore:true};
  const isOtp=OTPBUY.test(b);
  const inbound=/(?:إلى|الى)\s*حساب(?:ك|كم)/.test(b)&&!/من\s*حساب(?:ك|كم)/.test(b);
  const balM=b.match(/الرصيد المتاح\s*(?:egp\s*)?([\d,]+\.\d+)|available balance(?: is)?\s*(?:egp\s*)?([\d,]+\.\d+)/);
@@ -1146,7 +1346,7 @@ function ingest(list){const r={added:0,merged:0,known:0,failed:0};
   const st=tx.find(x=>(x.stmtKey||x.payKey)&&!x.sms&&x.amt===t.amt&&Math.abs(dayDiff(x.date,t.date))<=(x.payKey?10:4)&&(x.type===t.type||(t.type==='exp'&&x.type==='xfer'&&x.acc===t.acc)));
   if(st){st.sms=t.sms;skip.push(key);r.merged++;continue}
   if(pair(t)){skip.push(key);r.merged++}else{tx.push(t);r.added++}}
- if(r.added||r.merged||r.failed)save();return r}
+ if(r.added){r.merged+=dedupe()}if(r.added||r.merged||r.failed)save();return r}
 function pushSmsConfig(){if(!HAS_SMS)return;
  const words=[...new Set([...SMS_ACC.flatMap(kwList),...IP_WORDS])];
  try{Android.smsConfig(JSON.stringify({on:!!S.sms.on,words}))}catch(e){}}
@@ -1186,16 +1386,17 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-sms]');if(
 window.onResumeApp=pollSms;setInterval(pollSms,20000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)pollSms()});
 
 /* ---------- routing ---------- */
-const V=['home','credit','cash','subs','reports','settings','add','plan'];
+const V=['home','credit','cash','goals','gam','charity','subs','reports','settings','add','plan'];
 function go(v){if(location.hash!=='#'+v)location.hash=v;else route()}
 function route(){const h=location.hash.slice(1),v=V.includes(h)?h:'home';
  if(v!=='add'&&v!=='plan')backTo=v;else if(v==='add'&&!F)F=fresh('exp');
  V.forEach(k=>{$('v-'+k).hidden=k!==v;const t=$('t-'+k);if(t)t.classList.toggle('on',k===v)});
- $('fab').hidden=v==='add'||v==='plan'||v==='settings';document.querySelector('nav').hidden=v==='add'||v==='plan';
- if(v==='home')renderHome();else if(v==='credit')renderCredit();else if(v==='cash')renderCash();else if(v==='reports')renderReports();else if(v==='subs')renderSubs();else if(v==='settings')renderSettings();else if(v==='plan')renderPlan();else renderAdd();
- window.scrollTo(0,0)}
+ $('fab').hidden=['add','plan','settings','goals','gam','charity'].includes(v);document.querySelector('nav').hidden=v==='add'||v==='plan';
+ if(v==='home')renderHome();else if(v==='credit')renderCredit();else if(v==='cash')renderCash();else if(v==='reports')renderReports();else if(v==='subs')renderSubs();else if(v==='goals')renderGoals();else if(v==='gam')renderGam();else if(v==='charity')renderCharity();else if(v==='settings')renderSettings();else if(v==='plan')renderPlan();else renderAdd();
+ window.scrollTo(0,0);const on=$('t-'+v);if(on)on.scrollIntoView({inline:'center',block:'nearest'})}
 function renderAll(){const v=location.hash.slice(1);if(v==='add'||v==='plan')return;route()}
 window.addEventListener('hashchange',route);
+window.__app={get tx(){return tx},monthStats};
 load();route();pushReminder();pushSmsConfig();pollSms();
 if(HAS_SMS&&S.sms.on&&!S.sms.scanned&&Android.smsPermission()==='granted')scanSms(3650);
 if(!window.Android)$('status').textContent='Saved in this browser';

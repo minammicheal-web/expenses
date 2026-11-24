@@ -19,7 +19,10 @@
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow-x:clip;font-variant-numeric:tabular-nums}
 h1,h2,h3{margin:0;line-height:1.15}
 .wrap{max-width:980px;margin:0 auto;padding:0 max(4vw,14px) 110px}
-header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;padding:20px 0 12px}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:18px 0 12px}
+.hright{display:flex;align-items:center;gap:10px}
+.gear{display:flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:14px;background:var(--card);color:var(--ink);text-decoration:none;transition:background-color .25s,color .25s,transform .3s}
+.gear.on{background:var(--ink);color:var(--card)}.gear:active{transform:rotate(45deg)}
 h1{font-size:clamp(28px,6vw,38px);letter-spacing:-.02em;font-weight:800}
 h1 b{color:var(--acc)}
 .status{font-size:13px;color:var(--mute)}
@@ -123,8 +126,8 @@ nav a{transition:background-color .25s,color .25s}
 </head>
 <body>
 <div class="wrap">
-<header><h1>Expenses<b>.</b></h1><span class="status" id="status">Saved on this phone</span></header>
-<nav><a href="#home" id="t-home">Home</a><a href="#credit" id="t-credit">Credit</a><a href="#cash" id="t-cash">Cash</a><a href="#goals" id="t-goals">Goals</a><a href="#gam" id="t-gam">Gam3ya</a><a href="#charity" id="t-charity">Charity</a><a href="#subs" id="t-subs">Subs</a><a href="#reports" id="t-reports">Reports</a><a href="#settings" id="t-settings">Settings</a></nav>
+<header><h1>Expenses<b>.</b></h1><div class="hright"><span class="status" id="status">Saved on this phone</span><a href="#settings" id="t-settings" class="gear" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6a.5.5 0 0 0 .1-.6l-2-3.5a.5.5 0 0 0-.6-.2l-2.5 1a7.4 7.4 0 0 0-1.7-1l-.4-2.6a.5.5 0 0 0-.5-.4h-4a.5.5 0 0 0-.5.4l-.4 2.6c-.6.3-1.2.6-1.7 1l-2.5-1a.5.5 0 0 0-.6.2l-2 3.5a.5.5 0 0 0 .1.6L4.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6a.5.5 0 0 0-.1.6l2 3.5c.1.2.4.3.6.2l2.5-1c.5.4 1.1.7 1.7 1l.4 2.6c0 .2.3.4.5.4h4c.2 0 .5-.2.5-.4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1c.2.1.5 0 .6-.2l2-3.5a.5.5 0 0 0-.1-.6L19.4 13zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"/></svg></a></div></header>
+<nav><a href="#home" id="t-home">Home</a><a href="#credit" id="t-credit">Credit</a><a href="#cash" id="t-cash">Cash</a><a href="#goals" id="t-goals">Goals</a><a href="#gam" id="t-gam">Gam3ya</a><a href="#charity" id="t-charity">Charity</a><a href="#subs" id="t-subs">Subs</a><a href="#reports" id="t-reports">Reports</a></nav>
 
 <!-- HOME -->
 <section id="v-home">
@@ -306,8 +309,11 @@ nav a{transition:background-color .25s,color .25s}
   <button class="btn" id="sSave">Save</button>
  </div>
  <div class="grid2" style="margin-bottom:14px" data-sec="cats">
-  <div class="card"><h2>Expense categories</h2><div id="expCats"></div><div class="catrow"><input id="newExp" placeholder="New category" maxlength="40"><button class="ib" data-addcat="exp">Add</button></div></div>
-  <div class="card"><h2>Income categories</h2><div id="incCats"></div><div class="catrow"><input id="newInc" placeholder="New category" maxlength="40"><button class="ib" data-addcat="inc">Add</button></div></div>
+  <div class="card">
+   <div class="seg two" id="catTypeSeg"><button data-ctype="exp" class="on">Expenses</button><button data-ctype="inc">Income</button></div>
+   <div class="f"><label for="catPick">Category (A–Z)</label><select id="catPick"></select></div>
+   <div id="catEdit"></div>
+  </div>
  </div>
  <div class="card" id="stmCard" data-sec="stm">
   <h2>Bank statements (PDF)</h2>
@@ -357,9 +363,9 @@ nav a{transition:background-color .25s,color .25s}
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><h2 id="addTitle" style="margin:0">New entry</h2><button class="ib" id="addClose">Close</button></div>
   <div class="seg" id="aType"><button data-type="exp">Expense</button><button data-type="inc">Income</button><button data-type="xfer">Transfer</button><button data-type="pay">Pay card</button></div>
   <div class="f"><input id="aAmt" class="amtIn" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" aria-label="Amount in EGP"></div>
-  <div class="f"><span class="lbl" id="accLbl">Paid with</span><div class="chips" id="aAcc"></div></div>
-  <div class="f" id="toWrap"><span class="lbl">To</span><div class="chips" id="aTo"></div></div>
-  <div class="f" id="catWrap"><span class="lbl">Category</span><div class="chips" id="aCat"></div>
+  <div class="f"><label for="aAccSel" id="accLbl">Paid with</label><select id="aAccSel"></select></div>
+  <div class="f" id="toWrap"><label for="aToSel">To</label><select id="aToSel"></select></div>
+  <div class="f" id="catWrap"><label for="aCatSel">Category</label><select id="aCatSel"></select>
    <div class="catrow" id="quickCat" hidden style="margin-top:8px"><input id="quickCatIn" placeholder="New category name" maxlength="40"><button class="ib" id="quickCatAdd">Add</button></div></div>
   <div id="ccWrap">
    <span class="lbl">How will you pay it?</span>
@@ -680,14 +686,28 @@ function renderReports(){
 function renderSettings(){
  $('accSet').innerHTML=ACC.map(a=>`<div class="row"><div><label for="n-${a}">Name</label><input id="n-${a}" value="${esc(accName(a))}" maxlength="30"></div>${a==='credit'?'<div></div>':`<div><label for="o-${a}">Balance now</label><input id="o-${a}" type="number" inputmode="decimal" step="0.01" value="${bal(a)}"></div>`}</div>${a==='od'?`<div class="row"><div><label for="l-od">Overdraft limit</label><input id="l-od" type="number" inputmode="decimal" min="0" value="${+S.acc.od.limit||''}"></div><div></div></div>`:''}`).join('');
  $('sLimit').value=+S.acc.credit.limit||'';$('sRemind').value=S.remind;$('sStmt').value=S.stmt;$('sDue').value=S.due;
- const cats=k=>catList(k).map(c=>`<div class="catrow"><input value="${esc(c.n)}" data-ren="${k}:${esc(c.id)}" maxlength="40" aria-label="Category name"><button class="ib" data-rmcat="${k}:${esc(c.id)}">Remove</button></div>`).join('');
- $('expCats').innerHTML=cats('exp');$('incCats').innerHTML=cats('inc');driveRender();renderSms();showSettingsPage();
+ renderCatEdit();
+ driveRender();renderSms();showSettingsPage();
 }
 $('sSave').addEventListener('click',()=>{
  const st=parseInt($('sStmt').value),du=parseInt($('sDue').value),rm=parseInt($('sRemind').value);
  if(!(st>=1&&st<=28)||!(du>=1&&du<=28)){toast('Bill and due days must be between 1 and 28',false);return}
  for(const a of ACC){S.acc[a].n=$('n-'+a).value.trim()||DEF.acc[a].n;if(a!=='credit'){const v=r2($('o-'+a).value);if(Math.abs(v-bal(a))>0.004)setBalance(a,v)}}S.acc.od.limit=r2($('l-od').value);
  S.acc.credit.limit=r2($('sLimit').value);S.stmt=st;S.due=du;S.remind=rm>=0?rm:3;save();toast('Settings saved',false)});
+let catType='exp',catSel=null;
+function renderCatEdit(){document.querySelectorAll('#catTypeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.ctype===catType));
+ const list=byName(catList(catType).map(c=>({v:c.id,n:c.n})));if(catSel!=='__new'&&!list.some(o=>o.v===catSel))catSel=list[0]?list[0].v:'__new';
+ $('catPick').innerHTML=list.map(o=>`<option value="${esc(o.v)}"${o.v===catSel?' selected':''}>${esc(o.n)}</option>`).join('')+`<option value="__new"${catSel==='__new'?' selected':''}>＋ Add new category</option>`;
+ const used=catSel!=='__new'?tx.filter(t=>t.type===catType&&t.cat===catSel).length:0,c=S[catType].find(x=>x.id===catSel);
+ $('catEdit').innerHTML=catSel==='__new'?`<div class="f"><label for="catName">New ${catType==='exp'?'expense':'income'} category</label><input id="catName" maxlength="40" placeholder="e.g. Gym"></div><button class="btn" data-catdo="add">Add category</button>`
+  :`<div class="f"><label for="catName">Name</label><input id="catName" maxlength="40" value="${esc(c?c.n:'')}"></div><p class="note" style="margin-top:-6px">${used} entr${used===1?'y':'ies'} in this category.</p><div class="btns"><button class="btn" data-catdo="ren">Save name</button><button class="btn danger" data-catdo="rm">Remove</button></div>`}
+$('catTypeSeg').addEventListener('click',e=>{const b=e.target.closest('[data-ctype]');if(!b)return;catType=b.dataset.ctype;catSel=null;renderCatEdit()});
+$('catPick').addEventListener('change',()=>{catSel=$('catPick').value;renderCatEdit();if(catSel==='__new')$('catName').focus()});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-catdo]');if(!b)return;const a=b.dataset.catdo,v=($('catName').value||'').trim();
+ if(a==='add'){if(!v)return;catSel=addCat(catType,v);save();toast(`"${v}" added`,false)}
+ else if(a==='ren'){const c=S[catType].find(x=>x.id===catSel);if(c&&v){c.n=v;save();toast('Name saved',false)}}
+ else if(a==='rm'){if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to remove';return}
+  const used=tx.some(t=>t.type===catType&&t.cat===catSel);if(used)S[catType].find(c=>c.id===catSel).hidden=true;else S[catType]=S[catType].filter(c=>c.id!==catSel);catSel=null;save();toast(used?'Removed from the list (old entries keep it)':'Category removed',false)}});
 function addCat(k,name){name=name.trim();if(!name)return null;
  const ex=S[k].find(c=>c.n.toLowerCase()===name.toLowerCase());if(ex){ex.hidden=false;return ex.id}
  const id='c'+uid();S[k].push({id,n:name});return id}
@@ -708,14 +728,14 @@ function renderAdd(){if(!F)F=fresh('exp');
  document.querySelectorAll('#aType button').forEach(b=>b.classList.toggle('on',b.dataset.type===F.type));
  const ch=accChoices();if(!ch.includes(F.acc))F.acc=ch[0];
  $('accLbl').textContent=F.type==='exp'?'Paid with':F.type==='inc'?'Received in':'From';
- $('aAcc').innerHTML=ch.map(a=>`<button class="chip${F.acc===a?' on':''}" style="--c:${ACOL[a]}" data-aacc="${a}">${esc(accName(a))}${F.type==='inc'&&a==='credit'?' (refund)':''}</button>`).join('');
+ $('aAccSel').innerHTML=byName(ch.map(a=>({v:a,n:accName(a)+(F.type==='inc'&&a==='credit'?' (refund)':'')}))).map(o=>`<option value="${o.v}"${F.acc===o.v?' selected':''}>${esc(o.n)}</option>`).join('');
  $('toWrap').hidden=F.type!=='xfer';
  if(F.type==='xfer'){const to=NONCC.filter(a=>a!==F.acc);if(!to.includes(F.to))F.to=to[0];
-  $('aTo').innerHTML=to.map(a=>`<button class="chip${F.to===a?' on':''}" style="--c:${ACOL[a]}" data-ato="${a}">${esc(accName(a))}</button>`).join('')}
+  $('aToSel').innerHTML=byName(to.map(a=>({v:a,n:accName(a)}))).map(o=>`<option value="${o.v}"${F.to===o.v?' selected':''}>${esc(o.n)}</option>`).join('')}
  const hasCat=F.type==='exp'||F.type==='inc';$('catWrap').hidden=!hasCat;
  if(hasCat){const k=F.type,cl=catList(k);if(F.cat&&!S[k].some(c=>c.id===F.cat))F.cat=null;
   const extra=F.cat&&!cl.some(c=>c.id===F.cat)?S[k].filter(c=>c.id===F.cat):[];
-  $('aCat').innerHTML=[...cl,...extra].map(c=>`<button class="chip${F.cat===c.id?' on':''}" data-acat="${esc(c.id)}">${esc(c.n)}</button>`).join('')+'<button class="chip add" id="newCatChip">+ New</button>'}
+  $('aCatSel').innerHTML=(F.cat?'':'<option value="" selected disabled>Choose a category…</option>')+byName([...cl,...extra].map(c=>({v:c.id,n:c.n}))).map(o=>`<option value="${esc(o.v)}"${F.cat===o.v?' selected':''}>${esc(o.n)}</option>`).join('')+'<option value="__new">＋ New category…</option>'}
  const cc=F.type==='exp'&&F.acc==='credit';$('ccWrap').hidden=!cc;$('ipnWrap').hidden=!ipnOK();$('fxWrap').hidden=!fxOK();if(!fxOK())$('aFx').checked=false;
  if(cc){document.querySelectorAll('#aMode button').forEach(b=>b.classList.toggle('on',b.dataset.mode===F.mode));
 }
@@ -758,12 +778,28 @@ const GENERIC1=new Set(['google','paymob','fawry','fawrypf','geidea','amazon','m
 function simKey(t){const raw=t&&typeof t==='object'?(t.note||(t.sms&&t.sms.m)||''):String(t||'');const w=mkey(raw.replace(/\(.*?\)/g,'')).split(' ').filter(x=>x.length>1);
  if(!w.length)return '';if(t&&typeof t==='object'&&(t.cat==='sent'||t.cat==='recv'||/[؀-ۿ]/.test(raw)))return w.join(' ');
  return GENERIC1.has(w[0])&&w[1]?w[0]+' '+w[1]:w[0]}
-function similar(t){const k=simKey(t);if(!k||k.length<3)return[];return tx.filter(x=>x.id!==t.id&&x.type===t.type&&!x.plan&&simKey(x)===k)}
-async function offerSimilar(t){if(!(t.type==='exp'||t.type==='inc')||!t.cat)return;const sim=similar(t).filter(x=>x.cat!==t.cat);if(!sim.length)return;
- const unsorted=sim.filter(x=>x.review||!x.cat),name=(t.note||'').replace(/\s*\(.*$/,'').slice(0,40)||simKey(t),cat=catName(t);
- const btns=[{label:`Yes, all ${sim.length+1}`,value:'all'}];if(unsorted.length&&unsorted.length<sim.length)btns.push({label:`Only the ${unsorted.length} without a category`,value:'unsorted',ghost:true});btns.push({label:'No, just this one',value:'none',ghost:true});
- const v=await ask(`Put the others in ${cat} too?`,`<b>${sim.length}</b> other ${t.type==='exp'?'payment':'income'}${sim.length===1?'':'s'} look like <b>${esc(name)}</b>${unsorted.length?` (${unsorted.length} without a category)`:''}. New ones will go to ${esc(cat)} automatically either way.`,btns);
- if(v==='none')return;const list=v==='all'?sim:unsorted;list.forEach(x=>{x.cat=t.cat;x.review=false;x.catSet=true});save();toast(`${list.length+1} entries moved to ${cat}`,false)}
+function similar(t){const k=simKey(t);if(!k||k.length<3)return[];return tx.filter(x=>x.id!==t.id&&x.type===t.type&&!x.plan&&!isCheck(x)&&simKey(x)===k)}
+async function offerSimilar(t){if(!(t.type==='exp'||t.type==='inc')||!t.cat)return;const sim=similar(t).filter(x=>x.cat!==t.cat).sort(byDate);if(!sim.length)return;
+ const name=(t.note||'').replace(/\s*\(.*$/,'').slice(0,40)||simKey(t),cat=catName(t);
+ const v1=await ask(`Apply ${cat} to similar ones?`,`<b>${sim.length}</b> other ${t.type==='exp'?'payment':'income'}${sim.length===1?'':'s'} look like <b>${esc(name)}</b>. New ones will go to ${esc(cat)} automatically either way.`,
+  [{label:'Yes',value:'yes'},{label:'No, just this one',value:'no',ghost:true}]);
+ if(v1!=='yes')return;
+ const v2=await ask('Review them first?',`Check the ${sim.length} entr${sim.length===1?'y':'ies'} and choose which ones go to <b>${esc(cat)}</b>, or move them all now.`,
+  [{label:'Review them first',value:'review'},{label:`Apply to all ${sim.length}`,value:'all',ghost:true},{label:'Cancel',value:'cancel',ghost:true}]);
+ let list=null;if(v2==='all')list=sim;else if(v2==='review')list=await pickSimilar(sim,cat);
+ if(!list||!list.length)return;list.forEach(x=>{x.cat=t.cat;x.review=false;x.catSet=true});save();toast(`${list.length} more moved to ${cat}`,false)}
+/* checklist of similar entries: resolves with the ones left ticked */
+function pickSimilar(list,cat){return new Promise(res=>{
+ const rows=list.map((x,i)=>`<label class="check" style="margin:0;padding:8px 0;border-top:1px solid var(--line);align-items:flex-start"><input type="checkbox" data-pick="${i}" checked><span style="flex:1"><b>${esc(fmtS(x.date))} · ${money(x.amt)}</b> <span class="note">${esc(accName(x.acc))}</span><br><span class="note">${esc((x.note||'').slice(0,50))} · now: ${x.review||!x.cat?'no category':esc(catName(x))}</span></span></label>`).join('');
+ $('dlgT').textContent=`Choose which go to ${cat}`;
+ $('dlgB').innerHTML=`<div class="chips" style="margin-bottom:8px"><button class="chip" data-pickall="1">All</button><button class="chip" data-pickall="0">None</button>${list.some(x=>x.review||!x.cat)&&list.some(x=>!(x.review||!x.cat))?'<button class="chip" data-pickall="u">Only without a category</button>':''}</div><div style="max-height:46vh;overflow:auto">${rows}</div>`;
+ const count=()=>[...document.querySelectorAll('[data-pick]')].filter(c=>c.checked).length;
+ const draw=()=>{$('dlgBtns').innerHTML=`<button class="btn" data-dlgok="1">Apply to ${count()} selected</button><button class="btn ghost" data-dlgok="0">Cancel</button>`};
+ draw();$('dlg').hidden=false;
+ $('dlgB').onchange=draw;
+ $('dlgB').onclick=e=>{const a=e.target.closest('[data-pickall]');if(!a)return;document.querySelectorAll('[data-pick]').forEach(c=>{const x=list[+c.dataset.pick];c.checked=a.dataset.pickall==='1'||(a.dataset.pickall==='u'&&(x.review||!x.cat))});draw()};
+ $('dlgBtns').onclick=e=>{const b=e.target.closest('[data-dlgok]');if(!b)return;const sel=b.dataset.dlgok==='1'?[...document.querySelectorAll('[data-pick]')].filter(c=>c.checked).map(c=>list[+c.dataset.pick]):null;
+  $('dlg').hidden=true;$('dlgB').onchange=null;$('dlgB').onclick=null;res(sel)}})}
 $('aSave').addEventListener('click',()=>{const{t,e}=readForm();$('aErr').innerHTML=e.map(x=>`<div class="msg warn">${x}</div>`).join('');if(e.length)return;
  if(editId){const o=tx.find(x=>x.id===editId);if(o&&o.cat!==t.cat)t.catSet=true;else if(o&&o.catSet)t.catSet=true}
  const was=editId,needPlan=t.type==='exp'&&t.acc==='credit'&&F.mode==='inst'&&!t.plan;if(t.sms&&t.sms.m&&t.cat&&(t.type==='exp'||t.type==='inc'))S.merch[t.type+':'+mkey(t.sms.m)]=t.cat;if(t.cat&&(t.type==='exp'||t.type==='inc')&&simKey(t))S.merch[t.type+':~'+simKey(t)]=t.cat;
@@ -777,6 +813,10 @@ $('aType').addEventListener('click',e=>{const b=e.target.closest('button');if(!b
 $('aMode').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;F.mode=b.dataset.mode;renderAdd()});
 ['aAmt','aNote'].forEach(id=>$(id).addEventListener('input',info));$('aIpn').addEventListener('change',info);$('aFx').addEventListener('change',info);
 $('aDate').addEventListener('input',renderAdd);
+const byName=list=>[...list].sort((a,b)=>a.n.localeCompare(b.n,undefined,{sensitivity:'base'}));
+$('aAccSel').addEventListener('change',()=>{F.acc=$('aAccSel').value;if(F.type==='xfer'&&F.to===F.acc)F.to=null;renderAdd()});
+$('aToSel').addEventListener('change',()=>{F.to=$('aToSel').value;renderAdd()});
+$('aCatSel').addEventListener('change',()=>{const v=$('aCatSel').value;if(v==='__new'){$('quickCat').hidden=false;$('quickCatIn').focus();$('aCatSel').value=F.cat||'';return}F.cat=v;$('quickCat').hidden=true;renderAdd()});
 $('quickCatAdd').addEventListener('click',()=>{const id=addCat(F.type,$('quickCatIn').value);if(!id)return;F.cat=id;$('quickCatIn').value='';$('quickCat').hidden=true;save();renderAdd()});
 
 /* ---------- clicks ---------- */
@@ -1392,7 +1432,7 @@ const menuBtn=(go,ic,title,sub,right)=>`<button class="setbtn" data-go="${go}"><
 
 
 /* ripple from the touch point */
-const RIPPLE='nav a,.btn,.setbtn,.chip,.ib,.acc,.seg button,.list li.tx,.fab,.tile';
+const RIPPLE='.gear,nav a,.btn,.setbtn,.chip,.ib,.acc,.seg button,.list li.tx,.fab,.tile';
 document.addEventListener('pointerdown',e=>{if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;const el=e.target.closest(RIPPLE);if(!el||el.disabled)return;
  el.classList.add('rp');if(getComputedStyle(el).position==='static')el.classList.add('rpr');const r=el.getBoundingClientRect(),d=Math.max(r.width,r.height)*2.2,sp=document.createElement('span');sp.className='ripple';
  sp.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px`;el.appendChild(sp);setTimeout(()=>sp.remove(),600)},{passive:true});

@@ -293,7 +293,7 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const r2=n=>Math.round((+n||0)*100)/100;
 /* InstaPay: 0.1% of the amount, at least 0.50 and at most 20 */
-const FX=base=>r2(base*0.03);
+const FX=base=>Math.floor(base*3+1e-6)/100;
 const ipFee=base=>Math.min(20,Math.max(0.5,Math.round(base*0.1+1e-6)/100));
 const money=n=>{n=r2(n);return (n<0?'−':'')+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:n%1?2:0,maximumFractionDigits:2})};
 const egp=n=>'EGP '+money(n);
@@ -321,9 +321,10 @@ const dueOf=s=>{const[y,m,d]=parts(s);return S.due>d?mk(y,m-1,S.due):mk(y,m,S.du
 /* an installment plan: {months, each = monthly amount, first = date of the bill the first installment is on} */
 const planTotal=pl=>r2(pl.each*pl.months);
 const fee=t=>t.plan?r2(planTotal(t.plan)-t.amt):0;
-const cost=t=>t.plan?planTotal(t.plan):t.amt;
+/* interest-free plans: the bank keeps the exact price and puts the rounding difference on the last installment */
+const cost=t=>t.plan?(Math.abs(t.amt-planTotal(t.plan))<=t.plan.months*0.01?t.amt:planTotal(t.plan)):t.amt;
 function schedule(t){const n=t.plan.months,base=stmtOf(t.plan.first);
- return Array.from({length:n},(_,i)=>({stmt:addM(base,i),amt:r2(t.plan.each),i:i+1,n}))}
+ const tot=cost(t);return Array.from({length:n},(_,i)=>({stmt:addM(base,i),amt:i<n-1?r2(t.plan.each):r2(tot-t.plan.each*(n-1)),i:i+1,n}))}
 function fixPlan(t){const p=t.plan;if(!p||p.each!=null)return;const n=p.months||1;p.each=r2((t.amt+(+p.fee||0))/n);p.first=addM(stmtOf(t.date),p.off||0);delete p.fee;delete p.off}
 const dayDiff=(a,b)=>Math.round((new Date(b+'T00:00')-new Date(a+'T00:00'))/864e5);
 const base=()=>S.ccBase&&S.ccBase.stmt?S.ccBase:null;
@@ -331,7 +332,9 @@ const base=()=>S.ccBase&&S.ccBase.stmt?S.ccBase:null;
    statement that was imported but doesn't list it means it posted late, so it goes on the next bill) */
 function billOf(t){if(t.bill)return t.bill;const B=base(),s=stmtOf(t.date);
  if(B&&B.imported&&s===B.stmt&&!t.stmtKey&&dayDiff(t.date,B.stmt)<7)return addM(B.stmt,1);return s}
-const isCharge=t=>(t.type==='exp'||t.type==='xfer')&&t.acc==='credit';
+const CHECKRE=/\b(?:uber|careem|bolt|didi|indrive)\b/i;
+const isCheck=t=>t.type==='exp'&&t.acc==='credit'&&t.amt<=5&&!t.stmtKey&&CHECKRE.test((t.note||'')+' '+(t.sms?t.sms.body:''));
+const isCharge=t=>(t.type==='exp'||t.type==='xfer')&&t.acc==='credit'&&!isCheck(t);
 const isCredit=t=>t.type==='pay'||(t.type==='inc'&&t.acc==='credit');
 /* a payment/refund counts against the newest statement's bill if the statement doesn't already include it */
 function voidPairs(B){const v=new Set();
@@ -381,6 +384,7 @@ function title(t){
  if(t.type==='inc'&&t.acc==='credit')return `Refund · ${catName(t)}`;
  if(t.payKey)return `Salary · ${monthLbl(t.payKey.slice(4))}`;
  if(t.sub){const sb=S.subs.find(x=>x.id===t.sub);if(sb)return `${sb.n} · subscription`}
+ if(isCheck(t))return `${t.note||'Card check'} · card check (released, not counted)`;
  return catName(t)}
 function sub(t,a){const bits=[];
  if(!a||t.type==='exp'||t.type==='inc')if(t.type!=='xfer'&&t.type!=='pay')bits.push(accName(t.acc));
@@ -445,7 +449,7 @@ function dueHTML(c,withBtn){
 function renderHome(){
  const c=credit();$('dueBox').innerHTML=dueHTML(c,true);
  $('accs').innerHTML=ACC.map(a=>{
-  if(a==='credit'){const lim=+S.acc.credit.limit||0;return `<button class="acc${homeAcc===a?' on':''}" style="--c:${ACOL[a]}" data-acc="${a}"><div class="k">${esc(accName(a))}</div><div class="v">${egp(Math.max(0,c.used))}</div><div class="s">${lim?`used · ${money(c.avail)} available`:'used · set the limit in Settings'}</div>${lim?`<div class="bar"><i style="width:${Math.min(100,Math.max(0,c.used/lim*100))}%"></i></div>`:''}</button>`}
+  if(a==='credit'){const lim=+S.acc.credit.limit||0;return `<button class="acc${homeAcc===a?' on':''}" style="--c:${ACOL[a]}" data-acc="${a}"><div class="k">${esc(accName(a))}</div><div class="v">${egp(Math.max(0,c.used))}</div><div class="s">${lim?`outstanding · ${money(c.avail)} available`:'outstanding · set the limit in Settings'}</div>${lim?`<div class="bar"><i style="width:${Math.min(100,Math.max(0,c.used/lim*100))}%"></i></div>`:''}</button>`}
   const b=bal(a),lim=a==='od'?+S.acc.od.limit||0:0;return `<button class="acc${homeAcc===a?' on':''}" style="--c:${ACOL[a]}" data-acc="${a}"><div class="k">${esc(accName(a))}</div><div class="v${b<0?' neg':''}">${egp(b)}</div><div class="s">${lim?`balance · ${money(lim+b)} available`:'balance'}${S.acc[a].anchor?` · from statement ${fmtS(S.acc[a].anchor.date)}`:''}</div></button>`}).join('');
  const ym=today.slice(0,7),inM=tx.filter(t=>t.date.startsWith(ym));
  const sp=r2(inM.filter(t=>t.type==='exp').reduce((s,t)=>s+cost(t),0)),inc=r2(inM.filter(t=>t.type==='inc').reduce((s,t)=>s+t.amt,0));
@@ -462,7 +466,7 @@ function renderHome(){
 function renderCredit(){
  const c=credit(),lim=+S.acc.credit.limit||0;$('sDayTxt').textContent=S.stmt;$('dDayTxt').textContent=S.due;
  $('dueBox2').innerHTML=dueHTML(c,true);$('stmHint').hidden=!!base();
- $('limitCard').innerHTML=`<h2>${esc(accName('credit'))}</h2><div class="kv"><span>Limit</span><b>${lim?egp(lim):'Not set'}</b></div><div class="kv"><span>Used (incl. remaining installments)</span><b>${egp(Math.max(0,c.used))}</b></div><div class="kv tot"><span>Available</span><b>${lim?egp(c.avail):'—'}</b></div>${(()=>{const a=bankAvail();return a?`<div class="kv"><span>Available per your last bank SMS (${fmtS(iso(new Date(a.ts)))})</span><b>${egp(a.v)}</b></div>`:''})()}${lim?`<div class="bar" style="--c:var(--credit)"><i style="width:${Math.min(100,Math.max(0,c.used/lim*100))}%"></i></div>`:''}${c.used<0?`<div class="msg">You have ${egp(-c.used)} extra paid on the card.</div>`:''}${base()?`<p class="note" style="margin:10px 0 0">Your statement of ${fmt(base().stmt)}: balance ${egp(base().closing)} · total due ${egp(base().due)}${base().min!=null?` · minimum ${egp(base().min)}`:''}${base().avail!=null?` · available ${egp(base().avail)}`:''}. Available now = that, minus what you spent since, plus what you paid since.</p>`:''}`;renderCounted(c);
+ $('limitCard').innerHTML=`<h2>${esc(accName('credit'))}</h2><div class="kv"><span>Limit</span><b>${lim?egp(lim):'Not set'}</b></div><div class="kv"><span>Outstanding balance (incl. remaining installments)</span><b>${egp(Math.max(0,c.used))}</b></div><div class="kv tot"><span>Available</span><b>${lim?egp(c.avail):'—'}</b></div>${(()=>{const a=bankAvail();return a?`<div class="kv"><span>Available in your last bank SMS (${fmtS(iso(new Date(a.ts)))}, before fees the bank adds later)</span><b>${egp(a.v)}</b></div>`:''})()}${lim?`<div class="bar" style="--c:var(--credit)"><i style="width:${Math.min(100,Math.max(0,c.used/lim*100))}%"></i></div>`:''}${c.used<0?`<div class="msg">You have ${egp(-c.used)} extra paid on the card.</div>`:''}${base()?`<p class="note" style="margin:10px 0 0">Your statement of ${fmt(base().stmt)}: balance ${egp(base().closing)} · total due ${egp(base().due)}${base().min!=null?` · minimum ${egp(base().min)}`:''}${base().avail!=null?` · available ${egp(base().avail)}`:''}. Available now = that, minus what you spent since, plus what you paid since.</p>`:''}`;renderCounted(c);
  const o=c.open,fs=r2(o.full.reduce((s,x)=>s+x.amt,0)),is=r2(o.inst.reduce((s,x)=>s+x.amt,0));
  $('openCard').innerHTML=`<h2>Next bill · ${fmtS(o.stmt)}</h2><p class="note" style="margin-top:-6px">Still open · due ${dow(o.due)} ${fmtS(o.due)}</p><div class="kv"><span>Purchases to pay in full</span><b>${egp(fs)}</b></div><div class="kv"><span>Installments this month (${o.inst.length})</span><b>${egp(is)}</b></div>${o.covered?`<div class="kv"><span>Already paid ahead</span><b>− ${egp(o.covered)}</b></div>`:''}<div class="kv tot"><span>So far</span><b>${egp(o.rem)}</b></div>`;
  const plans=tx.filter(t=>t.type==='exp'&&t.acc==='credit'&&t.plan).sort(byDate);
@@ -976,6 +980,9 @@ function tagSubs(){let changed=false;
   if(f){t.fxFee=f.amt;t.amt=r2(t.amt+f.amt);if(f.stmtKey)t.fxKey=f.stmtKey;tx=tx.filter(x=>x!==f);changed=true}}
  /* charges known only from SMS: the bank adds its 3% later, so add it now */
  for(const t of tx){if(!t.sub||t.fxFee||t.stmtKey||!t.sms)continue;const sb=S.subs.find(x=>x.id===t.sub);if(sb&&sb.fx){t.fxFee=FX(t.amt);t.amt=r2(t.amt+t.fxFee);changed=true}}
+ for(const t of tx){if(t.type!=='exp'||t.acc!=='credit'||t.fxFee||t.stmtKey||!t.sms||!/international limit/i.test(t.sms.body))continue;t.fxFee=FX(t.amt);t.amt=r2(t.amt+t.fxFee);changed=true}
+ /* fees added by earlier versions with rounding: use the bank's cut-off amount */
+ for(const t of tx){if(!t.fxFee||t.fxKey)continue;const base=r2(t.amt-t.fxFee),f=FX(base);if(Math.abs(f-t.fxFee)>0.001&&Math.abs(f-t.fxFee)<0.02){t.fxFee=f;t.amt=r2(base+f);changed=true}}
  return changed}
 const subCharges=id=>tx.filter(t=>t.type==='exp'&&t.sub===id).sort(byDate);
 const nextDate=(d,cycle)=>{const[y,m,dd]=parts(d);return mk(y,m-1+(cycle==='y'?12:1),dd)};
@@ -1102,6 +1109,7 @@ function ingest(list){const r={added:0,merged:0,known:0,failed:0};
   if(p.type==='pay'){t.acc='debit';t.sms.guess=true}
   if(p.ipn){t.ipFee=ipFee(p.amt);t.amt=r2(p.amt+t.ipFee)}
   if(p.otp2){t.sms.otp2=true;t.note=(t.note||'Online purchase')+' (from the one-time password message)'}
+  if(t.type==='exp'&&t.acc==='credit'&&/international limit/i.test(msg.body)&&!subMatch(norm(msg.body)+' '+(p.m||'').toLowerCase())){t.fxFee=FX(t.amt);t.amt=r2(t.amt+t.fxFee)}
   if(t.type==='exp'){const sb=subMatch(norm(msg.body)+' '+(p.m||'').toLowerCase());if(sb){t.sub=sb.id;t.cat='subs';t.review=false;if(!p.m)t.note=sb.n;if(p.est)t.note=sb.n+' (amount in foreign currency — estimated)';if(sb.fx){t.fxFee=FX(t.amt);t.amt=r2(t.amt+t.fxFee)}}}
   const st=tx.find(x=>(x.stmtKey||x.payKey)&&!x.sms&&x.amt===t.amt&&Math.abs(dayDiff(x.date,t.date))<=(x.payKey?10:4)&&(x.type===t.type||(t.type==='exp'&&x.type==='xfer'&&x.acc===t.acc)));
   if(st){st.sms=t.sms;skip.push(key);r.merged++;continue}

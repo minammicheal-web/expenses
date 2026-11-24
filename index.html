@@ -127,6 +127,9 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
   <div class="card" id="openCard"></div>
  </div>
  <p class="note" id="stmHint" style="margin:-4px 0 14px">Got a statement PDF? <a href="#settings" style="color:var(--credit);font-weight:700">Import it in Settings</a> to set your card position and installments.</p>
+ <div class="card"><h2>What's counted</h2><p class="note" style="margin-top:-6px">Every payment and purchase the app is counting since your last statement. Something wrong? Tap it to fix or delete it.</p>
+  <div class="seg two" id="cntSeg"><button data-cnt="pay" class="on">Payments &amp; refunds</button><button data-cnt="buy">Purchases on the next bill</button></div>
+  <ul class="list" id="cntList"></ul></div>
  <div class="card"><h2>What will I owe?</h2><div class="row" style="margin-bottom:6px"><div><label for="fcDate">Due date</label><input id="fcDate" type="date"></div><div></div></div><div id="fcOut"></div></div>
  <div class="card"><h2>Installments</h2><ul class="list" id="instList"></ul></div>
  <div class="card"><h2>Card purchases</h2><p class="note" style="margin-top:-6px">Turned one of these into installments at the bank? Tap <b>Installments</b> next to it. The others stay as pay-in-full.</p><ul class="list" id="ccList"></ul><button class="btn ghost" id="ccMore" hidden style="margin-top:10px">Show more</button></div>
@@ -410,9 +413,12 @@ function pushReminder(){if(!window.Android||!Android.setReminder)return;
 
 /* ---------- home ---------- */
 let homeAcc=null,homeN=40;
+function paidSince(){const B=base();if(!B)return 0;return r2(tx.filter(t=>isCredit(t)&&(t.bill?t.bill>B.stmt:t.date>B.stmt)).reduce((a,t)=>a+t.amt,0))}
+function minLine(c){const B=base();if(!B||B.min==null||!c.now||c.now.stmt!==B.stmt)return '';const left=r2(Math.max(0,B.min-paidSince()));
+ return `<small>Minimum due: <b>${egp(left)}</b>${left<B.min?` (of ${egp(B.min)} — part already paid)`:''}</small>`}
 function dueHTML(c,withBtn){
  if(c.now){const d=daysTo(c.now.due);const when=c.now.over?`was due ${fmtS(c.now.due)} — ${-d} day${d===-1?'':'s'} late`:d===0?'due today':`due ${dow(c.now.due)} ${fmtS(c.now.due)} · ${d} day${d===1?'':'s'} left`;
-  return `<div class="due${c.now.over?' over':''}"><div class="t"><small>Credit card bill to pay</small><span class="big">${egp(c.now.amt)}</span><small>${when}</small></div>${withBtn?`<button class="btn" data-paynow="1">Pay now</button>`:''}</div>`}
+  return `<div class="due${c.now.over?' over':''}"><div class="t"><small>Credit card bill to pay</small><span class="big">${egp(c.now.amt)}</span><small>${when}</small>${minLine(c)}</div>${withBtn?`<button class="btn" data-paynow="1">Pay now</button>`:''}</div>`}
  if(c.last&&c.last.billed>0)return `<div class="due ok"><div class="t"><small>Credit card</small><b>Bill of ${fmtS(c.last.stmt)} is paid.</b><small>Next bill: ${fmtS(c.open.stmt)}, so far ${egp(c.open.billed)}</small></div></div>`;
  return ''}
 function renderHome(){
@@ -435,7 +441,7 @@ function renderHome(){
 function renderCredit(){
  const c=credit(),lim=+S.acc.credit.limit||0;$('sDayTxt').textContent=S.stmt;$('dDayTxt').textContent=S.due;
  $('dueBox2').innerHTML=dueHTML(c,true);$('stmHint').hidden=!!base();
- $('limitCard').innerHTML=`<h2>${esc(accName('credit'))}</h2><div class="kv"><span>Limit</span><b>${lim?egp(lim):'Not set'}</b></div><div class="kv"><span>Used (incl. remaining installments)</span><b>${egp(Math.max(0,c.used))}</b></div><div class="kv tot"><span>Available</span><b>${lim?egp(c.avail):'—'}</b></div>${lim?`<div class="bar" style="--c:var(--credit)"><i style="width:${Math.min(100,Math.max(0,c.used/lim*100))}%"></i></div>`:''}${c.used<0?`<div class="msg">You have ${egp(-c.used)} extra paid on the card.</div>`:''}${base()?`<p class="note" style="margin:10px 0 0">Starting from your statement of ${fmt(base().stmt)}: closing balance ${egp(base().closing)}, total due ${egp(base().due)}.</p>`:''}`;
+ $('limitCard').innerHTML=`<h2>${esc(accName('credit'))}</h2><div class="kv"><span>Limit</span><b>${lim?egp(lim):'Not set'}</b></div><div class="kv"><span>Used (incl. remaining installments)</span><b>${egp(Math.max(0,c.used))}</b></div><div class="kv tot"><span>Available</span><b>${lim?egp(c.avail):'—'}</b></div>${lim?`<div class="bar" style="--c:var(--credit)"><i style="width:${Math.min(100,Math.max(0,c.used/lim*100))}%"></i></div>`:''}${c.used<0?`<div class="msg">You have ${egp(-c.used)} extra paid on the card.</div>`:''}${base()?`<p class="note" style="margin:10px 0 0">Your statement of ${fmt(base().stmt)}: balance ${egp(base().closing)} · total due ${egp(base().due)}${base().min!=null?` · minimum ${egp(base().min)}`:''}${base().avail!=null?` · available ${egp(base().avail)}`:''}. Available now = that, minus what you spent since, plus what you paid since.</p>`:''}`;renderCounted(c);
  const o=c.open,fs=r2(o.full.reduce((s,x)=>s+x.amt,0)),is=r2(o.inst.reduce((s,x)=>s+x.amt,0));
  $('openCard').innerHTML=`<h2>Next bill · ${fmtS(o.stmt)}</h2><p class="note" style="margin-top:-6px">Still open · due ${dow(o.due)} ${fmtS(o.due)}</p><div class="kv"><span>Purchases to pay in full</span><b>${egp(fs)}</b></div><div class="kv"><span>Installments this month (${o.inst.length})</span><b>${egp(is)}</b></div>${o.covered?`<div class="kv"><span>Already paid ahead</span><b>− ${egp(o.covered)}</b></div>`:''}<div class="kv tot"><span>So far</span><b>${egp(o.rem)}</b></div>`;
  const plans=tx.filter(t=>t.type==='exp'&&t.acc==='credit'&&t.plan).sort(byDate);
@@ -629,7 +635,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-drive]');i
 
 
 /* ---------- installment setup ---------- */
-let P=null,ccN=20;
+let P=null,ccN=20,cntView='pay';
 function openPlan(id,fromAdd){const t=tx.find(x=>x.id===id);if(!t)return;
  P={id,months:t.plan?t.plan.months:12,first:t.plan?stmtOf(t.plan.first):stmtOf(t.date),touched:!!t.plan,fromAdd:!!fromAdd};
  $('pMonthsIn').value=t.plan&&![3,6,9,10,12,18,24,36].includes(t.plan.months)?t.plan.months:'';
@@ -669,6 +675,12 @@ $('pSave').addEventListener('click',()=>{const t=tx.find(x=>x.id===P.id),n=pMont
 $('pRemove').addEventListener('click',()=>{const b=$('pRemove');if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again: pay the whole amount on one bill';setTimeout(()=>{b.dataset.sure='';b.textContent='Cancel installments (pay in full)'},3000);return}
  b.dataset.sure='';const t=tx.find(x=>x.id===P.id);delete t.plan;save();toast('Back to pay in full',false);leavePlan()});
 $('ccMore').addEventListener('click',()=>{ccN+=20;renderCredit()});
+$('cntSeg').addEventListener('click',e=>{const b=e.target.closest('[data-cnt]');if(!b)return;cntView=b.dataset.cnt;renderCredit()});
+function renderCounted(c){document.querySelectorAll('#cntSeg button').forEach(b=>b.classList.toggle('on',b.dataset.cnt===cntView));
+ const B=base();let list,total;
+ if(cntView==='pay'){list=tx.filter(t=>isCredit(t)&&(!B||(t.bill?t.bill>B.stmt:t.date>B.stmt))).sort(byDate);total=r2(list.reduce((a,t)=>a+t.amt,0))}
+ else{list=c.open.full.map(x=>x.t).sort(byDate);total=r2(list.reduce((a,t)=>a+t.amt,0))}
+ $('cntList').innerHTML=(list.length?`<li style="border:0;padding-top:0"><span class="t note">${list.length} entr${list.length===1?'y':'ies'}${B&&cntView==='pay'?` after ${fmtS(B.stmt)}`:''}</span><b>${egp(total)}</b></li>`+grouped(list,'credit'):'<li class="empty" style="display:block;border:0">Nothing here.</li>')}
 
 /* ---------- forecast ---------- */
 function forecast(date){const c=credit();let s=addM(stmtOf(date),-2);for(let k=0;k<5&&dueOf(s)<date;k++)s=addM(s,1);
@@ -705,7 +717,7 @@ function parseCibCredit(lines){
  const sd=get(/^Statement Date\s+([A-Za-z]{3})-(\d{2})\b/);if(!sd||!get(/^Card Limit/))return null;
  const sm=MON3[sd[1].toLowerCase()],sy=2000+ +sd[2];if(!sm)return null;
  const st={kind:'credit',stmt:mk(sy,sm-1,S.stmt),limit:numv((get(/^Card Limit\s+([\d,.]+)/)||[])[1]),due:numv((get(/^Total Amount Due\s+([\d,.]+)/)||[])[1]),
-  min:numv((get(/^Minimum Payment Due\s+([\d,.]+)/)||[])[1]),dueDate:(get(/^Payment Due Date\s+(\d{4}-\d{2}-\d{2})/)||[])[1]||null,
+  min:numv((get(/^Minimum Payment Due\s+([\d,.]+)/)||[])[1]),avail:numv((get(/^Available Credit Limit\s+([\d,.]+)/)||[])[1]),dueDate:(get(/^Payment Due Date\s+(\d{4}-\d{2}-\d{2})/)||[])[1]||null,
   card:(get(/^Card Number\s+(?:[\d*]{4}\s+){3}(\d{4})/)||[])[1]||'',closing:numv((get(/CLOSING BALANCE\s+([\d,.]+)/)||[])[1]),
   opening:numv((get(/OPENING BALANCE\s+([\d,.]+)/)||[])[1]),lines:[],inst:[]};
  const yearFor=m=>m>sm?sy-1:sy;
@@ -843,7 +855,7 @@ function planImport(sts){
    const cat=guessCat(i.name),t={id:uid(),type:'exp',acc:'credit',amt,date:i.date,note:i.name,created:Date.parse(i.date)||Date.now(),plan:pl,instKey:i.key,bill:stmtOf(i.date)};
    if(cat)t.cat=cat;else{t.cat=null;t.review=true;R.review++}
    N.push(t);R.instNew++}
-  if(st.closing!=null&&st.due!=null&&(!R.base||st.stmt>=R.base.stmt))R.base={stmt:st.stmt,due:st.due,closing:st.closing,dueDate:st.dueDate,min:st.min,limit:st.limit,imported:true};
+  if(st.closing!=null&&st.due!=null&&(!R.base||st.stmt>=R.base.stmt))R.base={stmt:st.stmt,due:st.due,closing:st.closing,dueDate:st.dueDate,min:st.min,avail:st.avail,limit:st.limit,imported:true};
  }
  return{N,R}}
 let stmPending=null;

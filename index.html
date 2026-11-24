@@ -261,8 +261,8 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
 {
 /* ---------- settings & data ---------- */
 const ACC=['debit','credit','od','telda','cash'],NONCC=ACC.filter(a=>a!=='credit');
-const DEF_EXP=[['food','Food'],['groc','Groceries'],['phone','Phone bill'],['elec','Electricity charge card'],['gas','Gas charge card'],['deliv','Delivery'],['pharm','Pharmacy'],['trans','Transportation'],['apt','Apartment fees'],['other','Other']];
-const DEF_INC=[['salary','Salary'],['bonus','Bonus'],['gift','Gift'],['refund','Refund / cashback'],['other','Other']];
+const DEF_EXP=[['food','Food'],['groc','Groceries'],['phone','Phone bill'],['elec','Electricity charge card'],['gas','Gas charge card'],['deliv','Delivery'],['pharm','Pharmacy'],['trans','Transportation'],['apt','Apartment fees'],['sent','Sent to people'],['other','Other']];
+const DEF_INC=[['salary','Salary'],['recv','Received from people'],['bonus','Bonus'],['gift','Gift'],['refund','Refund / cashback'],['other','Other']];
 const DEF={acc:{debit:{n:'CIB Debit',open:0},credit:{n:'CIB Credit',limit:0},od:{n:'CIB Overdraft',open:0,limit:0},telda:{n:'Telda',open:0},cash:{n:'Cash',open:0}},
  stmt:11,due:5,remind:3,sms:{on:false,kw:{debit:'6396, 8659, 100044358659',credit:'3577',od:'5669, 100044925669',telda:'2501'},ipAcc:'debit'},payDay:28,merch:{},exp:DEF_EXP.map(([id,n])=>({id,n})),inc:DEF_INC.map(([id,n])=>({id,n}))};
 const FEE_CAT={id:'_fee',n:'Installment interest & fees'};
@@ -369,6 +369,9 @@ const byDate=(x,y)=>y.date.localeCompare(x.date)||(y.created||0)-(x.created||0);
 /* ---------- storage ---------- */
 function load(){try{const j=JSON.parse(localStorage.getItem('exp-data')||'{}');tx=Array.isArray(j.tx)?j.tx:[];skip=j.skip||[];fails=j.fails||[];S=merge(j.settings);tx.forEach(fixPlan);
  /* v4 put imported bank fees under Apartment fees by mistake */
+ for(const[k,id,n]of[['exp','sent','Sent to people'],['inc','recv','Received from people']])if(!S[k].some(c=>c.id===id))S[k].push({id,n});
+ tx.forEach(t=>{if(!t.review)return;const ipnOut=t.type==='exp'&&t.ipFee,ipnIn=t.type==='inc'&&t.acc!=='credit'&&((t.sms&&IPRE.test(norm(t.sms.body)))||(t.stmtKey&&!/^Inward ACH/i.test(t.note||'')));
+  if(ipnOut||ipnIn){t.cat=peopleCat(t.type,t.note==='InstaPay transfer'?'':t.note);t.review=false}});
  tx.forEach(t=>{if(t.cat==='apt'&&(t.stmtKey||t.note==='InstaPay fee')&&/\bfees?\b|interest|insurance|overdraft/i.test(t.note||''))t.cat=feeCat()})}catch(e){tx=[];S=clone(DEF)}}
 function merge(s){const o=clone(DEF);if(!s)return o;
  for(const k of ['stmt','due','remind'])if(s[k]!=null)o[k]=s[k];
@@ -736,6 +739,7 @@ function importAccount(st,N,R,linked){
   else if(/salary/i.test(d)&&!out){cat='salary';note='Salary'}
   else if(/credit card|card payment|cc payment/i.test(d)&&out){type='pay'}
   else if(/\bfees?\b|charges?|commission|interest|revolving overdraft/i.test(lo)){if(out){cat=feeCat();note=/revolving overdraft/i.test(d)?'Overdraft interest & fees':note}else{cat='refund'}}
+  else if(/ipn (?:outward|inward)/i.test(d))cat=peopleCat(out?'exp':'inc',note==='InstaPay transfer'?'':note);
   else if(out)cat=guessCat(d);
   const free=x=>!x.stmtKey&&x.amt===amt&&near(x,r.date,/salary/i.test(d)?10:4);
   let x=null;
@@ -762,6 +766,8 @@ const GUESS=[[/uber|careem|didi|indrive|swvl|\bmetro\b|wataniya|petrol|gas stati
 function guessCat(desc){const k=S.merch['exp:'+mkey(desc)];if(k&&S.exp.some(c=>c.id===k&&!c.hidden))return k;
  for(const[re,id]of GUESS)if(re.test(desc)&&S.exp.some(c=>c.id===id&&!c.hidden))return id;return null}
 const FEERE=/\bfees?\b|interest|insurance fee|late (?:payment )?charge|\bvat\b|stamp/i;
+function peopleCat(type,name){const k=name&&S.merch[type+':'+mkey(name)];if(k&&S[type].some(c=>c.id===k&&!c.hidden))return k;
+ const id=type==='exp'?'sent':'recv',n=type==='exp'?'Sent to people':'Received from people';let c=S[type].find(c=>c.id===id);if(!c){c={id,n};S[type].push(c)}c.hidden=false;return id}
 function feeCat(){let c=S.exp.find(c=>c.id==='fees'||/bank fees/i.test(c.n));if(c){c.hidden=false;return c.id}const id='fees';if(!S.exp.some(c=>c.id===id))S.exp.push({id,n:'Bank fees & interest'});else S.exp.find(c=>c.id===id).hidden=false;return id}
 /* work out every change on a copy, so it can be shown before anything is saved */
 function planImport(sts){
@@ -960,7 +966,7 @@ function ingest(list){const r={added:0,merged:0,known:0,failed:0};
   if(p.err){fails.unshift({key,from:msg.from||'',body:msg.body,ts:msg.ts,err:p.err});fails=fails.slice(0,20);r.failed++;continue}
   const t={id:uid(),type:p.type,acc:p.acc,amt:p.amt,date:iso(new Date(msg.ts)),note:p.m||'',created:msg.ts,sms:{key,from:msg.from||'',body:msg.body,ts:msg.ts,m:p.m,ip:p.ip}};
   if(p.type==='exp'||p.type==='inc'){const c=p.m&&S.merch[p.type+':'+mkey(p.m)];
-   if(c&&S[p.type].some(x=>x.id===c))t.cat=c;else if(p.type==='inc'&&p.acc==='credit')t.cat='refund';else{t.cat=null;t.review=true}}
+   if(c&&S[p.type].some(x=>x.id===c))t.cat=c;else if(p.type==='inc'&&p.acc==='credit')t.cat='refund';else if(p.acc!=='credit'&&IPRE.test(norm(msg.body)))t.cat=peopleCat(p.type,p.m);else{t.cat=null;t.review=true}}
   if(p.type==='xfer')t.to='cash';
   if(p.type==='pay'){t.acc='debit';t.sms.guess=true}
   if(p.ipn){t.ipFee=ipFee(p.amt);t.amt=r2(p.amt+t.ipFee)}

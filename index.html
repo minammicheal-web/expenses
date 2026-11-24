@@ -124,7 +124,9 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
   <div class="card" id="limitCard"></div>
   <div class="card" id="openCard"></div>
  </div>
+ <div class="card"><h2>What will I owe?</h2><div class="row" style="margin-bottom:6px"><div><label for="fcDate">Due date</label><input id="fcDate" type="date"></div><div></div></div><div id="fcOut"></div></div>
  <div class="card"><h2>Installments</h2><ul class="list" id="instList"></ul></div>
+ <div class="card"><h2>Card purchases</h2><p class="note" style="margin-top:-6px">Turned one of these into installments at the bank? Tap <b>Installments</b> next to it. The others stay as pay-in-full.</p><ul class="list" id="ccList"></ul><button class="btn ghost" id="ccMore" hidden style="margin-top:10px">Show more</button></div>
  <div class="card"><h2>Bills</h2><p class="note" style="margin-top:-6px">Each bill is issued on the <span id="sDayTxt">11</span>th and is due on the <span id="dDayTxt">5</span>th. Payments and refunds cover the oldest bill first.</p><ul class="list" id="billList"></ul></div>
 </section>
 
@@ -163,7 +165,7 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
   <h2 style="margin-top:18px">Credit card</h2>
   <div class="row"><div><label for="sLimit">Credit limit (EGP)</label><input id="sLimit" type="number" inputmode="decimal" min="0"></div><div><label for="sRemind">Remind me (days before due)</label><input id="sRemind" type="number" min="0" max="20"></div></div>
   <div class="row"><div><label for="sStmt">Bill issued on day</label><input id="sStmt" type="number" min="1" max="28"></div><div><label for="sDue">Payment due on day</label><input id="sDue" type="number" min="1" max="28"></div></div>
-  <p class="note">Already owe something on the card or have running installments? Add them as credit card purchases with their real date. For an installment plan that started earlier, the bills it already appeared on are counted automatically.</p>
+  <p class="note">Already owe something on the card or have running installments? Add them as credit card purchases with their real date, then tap Installments on the purchase and set the first due date. Installments already billed are counted automatically.</p>
   <button class="btn" id="sSave">Save</button>
  </div>
  <div class="grid2" style="margin-bottom:14px">
@@ -177,7 +179,7 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
   <div class="f"><label for="ipAcc">InstaPay messages with no card or account number go to</label><select id="ipAcc"></select></div>
   <button class="btn ghost" data-sms="savekw">Save numbers</button>
   <div id="smsState" style="margin-top:14px"></div>
-  <div id="smsScanBox" hidden style="margin-top:14px"><div class="row" style="margin-bottom:8px"><div><label for="scanDays">Add messages already on the phone from</label><select id="scanDays"><option value="7">the last 7 days</option><option value="30" selected>the last 30 days</option><option value="90">the last 3 months</option><option value="365">the last year</option></select></div><div style="align-self:end"><button class="btn ghost" data-sms="scan">Add old messages</button></div></div></div>
+  <div id="smsScanBox" hidden style="margin-top:14px"><div class="row" style="margin-bottom:8px"><div><label for="scanDays">Add messages already on the phone from</label><select id="scanDays"><option value="7">the last 7 days</option><option value="30" selected>the last 30 days</option><option value="90">the last 3 months</option><option value="365">the last year</option><option value="3650">all messages</option></select></div><div style="align-self:end"><button class="btn ghost" data-sms="scan">Add old messages</button></div></div></div>
   <div id="smsMsg"></div>
   <h2 style="margin-top:18px;font-size:16px">Test a message</h2>
   <div class="f"><textarea id="smsTest" rows="4" placeholder="Paste a bank SMS here to see what the app would record" style="width:100%;font:15px system-ui,sans-serif;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--soft);color:var(--ink)"></textarea></div>
@@ -213,17 +215,26 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
   <div id="ccWrap">
    <span class="lbl">How will you pay it?</span>
    <div class="seg two" id="aMode"><button data-mode="full">Pay before due date</button><button data-mode="inst">Installments</button></div>
-   <div id="instWrap">
-    <div class="f"><span class="lbl">Months</span><div class="chips" id="aMonths"></div></div>
-    <div class="row"><div><label for="aMonthsIn">Or type months</label><input id="aMonthsIn" type="number" min="2" max="60" inputmode="numeric"></div><div><label for="aFee">Interest / fees (EGP)</label><input id="aFee" type="number" min="0" inputmode="decimal" placeholder="0"></div></div>
-    <div class="f"><label for="aOff">First installment on</label><select id="aOff"></select></div>
-   </div>
   </div>
   <div class="info" id="aInfo" hidden></div>
   <div class="row"><div><label for="aDate">Date</label><input id="aDate" type="date"></div><div><label for="aNote">Note</label><input id="aNote" maxlength="120" placeholder="Optional"></div></div>
   <div class="info" id="aSms" hidden style="--c:var(--warn);white-space:pre-wrap;font-size:13px"></div>
   <div id="aErr"></div>
-  <div class="btns" style="margin-top:6px"><button class="btn" id="aSave">Save</button><button class="btn danger" id="aDel" hidden>Delete</button></div>
+  <div class="btns" style="margin-top:6px"><button class="btn" id="aSave">Save</button><button class="btn ghost" id="aPlan" hidden style="background:color-mix(in srgb,var(--credit) 14%,transparent)">Turn into installments</button><button class="btn danger" id="aDel" hidden>Delete</button></div>
+ </div>
+</section>
+
+<!-- INSTALLMENT SETUP -->
+<section id="v-plan" hidden>
+ <div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><h2 style="margin:0">Installments</h2><button class="ib" id="pClose">Close</button></div>
+  <div class="info" id="pTx" style="--c:var(--credit)"></div>
+  <div class="f"><span class="lbl">Number of months</span><div class="chips" id="pMonths"></div></div>
+  <div class="row"><div><label for="pMonthsIn">Or type months</label><input id="pMonthsIn" type="number" min="2" max="60" inputmode="numeric"></div><div><label for="pEach">Monthly installment (EGP)</label><input id="pEach" type="number" inputmode="decimal" min="0" step="0.01"></div></div>
+  <div class="f"><label for="pFirst">First installment due on</label><select id="pFirst"></select></div>
+  <div id="pSum"></div>
+  <div id="pErr"></div>
+  <div class="btns" style="margin-top:12px"><button class="btn" id="pSave">Save installments</button><button class="btn danger" id="pRemove" hidden>Cancel installments (pay in full)</button></div>
  </div>
 </section>
 </div>
@@ -269,10 +280,13 @@ const catName=(t)=>{if(t.type==='exp'||t.type==='inc'){const c=S[t.type].find(c=
 const stmtOf=d=>{const[y,m,dd]=parts(d);return dd<=Math.min(S.stmt,dim(y,m-1))?mk(y,m-1,S.stmt):mk(y,m,S.stmt)};
 const addM=(s,k)=>{const[y,m]=parts(s);return mk(y,m-1+k,S.stmt)};
 const dueOf=s=>{const[y,m,d]=parts(s);return S.due>d?mk(y,m-1,S.due):mk(y,m,S.due)};
-const fee=t=>t.plan?r2(t.plan.fee||0):0;
-const cost=t=>r2(t.amt+fee(t));
-function schedule(t){const n=t.plan.months,tot=cost(t),each=r2(tot/n),base=stmtOf(t.date),off=t.plan.off||0;
- return Array.from({length:n},(_,i)=>({stmt:addM(base,off+i),amt:i<n-1?each:r2(tot-each*(n-1)),i:i+1,n}))}
+/* an installment plan: {months, each = monthly amount, first = date of the bill the first installment is on} */
+const planTotal=pl=>r2(pl.each*pl.months);
+const fee=t=>t.plan?r2(planTotal(t.plan)-t.amt):0;
+const cost=t=>t.plan?planTotal(t.plan):t.amt;
+function schedule(t){const n=t.plan.months,base=stmtOf(t.plan.first);
+ return Array.from({length:n},(_,i)=>({stmt:addM(base,i),amt:r2(t.plan.each),i:i+1,n}))}
+function fixPlan(t){const p=t.plan;if(!p||p.each!=null)return;const n=p.months||1;p.each=r2((t.amt+(+p.fee||0))/n);p.first=addM(stmtOf(t.date),p.off||0);delete p.fee;delete p.off}
 function credit(){
  const map=new Map(),bill=s=>{if(!map.has(s))map.set(s,{stmt:s,due:dueOf(s),full:[],inst:[],billed:0});return map.get(s)};
  let charged=0,pool=0;
@@ -312,7 +326,7 @@ function title(t){
  return catName(t)}
 function sub(t,a){const bits=[];
  if(!a||t.type==='exp'||t.type==='inc')if(t.type!=='xfer'&&t.type!=='pay')bits.push(accName(t.acc));
- if(t.type==='exp'&&t.acc==='credit')bits.push(t.plan?`${t.plan.months} installments of ${money(schedule(t)[0].amt)}`+(fee(t)?` (incl. ${money(fee(t))} fees)`:''):`bill of ${fmtS(stmtOf(t.date))}`);
+ if(t.type==='exp'&&t.acc==='credit')bits.push(t.plan?`${t.plan.months} × ${money(t.plan.each)} installments`:`bill of ${fmtS(stmtOf(t.date))}`);
  if(t.note)bits.push(esc(t.note));if(t.sms)bits.push('SMS');return bits.join(' · ')}
 const ACOL={debit:'var(--debit)',credit:'var(--credit)',telda:'var(--telda)',cash:'var(--cash)'};
 function row(t,a){const d=delta(t,a),cls=d<0?'o':d>0?'i':'n',sign=d<0?'−':d>0?'+':'';
@@ -322,7 +336,7 @@ function grouped(list,a){let out='',last='';
 const byDate=(x,y)=>y.date.localeCompare(x.date)||(y.created||0)-(x.created||0);
 
 /* ---------- storage ---------- */
-function load(){try{const j=JSON.parse(localStorage.getItem('exp-data')||'{}');tx=Array.isArray(j.tx)?j.tx:[];skip=j.skip||[];fails=j.fails||[];S=merge(j.settings)}catch(e){tx=[];S=clone(DEF)}}
+function load(){try{const j=JSON.parse(localStorage.getItem('exp-data')||'{}');tx=Array.isArray(j.tx)?j.tx:[];skip=j.skip||[];fails=j.fails||[];S=merge(j.settings);tx.forEach(fixPlan)}catch(e){tx=[];S=clone(DEF)}}
 function merge(s){const o=clone(DEF);if(!s)return o;
  for(const k of ['stmt','due','remind'])if(s[k]!=null)o[k]=s[k];
  if(s.acc)for(const a of ACC)o.acc[a]={...o.acc[a],...(s.acc[a]||{})};
@@ -368,7 +382,11 @@ function renderCredit(){
  $('openCard').innerHTML=`<h2>Next bill · ${fmtS(o.stmt)}</h2><p class="note" style="margin-top:-6px">Still open · due ${dow(o.due)} ${fmtS(o.due)}</p><div class="kv"><span>Purchases to pay in full</span><b>${egp(fs)}</b></div><div class="kv"><span>Installments this month (${o.inst.length})</span><b>${egp(is)}</b></div>${o.covered?`<div class="kv"><span>Already paid ahead</span><b>− ${egp(o.covered)}</b></div>`:''}<div class="kv tot"><span>So far</span><b>${egp(o.rem)}</b></div>`;
  const plans=tx.filter(t=>t.type==='exp'&&t.acc==='credit'&&t.plan).sort(byDate);
  $('instList').innerHTML=plans.length?plans.map(t=>{const sc=schedule(t),done=sc.filter(p=>p.stmt<today),leftAmt=r2(sc.filter(p=>p.stmt>=today).reduce((s,p)=>s+p.amt,0)),fin=done.length===sc.length;
-  return `<li class="tx" data-tx="${t.id}" style="--c:var(--credit)"><span class="t"><b>${esc(t.note||catName(t))}</b> <span class="pill${fin?' paid':''}">${fin?'Finished':`${done.length} of ${sc.length} billed`}</span><small>${money(sc[0].amt)} × ${sc.length} · bought ${fmt(t.date)} · last bill ${fmtS(sc.at(-1).stmt)}</small><span class="bar" style="display:block;--c:var(--credit)"><i style="width:${done.length/sc.length*100}%"></i></span></span><span class="amt">${fin?'':money(leftAmt)+'<br><small class="note">left</small>'}</span></li>`}).join(''):'<li class="empty" style="display:block;border:0">No installment plans. Choose <b>Installments</b> when you add a credit card expense.</li>';
+  return `<li class="tx" data-plan="${t.id}" style="--c:var(--credit)"><span class="t"><b>${esc(t.note||catName(t))}</b> <span class="pill${fin?' paid':''}">${fin?'Finished':`${done.length} of ${sc.length} billed`}</span><small>${money(sc[0].amt)} × ${sc.length} = ${money(cost(t))} · bought ${fmt(t.date)} · last due ${fmtS(dueOf(sc.at(-1).stmt))}</small><span class="bar" style="display:block;--c:var(--credit)"><i style="width:${done.length/sc.length*100}%"></i></span></span><span class="amt">${fin?'':money(leftAmt)+'<br><small class="note">left</small>'}</span></li>`}).join(''):'<li class="empty" style="display:block;border:0">No installment plans yet. Tap <b>Installments</b> on a card purchase below.</li>';
+ const cp=tx.filter(t=>t.type==='exp'&&t.acc==='credit'&&!t.plan).sort(byDate);
+ $('ccList').innerHTML=cp.length?cp.slice(0,ccN).map(t=>`<li><span class="dot" style="--c:var(--credit)"></span><span class="t" data-tx="${t.id}" style="cursor:pointer">${esc(title(t))}<small>${fmt(t.date)}${t.note?' · '+esc(t.note):''} · bill of ${fmtS(stmtOf(t.date))}</small></span><span class="amt">${money(t.amt)}</span><button class="ib" data-plan="${t.id}">Installments</button></li>`).join(''):'<li class="empty" style="display:block;border:0">No card purchases yet.</li>';
+ $('ccMore').hidden=cp.length<=ccN;
+ if(!$('fcDate').value)$('fcDate').value=(c.now?c.now.due:c.open.due);renderForecast();
  const fut=c.bills.filter(b=>b.status==='future'&&b.billed>0),show=[...fut.slice(0,2).reverse(),...c.bills.filter(b=>b.status!=='future'&&(b.billed>0||b.status==='open')).reverse()];
  const part=(n,w,a)=>n?`${n} ${w}${n===1?'':'s'} ${money(a)}`:'';
  const lbl={open:'Open',future:'Upcoming',paid:'Paid',over:'Overdue',part:'Partly paid',due:'To pay'};
@@ -397,11 +415,11 @@ function renderReports(){
  const p=$('rMonth').value,acc=ca==='all'?null:ca,inP=tx.filter(t=>t.date.startsWith(p)&&(!acc||t.acc===acc));
  const ex=inP.filter(t=>t.type==='exp'),sp=r2(ex.reduce((s,t)=>s+cost(t),0)),inc=r2(inP.filter(t=>t.type==='inc').reduce((s,t)=>s+t.amt,0));
  $('rTiles').innerHTML=`<div class="tile"><div class="k">Spent</div><div class="v" style="color:var(--out)">${money(sp)}</div></div><div class="tile"><div class="k">Income</div><div class="v" style="color:var(--in)">${money(inc)}</div></div><div class="tile"><div class="k">Net</div><div class="v">${money(inc-sp)}</div></div>`;
- const m=new Map();ex.forEach(t=>{m.set(t.cat,r2((m.get(t.cat)||0)+t.amt));if(fee(t))m.set('_fee',r2((m.get('_fee')||0)+fee(t)))});
+ const m=new Map();ex.forEach(t=>{m.set(t.cat,r2((m.get(t.cat)||0)+t.amt));if(fee(t)>0)m.set('_fee',r2((m.get('_fee')||0)+fee(t)))});
  const rows=[...m].sort((a,b)=>b[1]-a[1]),max=Math.max(1,...rows.map(r=>r[1]));
  if(rCat&&!m.has(rCat))rCat=null;
  $('rCats').innerHTML=rows.length?rows.map(([k,v])=>`<div class="meter${rCat===k?' on':''}" data-rcat="${esc(k)}"><div class="top"><span>${esc(k==='_fee'?FEE_CAT.n:catName({type:'exp',cat:k}))}</span><b>${money(v)} · ${Math.round(v/sp*100)}%</b></div><div class="bar"><i style="width:${v/max*100}%"></i></div></div>`).join(''):'<div class="empty">No spending in this period.</div>';
- const list=ex.filter(t=>!rCat||(rCat==='_fee'?fee(t):t.cat===rCat)).sort(byDate);
+ const list=ex.filter(t=>!rCat||(rCat==='_fee'?fee(t)>0:t.cat===rCat)).sort(byDate);
  $('rListTitle').textContent=rCat?(rCat==='_fee'?FEE_CAT.n:catName({type:'exp',cat:rCat})):'All spending';
  $('rList').innerHTML=list.length?grouped(list,null):'<li class="empty" style="display:block;border:0">Nothing to show.</li>';
 }
@@ -425,13 +443,13 @@ document.addEventListener('change',e=>{const r=e.target.dataset&&e.target.datase
 
 /* ---------- add / edit ---------- */
 let F=null,editId=null,backTo='home';
-const fresh=(type)=>({type,acc:type==='pay'?'debit':type==='exp'?'cash':'debit',to:'cash',cat:null,mode:'full',months:12,off:0});
+const fresh=(type)=>({type,acc:type==='pay'?'debit':type==='exp'?'cash':'debit',to:'cash',cat:null,mode:'full'});
 function openAdd(type,acc,amt){editId=null;F=fresh(type||'exp');if(acc)F.acc=acc;
- $('aAmt').value=amt||'';$('aFee').value='';$('aMonthsIn').value='';$('aNote').value='';$('aDate').value=today;$('aErr').innerHTML='';
+ $('aAmt').value=amt||'';$('aNote').value='';$('aDate').value=today;$('aErr').innerHTML='';
  $('addTitle').textContent='New entry';$('aDel').hidden=true;$('aSms').hidden=true;go('add')}
 function openEdit(id){const t=tx.find(x=>x.id===id);if(!t)return;editId=id;
- F={type:t.type,acc:t.acc,to:t.to||'cash',cat:t.cat||null,mode:t.plan?'inst':'full',months:t.plan?t.plan.months:12,off:t.plan?t.plan.off||0:0};
- $('aAmt').value=t.amt;$('aFee').value=t.plan&&t.plan.fee?t.plan.fee:'';$('aMonthsIn').value=t.plan&&![3,6,9,12,18,24,36].includes(t.plan.months)?t.plan.months:'';
+ F={type:t.type,acc:t.acc,to:t.to||'cash',cat:t.cat||null,mode:t.plan?'inst':'full'};
+ $('aAmt').value=t.amt;
  $('aNote').value=t.note||'';$('aDate').value=t.date;$('aErr').innerHTML='';$('addTitle').textContent='Edit entry';$('aDel').hidden=false;$('aSms').hidden=!t.sms;$('aSms').textContent=t.sms?'From SMS'+(t.sms.from?' ('+t.sms.from+')':'')+':\n'+t.sms.body:'';go('add')}
 function accChoices(){return F.type==='exp'||F.type==='inc'?ACC:['debit','telda','cash']}
 function renderAdd(){if(!F)F=fresh('exp');
@@ -447,18 +465,17 @@ function renderAdd(){if(!F)F=fresh('exp');
   const extra=F.cat&&!cl.some(c=>c.id===F.cat)?S[k].filter(c=>c.id===F.cat):[];
   $('aCat').innerHTML=[...cl,...extra].map(c=>`<button class="chip${F.cat===c.id?' on':''}" data-acat="${esc(c.id)}">${esc(c.n)}</button>`).join('')+'<button class="chip add" id="newCatChip">+ New</button>'}
  const cc=F.type==='exp'&&F.acc==='credit';$('ccWrap').hidden=!cc;
- if(cc){document.querySelectorAll('#aMode button').forEach(b=>b.classList.toggle('on',b.dataset.mode===F.mode));$('instWrap').hidden=F.mode!=='inst';
-  $('aMonths').innerHTML=[3,6,9,12,18,24,36].map(n=>`<button class="chip${F.months===n&&!$('aMonthsIn').value?' on':''}" data-months="${n}">${n}</button>`).join('');
-  const d=$('aDate').value||today,base=stmtOf(d);
-  $('aOff').innerHTML=[0,1,2,3].map(k=>{const s=addM(base,k);return `<option value="${k}"${F.off===k?' selected':''}>Bill of ${fmt(s)} (due ${fmtS(dueOf(s))})${k===0?' — this purchase\'s bill':''}</option>`}).join('')}
- $('aSave').textContent=editId?'Save changes':'Save';info()}
-function months(){const v=parseInt($('aMonthsIn').value);return v>=2?v:F.months}
+ if(cc){document.querySelectorAll('#aMode button').forEach(b=>b.classList.toggle('on',b.dataset.mode===F.mode));
+}
+ const ed=editId&&tx.find(x=>x.id===editId);
+ $('aPlan').hidden=!(ed&&cc&&ed.type==='exp'&&ed.acc==='credit');$('aPlan').textContent=ed&&ed.plan?'Edit installments':'Turn into installments';
+ $('aSave').textContent=cc&&F.mode==='inst'&&!(ed&&ed.plan)?'Next: installment details':editId?'Save changes':'Save';info()}
 function info(){const el=$('aInfo'),amt=r2($('aAmt').value),d=$('aDate').value||today;let h='';el.style.setProperty('--c',ACOL[F.type==='pay'?'credit':F.acc]);
  if(F.type==='exp'&&F.acc==='credit'){
-  if(F.mode==='inst'){const n=months(),f=r2($('aFee').value),tot=r2(amt+f),sc=amt?schedule({amt,date:d,plan:{months:n,fee:f,off:F.off}}):null;
-   h=sc?`<b>${egp(sc[0].amt)}</b> a month for ${n} months${f?` (total ${egp(tot)})`:''}.<br>First on the bill of ${fmtS(sc[0].stmt)} (pay by ${fmtS(dueOf(sc[0].stmt))}), last on the bill of ${fmtS(sc.at(-1).stmt)}.`:`Enter the amount to see the monthly installment.`}
+  if(F.mode==='inst'){const ed=editId&&tx.find(x=>x.id===editId);
+   h=ed&&ed.plan?`<b>${egp(ed.plan.each)}</b> a month for ${ed.plan.months} months, first due ${fmtS(dueOf(stmtOf(ed.plan.first)))}. Tap <b>Edit installments</b> to change it.`:`Only the monthly installment will count in your bills. After you tap <b>Next</b>, enter the months, the monthly amount and the first due date.`}
   else{const s=stmtOf(d);h=`Goes on the bill of <b>${fmt(s)}</b>. Pay it by <b>${dow(dueOf(s))} ${fmt(dueOf(s))}</b>.`}
-  const c=credit(),lim=+S.acc.credit.limit||0,old=editId?cost(tx.find(x=>x.id===editId)||{amt:0}):0,av=r2(c.avail+old-(F.mode==='inst'?amt+r2($('aFee').value):amt));
+  const c=credit(),lim=+S.acc.credit.limit||0,et=editId&&tx.find(x=>x.id===editId),old=et?cost(et):0,av=r2(c.avail+old-(et&&et.plan?cost(et):amt));
   if(lim&&amt)h+=`<br>Available after this: <b${av<0?' class="neg"':''}>${egp(av)}</b>`}
  else if(F.type==='pay'){const c=credit();h=c.now?`Bill to pay: <b>${egp(c.now.amt)}</b> by ${fmtS(c.now.due)}. <button class="ib" data-fill="${c.now.amt}" style="margin-left:6px">Use this amount</button>`:`No unpaid bill right now. The next bill (${fmtS(c.open.stmt)}) is ${egp(c.open.rem)} so far; paying now counts toward it.`}
  else if(F.type!=='inc'||F.acc!=='credit'){const a=F.type==='xfer'||F.type==='pay'||F.type==='exp'?F.acc:null;
@@ -470,33 +487,32 @@ function readForm(){const e=[],amt=r2($('aAmt').value),date=$('aDate').value;
  const t={id:editId||uid(),type:F.type,acc:F.acc,amt,date,note:$('aNote').value.trim(),created:editId?(tx.find(x=>x.id===editId)||{}).created||Date.now():Date.now()};
  if(F.type==='exp'||F.type==='inc')t.cat=F.cat;if(F.type==='xfer')t.to=F.to;
  const old=editId&&tx.find(x=>x.id===editId);if(old&&old.sms)t.sms={...old.sms,guess:false};
- if(F.type==='exp'&&F.acc==='credit'&&F.mode==='inst'){const n=months();if(!(n>=2&&n<=60))e.push('Installments need 2 to 60 months.');t.plan={months:n,fee:r2($('aFee').value),off:F.off}}
+ if(F.type==='exp'&&F.acc==='credit'&&F.mode==='inst'&&old&&old.plan)t.plan=old.plan;
  return{t,e}}
 $('aSave').addEventListener('click',()=>{const{t,e}=readForm();$('aErr').innerHTML=e.map(x=>`<div class="msg warn">${x}</div>`).join('');if(e.length)return;
- const was=editId;if(t.sms&&t.sms.m&&t.cat&&(t.type==='exp'||t.type==='inc'))S.merch[t.type+':'+mkey(t.sms.m)]=t.cat;tx=tx.filter(x=>x.id!==t.id).concat(t);if(save()){toast(was?'Changes saved':`Saved ${egp(t.amt)}`,false);closeAdd()}});
+ const was=editId,needPlan=t.type==='exp'&&t.acc==='credit'&&F.mode==='inst'&&!t.plan;if(t.sms&&t.sms.m&&t.cat&&(t.type==='exp'||t.type==='inc'))S.merch[t.type+':'+mkey(t.sms.m)]=t.cat;tx=tx.filter(x=>x.id!==t.id).concat(t);if(save()){if(needPlan){editId=null;openPlan(t.id,true);return}toast(was?'Changes saved':`Saved ${egp(t.amt)}`,false);closeAdd()}});
+$('aPlan').addEventListener('click',()=>{if(editId)openPlan(editId)});
 $('aDel').addEventListener('click',()=>{if(!editId)return;const b=$('aDel');if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to delete';setTimeout(()=>{b.dataset.sure='';b.textContent='Delete'},3000);return}
  b.dataset.sure='';b.textContent='Delete';const t=tx.find(x=>x.id===editId);tx=tx.filter(x=>x.id!==editId);if(t&&t.sms)skip.push(t.sms.key);save();undo=t;toast('Entry deleted',true);closeAdd()});
 function closeAdd(){editId=null;if(history.length>1&&location.hash==='#add')history.back();else go(backTo)}
 $('addClose').addEventListener('click',closeAdd);
 $('aType').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const keepAmt=$('aAmt').value,ty=b.dataset.type,f=fresh(ty),ch=ty==='exp'||ty==='inc'?ACC:['debit','telda','cash'];if(ch.includes(F.acc))f.acc=F.acc;F=f;$('aAmt').value=keepAmt;renderAdd()});
 $('aMode').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;F.mode=b.dataset.mode;renderAdd()});
-['aAmt','aFee','aNote'].forEach(id=>$(id).addEventListener('input',info));
+['aAmt','aNote'].forEach(id=>$(id).addEventListener('input',info));
 $('aDate').addEventListener('input',renderAdd);
-$('aMonthsIn').addEventListener('input',()=>{document.querySelectorAll('#aMonths .chip').forEach(c=>c.classList.toggle('on',!$('aMonthsIn').value&&+c.dataset.months===F.months));info()});
-$('aOff').addEventListener('change',()=>{F.off=+$('aOff').value;info()});
 $('quickCatAdd').addEventListener('click',()=>{const id=addCat(F.type,$('quickCatIn').value);if(!id)return;F.cat=id;$('quickCatIn').value='';$('quickCat').hidden=true;save();renderAdd()});
 
 /* ---------- clicks ---------- */
 let undo=null;
-document.addEventListener('click',e=>{const b=e.target.closest('[data-tx],[data-acc],[data-aacc],[data-ato],[data-acat],[data-months],[data-paynow],[data-fill],[data-rcat],[data-addcat],[data-rmcat],#newCatChip');if(!b)return;
+document.addEventListener('click',e=>{const b=e.target.closest('[data-plan],[data-tx],[data-acc],[data-aacc],[data-ato],[data-acat],[data-months],[data-paynow],[data-fill],[data-rcat],[data-addcat],[data-rmcat],#newCatChip');if(!b)return;
  const d=b.dataset;
- if(d.tx)openEdit(d.tx);
+ if(d.plan)openPlan(d.plan);
+ else if(d.tx)openEdit(d.tx);
  else if(d.acc){homeAcc=homeAcc===d.acc?null:d.acc;homeN=40;renderHome()}
  else if(d.aacc){F.acc=d.aacc;if(F.type==='xfer'&&F.to===F.acc)F.to=null;renderAdd()}
  else if(d.ato){F.to=d.ato;renderAdd()}
  else if(d.acat){F.cat=d.acat;renderAdd()}
  else if(b.id==='newCatChip'){$('quickCat').hidden=false;$('quickCatIn').focus()}
- else if(d.months){F.months=+d.months;$('aMonthsIn').value='';renderAdd()}
  else if(d.paynow){const c=credit();openAdd('pay',null,c.now?c.now.amt:'')}
  else if(d.fill){$('aAmt').value=d.fill;info()}
  else if(d.rcat){rCat=rCat===d.rcat?null:d.rcat;renderReports()}
@@ -525,7 +541,7 @@ function offerRestore(d,box){if(!d||d.app!=='expenses'||!Array.isArray(d.tx))thr
 $('bkFile').addEventListener('change',async ev=>{const f=ev.target.files[0];ev.target.value='';if(!f)return;
  try{offerRestore(JSON.parse(await f.text()),$('bkMsg'))}catch(e){$('bkMsg').innerHTML='<div class="msg warn">That file is not an Expenses backup.</div>'}});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-restore]');if(!b||!pending)return;const d=pending;pending=null;
- const m=new Map(tx.map(t=>[t.id,t]));d.tx.filter(t=>t&&t.id&&t.type&&t.date).forEach(t=>m.set(t.id,t));tx=[...m.values()];skip=[...new Set([...skip,...(d.skip||[])])];S=merge(d.settings);save();pushSmsConfig();
+ const m=new Map(tx.map(t=>[t.id,t]));d.tx.filter(t=>t&&t.id&&t.type&&t.date).forEach(t=>m.set(t.id,t));tx=[...m.values()];tx.forEach(fixPlan);skip=[...new Set([...skip,...(d.skip||[])])];S=merge(d.settings);save();pushSmsConfig();
  b.closest('.msg').innerHTML=`Restored ${d.tx.length} entries.`});
 
 /* ---------- Google Drive (Android app only) ---------- */
@@ -543,6 +559,63 @@ window.onDrive=ev=>{
 document.addEventListener('click',e=>{const b=e.target.closest('[data-drive]');if(!b||!HAS_DRIVE)return;const a=b.dataset.drive;$('driveMsg').innerHTML='<div class="msg">Working…</div>';
  if(a==='connect')Android.driveConnect();else if(a==='backup')Android.driveBackupNow();else if(a==='restore')Android.driveRestore();else if(a==='off')Android.driveDisconnect()});
 
+
+
+/* ---------- installment setup ---------- */
+let P=null,ccN=20;
+function openPlan(id,fromAdd){const t=tx.find(x=>x.id===id);if(!t)return;
+ P={id,months:t.plan?t.plan.months:12,first:t.plan?stmtOf(t.plan.first):stmtOf(t.date),touched:!!t.plan,fromAdd:!!fromAdd};
+ $('pMonthsIn').value=t.plan&&![3,6,9,10,12,18,24,36].includes(t.plan.months)?t.plan.months:'';
+ $('pEach').value=t.plan?t.plan.each:r2(t.amt/P.months);$('pErr').innerHTML='';$('pRemove').hidden=!t.plan;
+ if(location.hash==='#plan')renderPlan();else if(fromAdd)location.replace('#plan');else go('plan')}
+function pMonths(){const v=parseInt($('pMonthsIn').value);return v>=2?v:P.months}
+function renderPlan(){if(!P){go('credit');return}const t=tx.find(x=>x.id===P.id);if(!t){go('credit');return}
+ $('pTx').innerHTML=`<b>${esc(t.note||catName(t))}</b> · ${egp(t.amt)}<br>Bought ${dow(t.date)} ${fmt(t.date)} on ${esc(accName('credit'))}`;
+ $('pMonths').innerHTML=[3,6,9,10,12,18,24,36].map(n=>`<button class="chip${P.months===n&&!$('pMonthsIn').value?' on':''}" data-pm="${n}">${n}</button>`).join('');
+ const from=stmtOf(t.date),to=addM(stmtOf(today)>from?stmtOf(today):from,6),opts=[];
+ for(let k=0,x=from;x<=to&&k<60;k++,x=addM(from,k))opts.push(x);
+ if(!opts.includes(P.first))opts.push(P.first);opts.sort();
+ $('pFirst').innerHTML=opts.map(x=>`<option value="${x}"${x===P.first?' selected':''}>${dow(dueOf(x))} ${fmt(dueOf(x))}  (bill of ${fmtS(x)})</option>`).join('');
+ planSum()}
+function planSum(){const t=tx.find(x=>x.id===P.id);if(!t)return;const n=pMonths(),each=r2($('pEach').value);
+ if(!(each>0)||!(n>=2)){$('pSum').innerHTML='<div class="msg">Enter the months and the monthly amount.</div>';return}
+ const pl={months:n,each,first:P.first},sc=schedule({...t,plan:pl}),tot=planTotal(pl),extra=r2(tot-t.amt);
+ const billed=sc.filter(x=>x.stmt<today),left=sc.length-billed.length,leftAmt=r2(each*left),firstDue=dueOf(sc[0].stmt),fullBill=stmtOf(t.date);
+ $('pSum').innerHTML=`<div class="kv"><span>Monthly installment</span><b>${egp(each)}</b></div>
+  <div class="kv"><span>Total of all installments (${n})</span><b>${egp(tot)}</b></div>
+  <div class="kv"><span>${extra>=0?'Interest & fees':'Less than the price by'}</span><b${extra<0?' class="neg"':''}>${egp(Math.abs(extra))}</b></div>
+  <div class="kv"><span>Already billed</span><b>${billed.length} of ${n}</b></div>
+  <div class="kv tot"><span>Months remaining</span><b>${left} · ${egp(leftAmt)}</b></div>
+  <div class="kv"><span>Last installment due</span><b>${fmt(dueOf(sc.at(-1).stmt))}</b></div>
+  <div class="info" style="margin:12px 0 0;--c:var(--credit)">Only <b>${egp(each)}</b> a month counts in your bills, starting with the one due <b>${fmtS(firstDue)}</b>.${fullBill<sc[0].stmt?` The bill due ${fmtS(dueOf(fullBill))} won't include this purchase.`:fullBill===sc[0].stmt?` The bill due ${fmtS(dueOf(fullBill))} has ${egp(each)} for it instead of ${egp(t.amt)}.`:''}</div>`}
+$('pMonths').addEventListener('click',e=>{const b=e.target.closest('[data-pm]');if(!b)return;P.months=+b.dataset.pm;$('pMonthsIn').value='';
+ const t=tx.find(x=>x.id===P.id);if(!P.touched&&t)$('pEach').value=r2(t.amt/P.months);renderPlan()});
+$('pMonthsIn').addEventListener('input',()=>{const t=tx.find(x=>x.id===P.id);if(!P.touched&&t&&pMonths()>=2)$('pEach').value=r2(t.amt/pMonths());
+ document.querySelectorAll('#pMonths .chip').forEach(c=>c.classList.toggle('on',!$('pMonthsIn').value&&+c.dataset.pm===P.months));planSum()});
+$('pEach').addEventListener('input',()=>{P.touched=true;planSum()});
+$('pFirst').addEventListener('change',()=>{P.first=$('pFirst').value;planSum()});
+function leavePlan(){P=null;if(history.length>1)history.back();else go('credit')}
+$('pClose').addEventListener('click',leavePlan);
+$('pSave').addEventListener('click',()=>{const t=tx.find(x=>x.id===P.id),n=pMonths(),each=r2($('pEach').value);
+ if(!(n>=2&&n<=60)||!(each>0)){$('pErr').innerHTML='<div class="msg warn">Enter 2 to 60 months and the monthly amount.</div>';return}
+ t.plan={months:n,each,first:P.first};save();toast(`${n} installments of ${egp(each)} saved`,false);leavePlan()});
+$('pRemove').addEventListener('click',()=>{const b=$('pRemove');if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again: pay the whole amount on one bill';setTimeout(()=>{b.dataset.sure='';b.textContent='Cancel installments (pay in full)'},3000);return}
+ b.dataset.sure='';const t=tx.find(x=>x.id===P.id);delete t.plan;save();toast('Back to pay in full',false);leavePlan()});
+$('ccMore').addEventListener('click',()=>{ccN+=20;renderCredit()});
+
+/* ---------- forecast ---------- */
+function forecast(date){const c=credit();let s=addM(stmtOf(date),-2);for(let k=0;k<5&&dueOf(s)<date;k++)s=addM(s,1);
+ const b=c.bills.find(x=>x.stmt===s)||{stmt:s,due:dueOf(s),full:[],inst:[],billed:0,covered:0,rem:0};
+ const older=c.bills.filter(x=>x.stmt<s&&x.stmt<today&&x.rem>0);return{b,older}}
+function renderForecast(){const d=$('fcDate').value;if(!d){$('fcOut').innerHTML='';return}
+ const{b,older}=forecast(d),fs=r2(b.full.reduce((a,x)=>a+x.amt,0)),is=r2(b.inst.reduce((a,x)=>a+x.amt,0)),open=b.stmt>=today;
+ $('fcOut').innerHTML=`<div class="due" style="margin:6px 0 10px;border-left-color:var(--credit);background:var(--soft)"><div class="t"><small>Due ${dow(b.due)} ${fmt(b.due)}${b.due!==d?` (first due date on or after ${fmtS(d)})`:''}</small><span class="big">${egp(b.rem)}</span><small>Bill of ${fmt(b.stmt)}${open?' · still open, purchases until then will be added':''}</small></div></div>
+  <div class="kv"><span>Purchases to pay in full (${b.full.length})</span><b>${egp(fs)}</b></div>
+  <div class="kv"><span>Installments (${b.inst.length})</span><b>${egp(is)}</b></div>
+  ${b.inst.map(x=>`<div class="kv" style="padding-left:14px;font-size:14px;color:var(--mute)"><span>${esc(x.t.note||catName(x.t))} · ${x.i} of ${x.n}</span><b>${money(x.amt)}</b></div>`).join('')}
+  ${b.covered?`<div class="kv"><span>Already paid</span><b>− ${egp(b.covered)}</b></div>`:''}
+  ${older.length?`<div class="msg">Not included: ${egp(older.reduce((a,x)=>a+x.rem,0))} still unpaid from the bill due ${fmtS(older.at(-1).due)}.</div>`:''}`}
+$('fcDate').addEventListener('input',renderForecast);
 
 /* ---------- bank SMS ---------- */
 const HAS_SMS=!!(window.Android&&typeof Android.smsTake==='function');
@@ -634,7 +707,13 @@ function renderSms(){
  $('smsFails').innerHTML=fails.length?`<h2 style="margin-top:18px;font-size:16px">Messages I couldn't read (${fails.length})</h2><p class="note" style="margin-top:-6px">They had one of your numbers but no clear amount. Add them by hand if they were payments, and send me a few so I can teach the app their wording.</p><ul class="list">${fails.map(f=>`<li><span class="t" style="white-space:pre-wrap;font-size:14px">${esc(f.body)}<small>${esc(f.from)} · ${f.ts?fmt(iso(new Date(f.ts))):''} · ${esc(f.err)}</small></span></li>`).join('')}</ul><button class="btn ghost" data-sms="clearfails" style="margin-top:8px">Clear this list</button>`:'';
 }
 const blockedHelp='<div class="msg warn"><b>Android blocked the SMS permission.</b> Apps installed from a file need one extra step:<br>1. Tap <b>Open app settings</b> below.<br>2. Tap the ⋮ menu (top right) → <b>Allow restricted settings</b> (if you see it).<br>3. Open <b>Permissions → SMS → Allow</b>.<br>4. Come back here and tap <b>Turn on SMS reading</b> again.<div class="btns" style="margin-top:10px"><button class="btn" data-sms="appsettings">Open app settings</button></div></div>';
-function smsOn(){S.sms.on=true;saveKw();go('settings');renderSettings();$('smsMsg').innerHTML='<div class="msg">SMS reading is on. Add the bank messages already on your phone with <b>Add old messages</b>.</div>'}
+function scanSms(days){const box=()=>$('smsMsg');if(location.hash==='#settings')box().innerHTML='<div class="msg">Reading your messages…</div>';
+ setTimeout(()=>{let l;try{l=JSON.parse(Android.smsScan(days))}catch(err){l={error:'Could not read messages.'}}
+  if(!Array.isArray(l)){if(location.hash==='#settings')box().innerHTML=`<div class="msg warn">${esc(l.error||'Could not read messages.')}</div>`;return}
+  S.sms.scanned=true;const r=ingest(l);if(!(r.added||r.merged||r.failed))save();
+  const txt=`Found ${l.length} bank message${l.length===1?'':'s'}: ${r.added} added${r.merged?`, ${r.merged} joined with another message (transfers, card payments, InstaPay)`:''}${r.known?`, ${r.known} already here`:''}${r.failed?`, ${r.failed} couldn't be read (listed below)`:''}.`;
+  if(location.hash==='#settings')box().innerHTML=`<div class="msg">${txt}</div>`;else toast(`Added ${r.added+r.merged} transactions from past SMS`,false)},30)}
+function smsOn(){S.sms.on=true;saveKw();go('settings');renderSettings();scanSms(3650)}
 window.onSms=ev=>{if(ev.type!=='perm')return;if(ev.granted)smsOn();else{renderSms();$('smsMsg').innerHTML=blockedHelp}};
 document.addEventListener('click',e=>{const b=e.target.closest('[data-sms]');if(!b)return;const a=b.dataset.sms;
  if(a==='savekw'){saveKw();toast('Numbers saved',false)}
@@ -642,25 +721,24 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-sms]');if(
   if(Android.smsPermission()==='granted')smsOn();else{$('smsMsg').innerHTML='<div class="msg">Android will ask you to allow SMS access…</div>';Android.smsRequest()}}
  else if(a==='off'){S.sms.on=false;save();pushSmsConfig();toast('SMS reading turned off',false)}
  else if(a==='appsettings')Android.openAppSettings();
- else if(a==='scan'){$('smsMsg').innerHTML='<div class="msg">Reading messages…</div>';setTimeout(()=>{let l;try{l=JSON.parse(Android.smsScan(+$('scanDays').value))}catch(err){l={error:'Could not read messages.'}}
-  if(!Array.isArray(l)){$('smsMsg').innerHTML=`<div class="msg warn">${esc(l.error||'Could not read messages.')}</div>`;return}
-  const r=ingest(l);$('smsMsg').innerHTML=`<div class="msg">Found ${l.length} bank message${l.length===1?'':'s'}: ${r.added} added${r.merged?`, ${r.merged} joined with another message (transfers, card payments, InstaPay)`:''}${r.known?`, ${r.known} already here`:''}${r.failed?`, ${r.failed} couldn't be read (listed below)`:''}.</div>`},30)}
+ else if(a==='scan')scanSms(+$('scanDays').value);
  else if(a==='test'){const v=$('smsTest').value.trim();if(!v)return;SMS_ACC.forEach(x=>S.sms.kw[x]=$('kw-'+x).value.trim());S.sms.ipAcc=$('ipAcc').value;const p=parseSms(v);$('smsTestOut').innerHTML=`<div class="msg${p.err?' warn':''}">${describe(p)}</div>`}
  else if(a==='clearfails'){fails=[];save()}});
 window.onResumeApp=pollSms;setInterval(pollSms,20000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)pollSms()});
 
 /* ---------- routing ---------- */
-const V=['home','credit','cash','reports','settings','add'];
+const V=['home','credit','cash','reports','settings','add','plan'];
 function go(v){if(location.hash!=='#'+v)location.hash=v;else route()}
 function route(){const h=location.hash.slice(1),v=V.includes(h)?h:'home';
- if(v!=='add')backTo=v;else if(!F)F=fresh('exp');
+ if(v!=='add'&&v!=='plan')backTo=v;else if(v==='add'&&!F)F=fresh('exp');
  V.forEach(k=>{$('v-'+k).hidden=k!==v;const t=$('t-'+k);if(t)t.classList.toggle('on',k===v)});
- $('fab').hidden=v==='add'||v==='settings';document.querySelector('nav').hidden=v==='add';
- if(v==='home')renderHome();else if(v==='credit')renderCredit();else if(v==='cash')renderCash();else if(v==='reports')renderReports();else if(v==='settings')renderSettings();else renderAdd();
+ $('fab').hidden=v==='add'||v==='plan'||v==='settings';document.querySelector('nav').hidden=v==='add'||v==='plan';
+ if(v==='home')renderHome();else if(v==='credit')renderCredit();else if(v==='cash')renderCash();else if(v==='reports')renderReports();else if(v==='settings')renderSettings();else if(v==='plan')renderPlan();else renderAdd();
  window.scrollTo(0,0)}
-function renderAll(){const v=location.hash.slice(1);if(v==='add')return;route()}
+function renderAll(){const v=location.hash.slice(1);if(v==='add'||v==='plan')return;route()}
 window.addEventListener('hashchange',route);
 load();route();pushReminder();pushSmsConfig();pollSms();
+if(HAS_SMS&&S.sms.on&&!S.sms.scanned&&Android.smsPermission()==='granted')scanSms(3650);
 if(!window.Android)$('status').textContent='Saved in this browser';
 }
 </script>

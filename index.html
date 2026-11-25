@@ -151,6 +151,7 @@ nav a{transition:background-color .25s,color .25s}
  <div class="accs" id="accs"></div>
  <div class="tiles" id="monthTiles"></div>
  <div id="homeMenu"></div>
+ <div id="homeBudget"></div>
  <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px"><h2 style="margin:0">Latest</h2><button class="ib" data-go="home-all">See all</button></div><ul class="list" id="homeLatest"></ul></div>
  </div>
  <div data-sub="review" data-title="Needs a category">
@@ -619,6 +620,8 @@ function dueHTML(c,withBtn){
 function renderBalCheck(){const show=S.balChecked!==1;$('balCheck').hidden=!show;if(!show)return;
  $('balRows').innerHTML=NONCC.map(a=>`<div class="catrow"><label for="bc-${a}" style="flex:1;margin:0;color:var(--ink)">${esc(accName(a))}</label><input id="bc-${a}" type="number" inputmode="decimal" step="0.01" value="${!anchorOf(a)&&+S.acc[a].open?+S.acc[a].open:bal(a)}" style="flex:1"></div>`).join('')}
 function renderHome(){renderBalCheck();
+ $('homeBudget').innerHTML=(S.goals||[]).map(g=>{const B=goalBudget(g,goalPlan(g));if(!B)return'';const over=B.left<0;
+  return `<button class="setbtn" data-go="goals-detail-${g.id}" style="margin-bottom:10px"><span class="ic">🎯</span><span class="t"><b>${esc(g.name)}: ${over?`over the limit by ${egp(-B.left)}`:`${egp(B.left)} left to spend`}</b><small>${egp(B.used)} of ${egp(B.limit)} this month${over?'':` · about ${egp(B.perDay)} a day`}</small><span class="bar" style="display:block"><i style="width:${Math.min(100,B.used/(B.limit||1)*100)}%;background:${over?'var(--out)':B.used>B.limit*0.85?'var(--warn)':'var(--in)'}"></i></span></span></button>`}).join('');
  const c=credit();$('dueBox').innerHTML=dueHTML(c,true);
  $('accs').innerHTML=ACC.map(a=>{
   if(a==='credit'){const lim=+S.acc.credit.limit||0;return `<button class="acc${homeAcc===a?' on':''}" style="--c:${ACOL[a]}" data-acc="${a}"><div class="k">${esc(accName(a))}</div><div class="v">${egp(Math.max(0,c.used))}</div><div class="s">${lim?`outstanding · ${money(c.avail)} available`:'outstanding · set the limit in Settings'}</div>${lim?`<div class="bar"><i style="width:${Math.min(100,Math.max(0,c.used/lim*100))}%"></i></div>`:''}</button>`}
@@ -1294,15 +1297,39 @@ function goalSim(g,P,pct,maxMonths=120){const st=P.st,cur=ymOf(today),cut=r2(P.f
   for(const m of S.gam){const i=ymDiff(m.start,ym),each=m.amt*(m.shares||1);if(i>=0&&i<m.months&&gamPays(m).length<=i)f-=each;if(i===m.turn-1&&!gamGot(m))f+=gamPayout(m)}
   cum=r2(cum+Math.max(0,f));out.push({ym,save:r2(Math.max(0,f)),cum})}
  return out}
+/* the spending budget that keeps a reachable goal on track: the smallest cut that works (0–30%),
+   this month's share of the saving, and what is left to spend overall and per category */
+function goalBudget(g,P){if(!P.reachable||P.need<=0)return null;const cutOf=p=>r2(P.flex.reduce((a,[k,v])=>a+v*p,0)),cum=p=>(goalSim(g,P,p,P.months).at(-1)||{cum:0}).cum;
+ let p=0;if(!P.ok){let lo=0,hi=0.3;for(let i=0;i<18;i++){const m=(lo+hi)/2;if(cum(m)>=P.need)hi=m;else lo=m}p=Math.ceil(hi*100)/100}
+ const sim=goalSim(g,P,p,P.months),tot=sim.at(-1).cum,ratio=tot>0?Math.min(1,P.need/tot):1,m0=sim[0];
+ const save=r2(m0.save*ratio),limit=r2(Math.max(0,P.st.spend-cutOf(p)+m0.save-save));
+ const ym=ymOf(today),spent={};for(const t of tx){if(t.type!=='exp'||NOT_SPEND.has(t.cat)||t.plan||isCheck(t)||ymOf(t.date)!==ym)continue;const k=t.cat||'_none';spent[k]=r2((spent[k]||0)+t.amt)}
+ const used=r2(Object.values(spent).reduce((a,b)=>a+b,0)),y=+ym.slice(0,4),mo=+ym.slice(5,7),dim=new Date(y,mo,0).getDate(),daysLeft=dim-(+today.slice(8))+1;
+ const keys=[...new Set([...Object.keys(P.st.cats).filter(k=>P.st.cats[k]>0),...Object.keys(spent)])];
+ const cats=keys.map(k=>{const v=P.st.cats[k]||0,flex=!FIXED.has(k);return{k,flex,limit:r2(flex?v*(1-p):v),spent:spent[k]||0}}).filter(c=>c.limit>0||c.spent>0).sort((a,b)=>b.flex-a.flex||b.limit-a.limit);
+ const left=r2(limit-used);return{p,save,limit,used,left,daysLeft,perDay:r2(Math.max(0,left)/daysLeft),cats,ym,catsTotal:r2(cats.reduce((a,c)=>a+c.limit,0))}}
+function budgetHTML(g,B){const pc=x=>Math.min(100,Math.max(0,x)),over=B.left<0,col=over?'var(--out)':B.used>B.limit*0.85?'var(--warn)':'var(--in)';
+ return `<div class="card" style="padding:14px;margin:12px 0;background:var(--soft)"><h2 style="font-size:16px;margin:0 0 4px">Your spending limit for ${monthLbl(B.ym)}</h2>
+ <p class="note" style="margin:0 0 8px">${B.p>0?`Based on ${Math.round(B.p*100)}% less on flexible categories. `:''}Save ${egp(B.save)} this month${B.save<=0?' (catch up later, when installments end)':''}, and spend no more than:</p>
+ <div style="font-size:24px;font-weight:700">${egp(B.limit)}</div>
+ <div class="bar" style="--c:${col}"><i style="width:${pc(B.used/(B.limit||1)*100)}%;background:${col}"></i></div>
+ <div class="kv"><span>Spent so far this month</span><b>${egp(B.used)}</b></div>
+ <div class="kv"><span>${over?'Over the limit by':'Left to spend'}</span><b${over?' class="neg"':''}>${egp(Math.abs(B.left))}</b></div>
+ ${over?'':`<div class="kv"><span>About this much a day (${B.daysLeft} days left)</span><b>${egp(B.perDay)}</b></div>`}
+ <h2 style="font-size:15px;margin:12px 0 4px">Limit per category</h2>
+ ${B.cats.map(c=>{const o=c.spent>c.limit;return `<div style="margin:8px 0"><div class="kv" style="margin:0"><span>${esc(catLabel(c.k))}${c.flex||c.k==='_none'?'':' <small style="color:var(--mute)">(fixed)</small>'}</span><b${o?' class="neg"':''}>${money(c.spent)} / ${money(c.limit)}</b></div><div class="bar"><i style="width:${pc(c.spent/(c.limit||1)*100)}%;background:${o?'var(--out)':'var(--in)'}"></i></div></div>`}).join('')}
+ ${B.limit>B.catsTotal+1?`<p class="note" style="margin:8px 0 0">Spare room this month: ${egp(r2(B.limit-B.catsTotal))} on top of the category limits.</p>`:''}
+ ${S.goals.length>1?`<p class="note" style="margin:8px 0 0">This counts this goal only. With several goals, the leftover money is shared between them.</p>`:''}</div>`}
 function goalAlts(g,P){const need=P.need,saved=g.saved||0,res=[],seen=new Set();
  const endOf=ym=>mk(+ym.slice(0,4),+ym.slice(5,7)-1,28);
  const reach=pct=>{const sim=goalSim(g,P,pct),k=sim.findIndex(x=>x.cum>=need);return k<0?null:{k:k+1,ym:sim[k].ym,per:r2(need/(k+1))}};
  const by=pct=>{const sim=goalSim(g,P,pct,P.months);return r2(saved+(sim.length?sim[sim.length-1].cum:0))};
  for(const[pct,label,how]of[[0,'Same amount, later date','No cuts — just set aside what is left each month'],[0.15,'Same amount, a bit sooner','Spend 15% less on flexible categories'],[0.3,'Same amount, soonest','Spend 30% less on flexible categories']]){
-  const r=reach(pct);if(!r||seen.has(r.ym))continue;seen.add(r.ym);
+  if(P.reachable&&pct>0)continue;const r=reach(pct);if(!r||seen.has(r.ym))continue;seen.add(r.ym);
   res.push({title:label,big:`${monthLbl(r.ym)}`,sub:`${how} · about ${egp(r.per)} a month · ${r.k} months`,act:`d:${endOf(r.ym)}`,btn:`Use ${MONTHS[+r.ym.slice(5)-1].slice(0,3)} ${r.ym.slice(0,4)}`})}
- const a0=by(0),a30=by(0.3);
- if(a30>saved)res.push({title:'Same date, smaller goal',big:egp(Math.floor(a30/100)*100),sub:`What you can have by ${fmtS(g.date)} with 30% less on flexible spending${a0>saved&&a0<a30?` (${egp(Math.floor(a0/100)*100)} with no cuts)`:''}`,act:`a:${Math.floor(a30/100)*100}`,btn:'Use this amount'});
+ const a0=by(0),a30=by(0.3),fl=x=>Math.floor(x/100)*100;
+ if(P.reachable){if(a0>saved&&fl(a0)<g.target)res.push({title:'Same date, no cuts',big:egp(fl(a0)),sub:`What you can have by ${fmtS(g.date)} without spending less`,act:`a:${fl(a0)}`,btn:'Use this amount'})}
+ else if(a30>saved&&fl(a30)<g.target)res.push({title:'Same date, smaller goal',big:egp(Math.floor(a30/100)*100),sub:`What you can have by ${fmtS(g.date)} with 30% less on flexible spending${a0>saved&&a0<a30?` (${egp(Math.floor(a0/100)*100)} with no cuts)`:''}`,act:`a:${Math.floor(a30/100)*100}`,btn:'Use this amount'});
  const ends=tx.filter(t=>t.plan).map(t=>{const sc=schedule(t),last=sc.at(-1);return{t,ym:ymOf(dueOf(last.stmt)),each:last.amt}}).filter(x=>x.ym>=ymOf(today)&&x.ym<=addYm(ymOf(today),P.months+24)).sort((a,b)=>a.ym.localeCompare(b.ym)).slice(0,3);
  return{res,ends,none:!res.length}}function renderGoals(){
  const list=S.goals;
@@ -1312,14 +1339,15 @@ function goalAlts(g,P){const need=P.need,saved=g.saved||0,res=[],seen=new Set();
   <p class="note" style="margin:4px 0 10px">${egp(g.target)} by ${fmt(g.date)} · ${P.months} month${P.months===1?'':'s'} left</p>
   <div class="bar" style="height:12px"><i style="width:${pct}%"></i></div>
   <div class="kv" style="margin-top:8px"><span>Saved</span><b>${egp(g.saved||0)} (${Math.round(pct)}%)</b></div>
-  <div class="kv tot"><span>Set aside every month</span><b>${egp(P.per)}</b></div>
+  <div class="kv tot"><span>Set aside on average each month</span><b>${egp(P.per)}</b></div>
   <div class="kv"><span>Your income (3-month average)</span><b>${egp(P.st.inc)}</b></div>
   <div class="kv"><span>Spending + installments + gam3ya + charity</span><b>− ${egp(P.out)}</b></div>
   <div class="kv"><span>Left over each month now</span><b${P.freeNow<0?' class="neg"':''}>${egp(P.freeNow)}</b></div>
   <div class="kv"><span>Left over per month on average until ${fmtS(g.date)} (as installments end)</span><b>${egp(P.free)}</b></div>
-  <div class="info" style="margin:12px 0;--c:${P.ok?'var(--in)':P.reachable?'var(--warn)':'var(--out)'}">${P.ok?`<b>You can do it as you are.</b> Move ${egp(P.per)} to savings right after your salary arrives each month, before spending.${P.freeNow<P.per?(()=>{const sim=goalSim(g,P,0,P.months),f=sim.find(x=>x.save>=P.per);return f?` Right now only ${egp(Math.max(0,P.freeNow))} is left a month; from ${monthLbl(f.ym)} you'll have about ${egp(f.save)} as installments end — save more then to catch up.`:''})():''}`
-   :P.reachable?`<b>Reachable with these monthly limits:</b><br>${P.cuts.map(c=>`• ${esc(catLabel(c.k))}: ${money(c.from)} → <b>${money(c.to)}</b> (−${money(c.cut)})`).join('<br>')}<br>Then move ${egp(P.per)} to savings right after your salary arrives.`
-   :`<b>Not reachable by ${fmtS(g.date)}, even with 30% less on flexible spending.</b> Pick one of the options below.`}</div>
+  <div class="info" style="margin:12px 0;--c:${P.ok?'var(--in)':P.reachable?'var(--warn)':'var(--out)'}">${P.ok?`<b>You can do it as you are.</b> Save about ${egp(P.per)} a month on average — less while installments are running, more once they end. This month's amount and your spending limit are below.`
+   :P.reachable?`<b>Reachable if you spend a bit less on flexible categories.</b> Keep to the spending limit below and save what it says each month.`
+   :`<b>Not reachable by ${fmtS(g.date)}, even with 30% less on flexible spending.</b> Pick one of the options below — your spending limit appears once you choose.`}</div>
+  ${(()=>{const B=goalBudget(g,P);return B?budgetHTML(g,B):''})()}
   ${P.ok?'':(()=>{const A=goalAlts(g,P);return `<h2 style="font-size:16px;margin:4px 0 8px">${P.reachable?'Or, without cutting back':'Options that work'}</h2>`
    +(A.none?`<div class="msg">Within the next 10 years your income doesn't leave enough after your commitments. Add income (e.g. a payout or bonus) or lower the amount.</div>`
    :A.res.map(o=>`<div class="alt"><div class="t"><small>${esc(o.title)}</small><b>${o.big}</b><small>${esc(o.sub)}</small></div><button class="btn ghost" data-goalalt="${g.id}|${o.act}">${esc(o.btn)}</button></div>`).join(''))

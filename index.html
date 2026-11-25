@@ -3,69 +3,88 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#10231c">
+<meta name="theme-color" content="#f3f6f8">
 <link rel="manifest" href="manifest.json">
 <title>Expenses</title>
 <style>
 /* VOICE: practical, calm, a personal money tool opened several times a day.
-   IDEA: a wallet with four cards and a ledger; the credit card bill is the thing to watch.
-   COLOUR and TYPE: pale sage panel, white cards, deep green ink; one colour per account; system UI fonts, tabular figures. */
+   LOOK: same family as the Time Sheet and Medicine apps — slate page, white cards with a soft shadow, teal accent,
+   a floating pill tab bar with a 3D shadow, outlined fields, round ticked checkboxes, ripples on every tap.
+   One colour per account; system UI fonts, tabular figures. */
 :root{color-scheme:light dark;
---bg:light-dark(#e6ebe8,#111513);--card:light-dark(#fff,#1b201e);--ink:light-dark(#10231c,#e9efec);--mute:light-dark(#56645e,#9aa8a2);
---line:light-dark(#dbe2de,#2c3330);--soft:light-dark(#f0f3f1,#242a27);
---acc:light-dark(#0e7a55,#3cc492);--out:light-dark(#c0392b,#f0786b);--in:light-dark(#0e7a55,#3cc492);--warn:light-dark(#b45309,#f5a524);
---debit:light-dark(#1d4ed8,#7aa5ff);--credit:light-dark(#7c2d92,#d58ce8);--telda:light-dark(#c2410c,#fb8a4c);--cash:light-dark(#0e7a55,#3cc492);--od:light-dark(#0f766e,#2dd4bf);--on:light-dark(#fff,#0b1712)}
-*{box-sizing:border-box;min-width:0}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow-x:clip;font-variant-numeric:tabular-nums}
+--bg:light-dark(#f3f6f8,#0b1220);--card:light-dark(#fff,#131c2e);--ink:light-dark(#0f172a,#e6edf6);--mute:light-dark(#5b6b80,#9fb0c6);
+--line:light-dark(#e5eaf0,#27354f);--soft:light-dark(#eef2f6,#1a2539);--tint:light-dark(#d9f2ee,#12332f);--outline:light-dark(#79868f,#8a98ab);
+--acc:light-dark(#0f766e,#2dd4bf);--on:light-dark(#fff,#04201c);--out:light-dark(#dc2626,#f87171);--on-out:light-dark(#fff,#2a0a0a);--in:light-dark(#15803d,#4ade80);--warn:light-dark(#b45309,#fbbf24);
+--dot:light-dark(#16a34a,#3ddc97);--toast-bg:light-dark(#0f172a,#e6edf6);--toast-fg:light-dark(#fff,#0b1220);
+--debit:light-dark(#1d4ed8,#7aa5ff);--credit:light-dark(#7c2d92,#d58ce8);--telda:light-dark(#c2410c,#fb8a4c);--cash:light-dark(#15803d,#4ade80);--od:light-dark(#0e7490,#22d3ee);
+--shadow:0 1px 2px rgba(15,23,42,.05),0 4px 14px rgba(15,23,42,.05);
+--pill-shadow:0 10px 22px rgba(15,23,42,.16),0 3px 7px rgba(15,23,42,.10),inset 0 1px 0 rgba(255,255,255,.9);--pill-on-shadow:0 4px 10px rgba(15,23,42,.35);
+--pop-shadow:0 1px 3px rgba(0,0,0,.3),0 4px 8px 3px rgba(0,0,0,.15);--rc:rgba(15,118,110,.3)}
+:root[data-theme=dark]{--shadow:none;--pill-shadow:0 12px 24px rgba(0,0,0,.6),0 3px 8px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.07);--pill-on-shadow:0 4px 12px rgba(0,0,0,.55);--rc:rgba(45,212,191,.3)}
+@supports (color:color-mix(in srgb,red 50%,blue)){:root{--rc:color-mix(in srgb,var(--acc) 34%,transparent)}}
+*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow-x:clip;font-variant-numeric:tabular-nums}
 h1,h2,h3{margin:0;line-height:1.15}
-.wrap{max-width:980px;margin:0 auto;padding:0 max(4vw,14px) 110px}
-header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:18px 0 12px}
+.wrap{max-width:620px;margin:0 auto;padding:env(safe-area-inset-top) 14px 110px}
+/* header: bold title with a green dot, square-ish gear button */
+header{display:flex;align-items:center;gap:10px;padding:14px 2px 8px;min-height:72px}
+h1{flex:1;font-size:32px;line-height:1.1;font-weight:800;letter-spacing:-.6px}
+h1 b{color:var(--dot)}
 .hright{display:flex;align-items:center;gap:10px}
-.gear{display:flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:14px;background:var(--card);color:var(--ink);text-decoration:none;transition:background-color .25s,color .25s,transform .3s}
-.gear.on{background:var(--ink);color:var(--card)}.gear:active{transform:rotate(45deg)}
-h1{font-size:clamp(28px,6vw,38px);letter-spacing:-.02em;font-weight:800}
-h1 b{color:var(--acc)}
-.status{font-size:13px;color:var(--mute)}
-nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;background:var(--card);padding:4px;border-radius:14px;margin-bottom:16px;position:sticky;top:6px;z-index:3;box-shadow:0 2px 10px rgb(0 0 0/.06)}
+.status{display:none}
+.gear{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;width:50px;height:50px;border-radius:17px;border:1px solid var(--line);background:var(--card);color:var(--ink);text-decoration:none;transition:background-color .25s,color .25s,transform .3s}
+.gear.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}.gear:active{transform:rotate(45deg)}
+/* pill tab bar with a 3D shadow */
+nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;background:var(--card);border:1px solid var(--line);border-radius:26px;padding:6px;margin:6px 0 16px;position:sticky;top:calc(6px + env(safe-area-inset-top));z-index:3;box-shadow:var(--pill-shadow)}
 nav::-webkit-scrollbar{display:none}
-nav a{flex:0 0 auto;text-align:center;padding:10px 13px;font-size:14px;border-radius:10px;color:var(--ink);text-decoration:none;font-weight:650;min-height:44px;display:flex;align-items:center;justify-content:center}
-nav a.on{background:var(--ink);color:var(--card)}
-.card{background:var(--card);border-radius:16px;padding:clamp(16px,3vw,24px);margin-bottom:14px}
-h2{font-size:19px;margin-bottom:12px;font-weight:750}
+nav a{position:relative;overflow:hidden;flex:0 0 auto;padding:11px 18px;border-radius:21px;color:var(--mute);text-decoration:none;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:background-color .28s,color .28s,transform .2s,box-shadow .28s}
+nav a:active{transform:scale(.96)}
+nav a.on{background:var(--ink);color:var(--bg);box-shadow:var(--pill-on-shadow)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+h2{font-size:18px;margin-bottom:12px;font-weight:750}
 .note{font-size:13px;color:var(--mute)}
-label,.lbl{display:block;font-size:14px;font-weight:600;margin-bottom:6px;color:var(--mute)}
-input,select{width:100%;font:16px system-ui,sans-serif;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--soft);color:var(--ink);min-height:46px}
-input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px solid var(--acc);outline-offset:1px}
+label,.lbl{display:block;font-size:13px;font-weight:600;margin-bottom:5px;color:var(--mute)}
+/* outlined fields */
+input,select,textarea{width:100%;font:16px system-ui,sans-serif;padding:12px;border:1px solid var(--outline);border-radius:8px;background:transparent;color:var(--ink);min-height:50px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-offset:-1px;border-color:var(--acc)}
+button:focus-visible,nav a:focus-visible,.gear:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .f{margin-bottom:14px}
 .row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-bottom:14px}
-.btn{border:0;border-radius:12px;background:var(--acc);color:var(--on);font:700 16px system-ui,sans-serif;padding:13px 18px;min-height:50px;width:100%;cursor:pointer}
-.btn.ghost{background:var(--soft);color:var(--ink)}.btn.danger{background:transparent;color:var(--out);border:1.5px solid var(--out)}
-.btns{display:flex;gap:8px;flex-wrap:wrap}.btns>*{flex:1 1 140px}
-.ib{border:0;background:var(--soft);color:var(--ink);border-radius:8px;min-height:40px;min-width:44px;font:600 13px system-ui,sans-serif;cursor:pointer;padding:0 12px}
-.chips{display:flex;flex-wrap:wrap;gap:6px}
-.chip{border:1.5px solid var(--line);background:var(--soft);color:var(--ink);border-radius:999px;padding:8px 14px;font:600 14px system-ui,sans-serif;min-height:42px;cursor:pointer}
-.chip.on{background:var(--c,var(--ink));border-color:var(--c,var(--ink));color:var(--on)}
+.btn{position:relative;overflow:hidden;border:0;border-radius:12px;background:var(--acc);color:var(--on);font:700 16px system-ui,sans-serif;padding:12px 16px;min-height:50px;width:100%;cursor:pointer}
+.btn.ghost{background:var(--tint);color:var(--acc)}.btn.danger{background:var(--out);color:var(--on-out)}
+.btn[disabled]{opacity:.5}
+.btns{display:flex;gap:10px;flex-wrap:wrap}.btns>*{flex:1 1 140px}
+/* small pill buttons (See all, Back, Close…) */
+.ib{position:relative;overflow:hidden;border:0;background:var(--tint);color:var(--acc);border-radius:999px;min-height:38px;min-width:44px;font:700 14px system-ui,sans-serif;cursor:pointer;padding:0 14px;white-space:nowrap}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{position:relative;overflow:hidden;border:1px solid var(--line);background:var(--card);color:var(--mute);border-radius:999px;padding:8px 14px;font:700 14px system-ui,sans-serif;min-height:40px;cursor:pointer}
+.chip.on{background:var(--c,var(--ink));border-color:var(--c,var(--ink));color:var(--card)}
 .chip.add{border-style:dashed;background:transparent}
-.seg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;background:var(--soft);padding:4px;border-radius:12px;margin-bottom:16px}
+/* segmented switch = small pill bar */
+.seg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;background:var(--soft);border:1px solid var(--line);padding:4px;border-radius:24px;margin-bottom:16px}
 .seg.two{grid-template-columns:repeat(2,minmax(0,1fr))}
-.seg button{border:0;background:transparent;color:var(--ink);border-radius:9px;min-height:44px;font:650 14px system-ui,sans-serif;cursor:pointer;padding:4px}
-.seg button.on{background:light-dark(#fff,#3d4a45);box-shadow:0 1px 4px rgb(0 0 0/.15)}
+.seg button{position:relative;overflow:hidden;border:0;background:transparent;color:var(--mute);border-radius:20px;min-height:42px;font:700 14px system-ui,sans-serif;cursor:pointer;padding:4px 6px;transition:background-color .25s,color .25s,box-shadow .25s,transform .2s}
+.seg button:active{transform:scale(.96)}
+.seg button.on{background:var(--ink);color:var(--bg);box-shadow:var(--pill-on-shadow)}
 .amtIn{font:800 34px system-ui,sans-serif;text-align:center;padding:10px;min-height:66px;letter-spacing:-.01em}
-.accs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}
-.acc{background:var(--card);border-radius:16px;padding:14px 16px;border:0;border-top:5px solid var(--c);text-align:left;color:var(--ink);font:inherit;cursor:pointer;display:block;width:100%}
-.acc.on{outline:2.5px solid var(--c);outline-offset:-2px}
-.acc .k{font-size:14px;color:var(--mute);font-weight:600}
-.acc .v{font:800 clamp(16px,4.4vw,28px)/1.15 system-ui,sans-serif;margin:4px 0 2px;white-space:nowrap;letter-spacing:-.01em}
-.acc .s{font-size:13px;color:var(--mute)}
-.accs .acc:last-child:nth-child(odd){grid-column:1/-1}
-.check{display:flex;align-items:center;gap:10px;font-weight:500;color:var(--ink);min-height:44px;cursor:pointer;margin-bottom:10px}.check input{width:22px;height:22px;min-height:0;accent-color:var(--acc);flex:none}
+/* round checkboxes with a ripple on press (same as Time Sheet) */
+input[type=checkbox]{-webkit-appearance:none;appearance:none;position:relative;flex:none;display:inline-block;width:22px;height:22px;min-height:0;margin:0;padding:0;
+ border:2px solid var(--outline);border-radius:50%;background:transparent;cursor:pointer;vertical-align:middle;transition:background-color .18s,border-color .18s}
+input[type=checkbox]::after{content:"";position:absolute;left:5.5px;top:1.5px;width:5px;height:10px;border:solid var(--on);border-width:0 2.5px 2.5px 0;transform:rotate(45deg) scale(0);transition:transform .2s cubic-bezier(.2,.8,.3,1.5)}
+input[type=checkbox]:checked{background:var(--acc);border-color:var(--acc)}
+input[type=checkbox]:checked::after{transform:rotate(45deg) scale(1)}
+input[type=checkbox]:focus{outline:none}
+input[type=checkbox]:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+.crip::before{content:"";position:absolute;inset:-2px;border-radius:50%;pointer-events:none;animation:crip .5s ease-out}
+@keyframes crip{from{box-shadow:0 0 0 0 var(--rc)}to{box-shadow:0 0 0 18px transparent}}
+.check{display:flex;align-items:center;gap:12px;font-weight:600;font-size:15px;color:var(--ink);min-height:44px;cursor:pointer;margin-bottom:10px}
 .neg{color:var(--out)}
-.bar{height:9px;background:var(--soft);border-radius:6px;overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:var(--c,var(--acc));border-radius:6px}
-.due{border-radius:16px;padding:16px 18px;margin-bottom:14px;background:var(--card);border-left:6px solid var(--credit);display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.bar{height:8px;background:var(--line);border-radius:6px;overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:var(--c,var(--acc));border-radius:6px}
+.due{border-radius:16px;padding:14px 16px;margin-bottom:14px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);border-left:5px solid var(--credit);display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
 .due.over{border-left-color:var(--out)}.due.ok{border-left-color:var(--in)}
-.due .big{font:800 clamp(22px,6.5vw,26px)/1.1 system-ui,sans-serif;white-space:nowrap}
-.due .t{flex:1 1 200px}.due .t small{display:block;color:var(--mute);font-size:14px}
-.due .btn{width:auto;flex:0 0 auto}
+.due .big{display:block;font:800 24px/1.15 system-ui,sans-serif;white-space:nowrap;letter-spacing:-.3px;margin:2px 0}
+.due .t{flex:1 1 180px}.due .t small{display:block;color:var(--mute);font-size:13px}
+.due .btn{width:auto;flex:0 0 auto;border-radius:999px;padding:10px 20px;min-height:44px}
 .list{list-style:none;margin:0;padding:0}
 .list li{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--line)}
 .list li.tx{cursor:pointer}
@@ -73,10 +92,10 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
 .list .t{flex:1}.list .t small{display:block;color:var(--mute);font-size:13px}
 .amt{font-weight:750;white-space:nowrap;flex:0 0 auto;text-align:right}
 .amt.o{color:var(--out)}.amt.i{color:var(--in)}.amt.n{color:var(--mute)}
-.day{font-size:13px;font-weight:700;color:var(--mute);padding:14px 0 4px;text-transform:uppercase;letter-spacing:.04em}
+.day{font-size:12px;font-weight:700;color:var(--mute);padding:14px 0 4px;text-transform:uppercase;letter-spacing:.6px}
 .tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}
-.tile{background:var(--card);border-radius:14px;padding:14px 12px}
-.tile .k{font-size:13px;color:var(--mute)}.tile .v{font:800 clamp(13px,3.7vw,26px)/1.2 system-ui,sans-serif;white-space:nowrap;margin-top:4px;letter-spacing:-.01em}
+.tile{position:relative;overflow:hidden;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:var(--shadow)}
+.tile .k{font-size:12px;color:var(--mute);font-weight:600}.tile .v{font:800 clamp(13px,3.7vw,22px)/1.2 system-ui,sans-serif;white-space:nowrap;margin-top:4px;letter-spacing:-.01em}
 .meter{margin-bottom:12px;cursor:pointer}.meter .top{display:flex;justify-content:space-between;gap:8px;font-size:15px}.meter .top b{white-space:nowrap;flex:0 0 auto}
 .meter.on .top span{font-weight:700;text-decoration:underline}
 .kv>span{flex:1 1 auto}.kv>b{flex:0 0 auto;text-align:right}
@@ -87,55 +106,113 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
 .pill.over{background:color-mix(in srgb,var(--out) 16%,transparent);color:var(--out)}
 .pill.due,.pill.part{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
 .pill.open{background:color-mix(in srgb,var(--credit) 16%,transparent);color:var(--credit)}
-.msg{font-size:14px;border-radius:10px;padding:10px 12px;margin-top:10px;background:var(--soft);color:var(--ink)}
+.msg{font-size:14px;border-radius:12px;padding:10px 12px;margin-top:10px;background:var(--soft);color:var(--ink)}
 .msg.warn{background:color-mix(in srgb,var(--out) 13%,transparent)}
 .info{font-size:14px;border-radius:12px;padding:12px 14px;background:color-mix(in srgb,var(--c,var(--acc)) 11%,transparent);margin-bottom:14px}
 .info b{white-space:normal}.info{overflow-wrap:anywhere}
 .empty{color:var(--mute);text-align:center;padding:22px 8px}
-.fab{position:fixed;right:max(18px,calc(50vw - 470px));bottom:calc(18px + env(safe-area-inset-bottom));z-index:4;border:0;border-radius:999px;background:var(--acc);color:var(--on);font:800 17px system-ui,sans-serif;padding:0 24px;min-height:58px;box-shadow:0 6px 18px rgb(0 0 0/.25);cursor:pointer}
-.toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--card);padding:10px 12px 10px 16px;border-radius:12px;display:none;align-items:center;gap:12px;z-index:6;max-width:92vw}
-.toast.show{display:flex}.toast button{background:var(--acc);color:var(--on);border:0;border-radius:8px;min-height:38px;padding:0 12px;font-weight:700;cursor:pointer}
-.alt{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:var(--soft);margin-bottom:8px;flex-wrap:wrap}.alt .t{flex:1 1 170px}.alt .t b{display:block;font-size:19px;margin:2px 0}.alt .t small{display:block;color:var(--mute);font-size:13px}.alt .btn{width:auto;flex:0 0 auto;padding:10px 16px;min-height:44px}
+.fab{position:fixed;right:max(18px,calc(50vw - 292px));bottom:calc(18px + env(safe-area-inset-bottom));z-index:4;border:0;border-radius:999px;background:var(--acc);color:var(--on);font:800 17px system-ui,sans-serif;padding:0 24px;min-height:58px;box-shadow:0 10px 22px rgba(15,23,42,.28),0 3px 7px rgba(15,23,42,.18);cursor:pointer;overflow:hidden}
+.fab:active{transform:scale(.96)}
+.toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--toast-bg);color:var(--toast-fg);padding:10px 12px 10px 16px;border-radius:12px;display:none;align-items:center;gap:12px;z-index:60;max-width:92vw;font-size:14px;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.toast.show{display:flex}.toast button{background:var(--acc);color:var(--on);border:0;border-radius:999px;min-height:36px;padding:0 14px;font-weight:700;cursor:pointer}
+.alt{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:var(--soft);margin-bottom:8px;flex-wrap:wrap}.alt .t{flex:1 1 170px}.alt .t b{display:block;font-size:19px;margin:2px 0}.alt .t small{display:block;color:var(--mute);font-size:13px}.alt .btn{width:auto;flex:0 0 auto;padding:10px 18px;min-height:44px;border-radius:999px}
 .subhead{display:flex;align-items:center;gap:10px;margin-bottom:12px}.subhead h2{margin:0}
 .setbtn .amt{font-size:15px}.setbtn .bar{margin-top:6px}
-.setbtn{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--card);border:0;border-radius:14px;padding:14px 16px;margin-bottom:8px;color:var(--ink);font:inherit;cursor:pointer;min-height:64px}
-.setbtn .ic{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;background:var(--soft);flex:none}
+/* menu rows (like Medicine's menu buttons) */
+.setbtn{position:relative;overflow:hidden;display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:16px;padding:13px 16px;margin-bottom:10px;color:var(--ink);font:inherit;cursor:pointer;min-height:62px}
+.setbtn .ic{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;background:var(--tint);flex:none}
 .setbtn .t{flex:1}.setbtn .t b{display:block;font-size:16px}.setbtn .t small{color:var(--mute);font-size:13px}.setbtn .go{color:var(--mute);font-size:22px}
-.switch{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px}.switch>.btn{flex:0 0 auto;padding:12px 18px}
+.switch{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px}.switch>.btn{flex:0 0 auto;padding:12px 18px;border-radius:999px}
 .catrow{display:flex;gap:8px;align-items:center;margin-bottom:8px}.catrow input{flex:1}
 .upbox{position:relative;display:block;overflow:hidden;border-radius:12px}.upbox input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;min-height:0;padding:0;border:0}
-.upbox:focus-within{outline:3px solid var(--acc);outline-offset:2px}
+.upbox:focus-within{outline:2px solid var(--acc);outline-offset:2px}
 .prog{font-size:13px;color:var(--mute)}
-.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
 .grid2>.card{margin-bottom:0}
 [hidden]{display:none!important}
-/* Material-style dropdowns: the real <select> stays for its value, a button shows it, a rounded menu picks */
+/* ---- Home: compact cards that open and close ---- */
+.xc{padding:0;overflow:hidden}
+.xh{position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;color:var(--ink);font:inherit;text-align:left;padding:14px 12px 14px 16px;cursor:pointer;min-height:66px}
+.xh .ic{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;background:var(--tint);flex:none}
+.xh .t{flex:1;min-width:0}.xh .t b{display:block;font-size:16px}.xh .t small{display:block;color:var(--mute);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xh .v{font-weight:800;font-size:17px;white-space:nowrap;letter-spacing:-.2px}
+.xh .ch{flex:none;color:var(--mute);transition:transform .3s cubic-bezier(.2,.8,.2,1),color .2s}
+.xc.open .xh .ch{transform:rotate(180deg);color:var(--acc)}
+.xb{display:grid;grid-template-rows:0fr;transition:grid-template-rows .32s cubic-bezier(.2,.8,.2,1)}
+.xc.open .xb{grid-template-rows:1fr}
+.xi{overflow:hidden;min-height:0;padding:0 16px;opacity:0;transition:opacity .25s,padding .32s}
+.xc.open .xi{opacity:1;padding:0 16px 14px}
+.xi>:first-child{border-top:1px solid var(--line)}
+.xc:not(.open) .xi{visibility:hidden;transition:opacity .25s,padding .32s,visibility 0s .32s}
+.hr{position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;width:100%;border:0;border-top:1px solid var(--line);background:none;color:var(--ink);font:inherit;text-align:left;padding:11px 0;cursor:pointer}
+.hr .t{flex:1;min-width:0}.hr .t small{display:block;color:var(--mute);font-size:13px}
+.hr .v{font-weight:750;white-space:nowrap}
+.hr .bar{margin-top:5px}
+.xi .kv{padding:9px 0}
+.xmore{display:flex;justify-content:flex-end;padding-top:10px}
+.mini{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+/* Material-style dropdowns (outlined field + elevated menu, like Medicine) */
 select.ddn{position:absolute!important;opacity:0!important;pointer-events:none!important;width:1px!important;height:1px!important;min-height:0!important;padding:0!important;border:0!important;margin:0!important}
-.dd{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;font:16px system-ui,sans-serif;padding:11px 12px 11px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--soft);color:var(--ink);min-height:46px;cursor:pointer;position:relative;overflow:hidden}
-.dd:focus-visible{outline:3px solid var(--acc);outline-offset:1px}.dd.open{border-color:var(--acc)}
+.dd{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;font:16px system-ui,sans-serif;padding:0 10px 0 14px;border:1px solid var(--outline);border-radius:8px;background:transparent;color:var(--ink);min-height:50px;cursor:pointer;position:relative;overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.dd:active{background:var(--tint)}
+.dd:focus-visible{outline:2px solid var(--acc);outline-offset:1px}.dd.open{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
 .dd .v{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dd.ph .v{color:var(--mute)}
 .dd .ch{flex:none;color:var(--mute);transition:transform .2s}.dd.open .ch{transform:rotate(180deg);color:var(--acc)}
+.dd .cal{flex:none;color:var(--mute);display:grid}
 .ddshade{position:fixed;inset:0;z-index:19}
-.ddmenu{position:fixed;z-index:20;background:var(--card);color:var(--ink);border-radius:18px;box-shadow:0 12px 32px rgb(0 0 0/.28),0 2px 8px rgb(0 0 0/.14);padding:6px;overflow-y:auto;overscroll-behavior:contain;transform-origin:top center;animation:ddIn .16s ease-out}
+.ddmenu{position:fixed;z-index:20;background:var(--card);color:var(--ink);border-radius:8px;box-shadow:var(--pop-shadow);padding:8px 0;overflow-y:auto;overscroll-behavior:contain;transform-origin:top center;animation:ddIn .14s ease-out}
 .ddmenu.up{transform-origin:bottom center}
-@keyframes ddIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:none}}
-.ddmenu button{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;color:inherit;text-align:left;font:16px system-ui,sans-serif;padding:11px 14px;border-radius:12px;min-height:46px;cursor:pointer;position:relative;overflow:hidden}
-.ddmenu button.sel{background:color-mix(in srgb,var(--acc) 15%,transparent);color:var(--acc);font-weight:700}
-.ddmenu .ck{margin-left:auto;font-weight:800}
+@keyframes ddIn{from{opacity:0;transform:scaleY(.92)}to{opacity:1;transform:none}}
+.ddmenu button{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;color:inherit;text-align:left;font:16px system-ui,sans-serif;padding:0 16px;min-height:48px;cursor:pointer;position:relative;overflow:hidden}
+.ddmenu button:active{background:var(--tint)}
+.ddmenu button.sel{background:var(--tint);color:var(--acc);font-weight:600}
+/* pop-up dialog */
+#dlg{position:fixed;inset:0;z-index:30;background:rgba(2,6,23,.55);display:flex;align-items:center;justify-content:center;padding:16px;animation:pkF .15s ease-out}
+#dlg>.card{width:100%;max-width:440px;max-height:88vh;overflow:auto;margin:0;border:0;border-radius:28px;padding:22px 20px 18px;box-shadow:0 24px 60px rgba(0,0,0,.45),0 8px 20px rgba(0,0,0,.3);animation:pkIn .2s cubic-bezier(.2,.8,.2,1)}
+/* ---- Material 3 date and month pickers (same as Medicine / Time Sheet) ---- */
+#pk{position:fixed;inset:0;z-index:50;background:rgba(2,6,23,.55);display:flex;align-items:center;justify-content:center;animation:pkF .15s ease-out}
+@keyframes pkF{from{opacity:0}to{opacity:1}}
+@keyframes pkIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+.pkd{background:var(--card);color:var(--ink);border-radius:28px;width:min(360px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto;box-shadow:0 10px 34px rgba(0,0,0,.35);animation:pkIn .18s cubic-bezier(.2,.8,.2,1)}
+.pkh{padding:20px 24px 14px;border-bottom:1px solid var(--line)}
+.pkh small{display:block;font-size:13px;font-weight:600;color:var(--mute)}
+.pkh .big{font-size:30px;font-weight:600;letter-spacing:-.3px;margin-top:22px}
+.pknav{display:flex;align-items:center;padding:10px 12px 2px 16px}
+.pkm{flex:1;display:inline-flex;align-items:center;gap:2px;border:0;background:none;color:var(--ink);font:inherit;font-size:15px;font-weight:700;padding:8px;border-radius:20px;cursor:pointer;text-align:left}
+.pkm svg{color:var(--mute);transition:transform .2s}.pkm.open svg{transform:rotate(180deg)}
+.pki{width:44px;height:44px;border:0;background:none;color:var(--mute);border-radius:50%;cursor:pointer;display:grid;place-items:center}
+.pki:active,.pkm:active{background:var(--tint)}
+.pkg{display:grid;grid-template-columns:repeat(7,1fr);padding:2px 12px 4px;text-align:center}
+.pkg .wd{font-size:13px;font-weight:600;color:var(--mute);height:40px;line-height:40px}
+.pkday{width:40px;height:40px;border-radius:50%;border:1px solid transparent;background:none;color:var(--ink);font:inherit;font-size:15px;margin:2px auto;cursor:pointer;padding:0}
+.pkday:active{background:var(--tint)}
+.pkday.today{border-color:var(--acc);color:var(--acc)}
+.pkday.sel{background:var(--acc);border-color:var(--acc);color:var(--on);font-weight:700}
+.pky{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px 16px;max-height:300px;overflow:auto}
+.pky button{height:40px;border:0;border-radius:20px;background:none;color:var(--ink);font:inherit;font-size:15px;cursor:pointer}
+.pky button.sel{background:var(--acc);color:var(--on);font-weight:700}
+.pky button.cur:not(.sel){outline:1px solid var(--acc);color:var(--acc)}
+.mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px 16px 6px}
+.mcell{position:relative;overflow:hidden;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:16px;padding:15px 0;font:inherit;font-weight:700;cursor:pointer}
+.mcell.cur{border-color:var(--acc);color:var(--acc)}
+.mcell.sel{background:var(--acc);border-color:var(--acc);color:var(--on)}
+.pkb{display:flex;justify-content:flex-end;gap:4px;padding:8px 12px 14px}
+.pkb button{position:relative;overflow:hidden;border:0;background:none;color:var(--acc);font:inherit;font-size:15px;font-weight:700;padding:10px 14px;border-radius:20px;cursor:pointer}
+.pkb button:active{background:var(--tint)}
+.pkb .sp{flex:1}
+input.pkn{position:absolute!important;opacity:0!important;pointer-events:none!important;width:1px!important;height:1px!important;min-height:0!important;padding:0!important;border:0!important;margin:0!important}
 /* motion: pages slide in, taps ripple */
-@keyframes inR{from{transform:translateX(36px);opacity:0}to{transform:none;opacity:1}}
-@keyframes inL{from{transform:translateX(-36px);opacity:0}to{transform:none;opacity:1}}
+@keyframes inR{from{transform:translateX(44px);opacity:0}to{transform:none;opacity:1}}
+@keyframes inL{from{transform:translateX(-44px);opacity:0}to{transform:none;opacity:1}}
 @keyframes inUp{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
-.anim-r{animation:inR .26s cubic-bezier(.2,.8,.2,1)}.anim-l{animation:inL .26s cubic-bezier(.2,.8,.2,1)}.anim-u{animation:inUp .24s cubic-bezier(.2,.8,.2,1)}
-.rp{overflow:hidden;-webkit-tap-highlight-color:transparent}.rp.rpr{position:relative}
-.ripple{position:absolute;border-radius:50%;pointer-events:none;background:currentColor;opacity:.22;transform:scale(0);animation:rip .55s ease-out forwards}
+.anim-r{animation:inR .32s cubic-bezier(.2,.8,.2,1)}.anim-l{animation:inL .32s cubic-bezier(.2,.8,.2,1)}.anim-u{animation:inUp .26s cubic-bezier(.2,.8,.2,1)}
+.rp{overflow:hidden}.rp.rpr{position:relative}
+.ripple{position:absolute;border-radius:50%;pointer-events:none;background:currentColor;opacity:.28;transform:scale(0);animation:rip .6s ease-out forwards}
 @keyframes rip{to{transform:scale(1);opacity:0}}
-nav a{transition:background-color .25s,color .25s}
-.btn,.setbtn,.chip,.ib,.acc,.seg button{transition:transform .12s ease,background-color .2s}
-.btn:active,.setbtn:active,.acc:active,.ib:active{transform:scale(.98)}
-@media(prefers-reduced-motion:reduce){.anim-r,.anim-l,.anim-u,.ripple{animation:none!important}.ripple{display:none}.btn:active,.setbtn:active,.acc:active,.ib:active{transform:none}}
-@media(max-width:700px){.grid2{grid-template-columns:minmax(0,1fr)}.grid2>.card{margin-bottom:0}}
-@media(max-width:380px){nav a{font-size:13px;padding:10px 10px}.seg button{font-size:13px}}
+.btn,.setbtn,.chip,.ib,.xh,.hr,.tile{transition:transform .12s ease,background-color .2s}
+.btn:active,.setbtn:active,.ib:active,.chip:active{transform:scale(.97)}
+@media(prefers-reduced-motion:reduce){.anim-r,.anim-l,.anim-u,.ripple,.crip::before,#dlg,#dlg>.card,.pkd,#pk,.ddmenu{animation:none!important}.ripple{display:none}.btn:active,.setbtn:active,.ib:active,.chip:active,nav a:active,.seg button:active,.fab:active{transform:none}.xb,.xi,.xh .ch{transition:none}}
+@media(max-width:380px){nav a{font-size:14px;padding:10px 14px}.seg button{font-size:13px}h1{font-size:28px}}
 </style>
 </head>
 <body>
@@ -148,11 +225,8 @@ nav a{transition:background-color .25s,color .25s}
  <div data-main>
  <div id="dueBox"></div>
  <div class="card" id="balCheck" hidden style="border:2px solid var(--acc)"><h2>Check your balances</h2><p class="note" style="margin-top:-6px">The app can't see every movement (e.g. Telda card purchases send no SMS). Type what your bank and Telda apps show now; the app continues from these numbers.</p><div id="balRows"></div><div class="btns"><button class="btn" id="balSave">Save balances</button><button class="btn ghost" id="balOk">They're right</button></div></div>
- <div class="accs" id="accs"></div>
- <div class="tiles" id="monthTiles"></div>
  <div id="homeMenu"></div>
- <div id="homeBudget"></div>
- <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px"><h2 style="margin:0">Latest</h2><button class="ib" data-go="home-all">See all</button></div><ul class="list" id="homeLatest"></ul></div>
+ <div id="homeCards"></div>
  </div>
  <div data-sub="review" data-title="Needs a category">
  <div class="card" id="reviewCard" style="border:2px solid var(--warn)"><h2 id="reviewTitle">Needs a category</h2><p class="note" style="margin-top:-6px">Found in your SMS or statements and already counted in your balances. Tap each one to pick a category; the app remembers it for that name next time.</p><ul class="list" id="reviewList"></ul></div>
@@ -411,7 +485,7 @@ nav a{transition:background-color .25s,color .25s}
 </section>
 </div>
 <button class="fab" id="fab">+ Add</button>
-<div id="dlg" hidden style="position:fixed;inset:0;z-index:9;background:rgb(0 0 0/.45);display:flex;align-items:flex-end;justify-content:center;padding:16px"><div class="card" style="width:100%;max-width:520px;margin:0 0 calc(10px + env(safe-area-inset-bottom))"><h2 id="dlgT"></h2><div id="dlgB" class="note" style="font-size:15px;color:var(--ink);margin-bottom:14px"></div><div id="dlgBtns" style="display:grid;gap:8px"></div></div></div>
+<div id="dlg" hidden><div class="card" role="dialog"><h2 id="dlgT"></h2><div id="dlgB" class="note" style="font-size:15px;color:var(--ink);margin-bottom:14px"></div><div id="dlgBtns" style="display:grid;gap:8px"></div></div></div>
 <div class="toast" id="toast"><span id="toastT"></span><button id="toastB">Undo</button></div>
 
 <script>
@@ -619,20 +693,40 @@ function dueHTML(c,withBtn){
  return ''}
 function renderBalCheck(){const show=S.balChecked!==1;$('balCheck').hidden=!show;if(!show)return;
  $('balRows').innerHTML=NONCC.map(a=>`<div class="catrow"><label for="bc-${a}" style="flex:1;margin:0;color:var(--ink)">${esc(accName(a))}</label><input id="bc-${a}" type="number" inputmode="decimal" step="0.01" value="${!anchorOf(a)&&+S.acc[a].open?+S.acc[a].open:bal(a)}" style="flex:1"></div>`).join('')}
+/* Home: a short page of cards that open and close; what each one holds is summed up in its header */
+let homeOpen={acc:0,month:0,latest:1};try{Object.assign(homeOpen,JSON.parse(localStorage.getItem('exp-home-open')||'{}'))}catch(e){}
+const CHEV='<svg class="ch" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg>';
+function xcard(id,ic,title,sub,val,valCls,body){const o=!!homeOpen[id];
+ return `<section class="card xc${o?' open':''}"><button type="button" class="xh" data-xt="${id}" aria-expanded="${o}"><span class="ic" aria-hidden="true">${ic}</span><span class="t"><b>${title}</b>${sub?`<small>${sub}</small>`:''}</span>${val!=null?`<span class="v${valCls?' '+valCls:''}">${val}</span>`:''}${CHEV}</button><div class="xb"><div class="xi">${body}</div></div></section>`}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-xt]');if(!b)return;const c=b.closest('.xc'),id=b.dataset.xt,o=!c.classList.contains('open');
+ c.classList.toggle('open',o);b.setAttribute('aria-expanded',o);homeOpen[id]=o?1:0;try{localStorage.setItem('exp-home-open',JSON.stringify(homeOpen))}catch(x){}});
 function renderHome(){renderBalCheck();
- $('homeBudget').innerHTML=(S.goals||[]).map(g=>{const B=goalBudget(g,goalPlan(g));if(!B)return'';const over=B.left<0;
-  return `<button class="setbtn" data-go="goals-detail-${g.id}" style="margin-bottom:10px"><span class="ic">🎯</span><span class="t"><b>${esc(g.name)}: ${over?`over the limit by ${egp(-B.left)}`:`${egp(B.left)} left to spend`}</b><small>${egp(B.used)} of ${egp(B.limit)} this month${over?'':` · about ${egp(B.perDay)} a day`}</small><span class="bar" style="display:block"><i style="width:${Math.min(100,B.used/(B.limit||1)*100)}%;background:${over?'var(--out)':B.used>B.limit*0.85?'var(--warn)':'var(--in)'}"></i></span></span></button>`}).join('');
  const c=credit();$('dueBox').innerHTML=dueHTML(c,true);
- $('accs').innerHTML=ACC.map(a=>{
-  if(a==='credit'){const lim=+S.acc.credit.limit||0;return `<button class="acc${homeAcc===a?' on':''}" style="--c:${ACOL[a]}" data-acc="${a}"><div class="k">${esc(accName(a))}</div><div class="v">${egp(Math.max(0,c.used))}</div><div class="s">${lim?`outstanding · ${money(c.avail)} available`:'outstanding · set the limit in Settings'}</div>${lim?`<div class="bar"><i style="width:${Math.min(100,Math.max(0,c.used/lim*100))}%"></i></div>`:''}</button>`}
-  const b=bal(a),lim=a==='od'?+S.acc.od.limit||0:0;return `<button class="acc${homeAcc===a?' on':''}" style="--c:${ACOL[a]}" data-acc="${a}"><div class="k">${esc(accName(a))}</div><div class="v${b<0?' neg':''}">${egp(b)}</div><div class="s">${lim?`balance · ${money(lim+b)} available`:'balance'}${(()=>{const A=anchorOf(a);return A?` · from ${A.src==='sms'?'bank SMS':A.src==='you'?'your balance':'statement'} ${fmtS(A.date)}`:''})()}</div></button>`}).join('');
- const ym=today.slice(0,7),inM=tx.filter(t=>t.date.startsWith(ym));
- const sp=r2(inM.filter(t=>t.type==='exp'&&t.cat!=='gam3ya').reduce((s,t)=>s+cost(t),0)),inc=r2(inM.filter(t=>t.type==='inc'&&t.cat!=='gam3ya').reduce((s,t)=>s+t.amt,0));
- $('monthTiles').innerHTML=`<div class="tile"><div class="k">Spent in ${MONTHS[+ym.slice(5)-1]}</div><div class="v" style="color:var(--out)">${money(sp)}</div></div><div class="tile"><div class="k">Income</div><div class="v" style="color:var(--in)">${money(inc)}</div></div><div class="tile"><div class="k">Net</div><div class="v">${money(inc-sp)}</div></div>`;
  const rv=tx.filter(t=>t.review&&!isCheck(t)).sort(byDate);
  $('reviewTitle').textContent=rv.length?`${rv.length} need${rv.length===1?'s':''} a category`:'All sorted';$('reviewList').innerHTML=rv.length?rv.slice(0,200).map(t=>row(t,null)).join(''):'<li class="empty" style="display:block;border:0">Nothing waiting for a category.</li>';
- $('homeMenu').innerHTML=(rv.length?menuBtn('home-review','🏷️',`${rv.length} need${rv.length===1?'s':''} a category`,'Tap to sort them — similar ones can be done together'):'');
- $('homeLatest').innerHTML=tx.length?grouped([...tx].filter(t=>!isCheck(t)).sort(byDate).slice(0,8),null):'<li class="empty" style="display:block;border:0">Nothing here yet. Tap <b>+ Add</b> to record your first expense.</li>';
+ $('homeMenu').innerHTML=(rv.length?menuBtn('home-review','🏷️',`${rv.length} need${rv.length===1?'s':''} a category`,'Tap to sort them'):'');
+ /* accounts */
+ const lim=+S.acc.credit.limit||0,owed=Math.max(0,c.used),total=r2(NONCC.reduce((s,a)=>s+bal(a),0));
+ const accRows=ACC.map(a=>{
+  if(a==='credit')return `<button type="button" class="hr" data-acc="${a}" style="--c:${ACOL[a]}"><span class="dot"></span><span class="t">${esc(accName(a))}<small>${lim?`owed · ${money(c.avail)} available`:'owed · set the limit in Settings'}</small>${lim?`<span class="bar" style="display:block"><i style="width:${Math.min(100,Math.max(0,c.used/lim*100))}%"></i></span>`:''}</span><span class="v">${money(owed)}</span></button>`;
+  const b=bal(a),l=a==='od'?+S.acc.od.limit||0:0,A=anchorOf(a);
+  return `<button type="button" class="hr" data-acc="${a}" style="--c:${ACOL[a]}"><span class="dot"></span><span class="t">${esc(accName(a))}<small>${l?`${money(l+b)} available`:'balance'}${A?` · from ${A.src==='sms'?'bank SMS':A.src==='you'?'your balance':'statement'} ${fmtS(A.date)}`:''}</small></span><span class="v${b<0?' neg':''}">${money(b)}</span></button>`}).join('');
+ /* this month and the goal spending limits */
+ const ym=today.slice(0,7),inM=tx.filter(t=>t.date.startsWith(ym));
+ const sp=r2(inM.filter(t=>t.type==='exp'&&t.cat!=='gam3ya').reduce((s,t)=>s+cost(t),0)),inc=r2(inM.filter(t=>t.type==='inc'&&t.cat!=='gam3ya').reduce((s,t)=>s+t.amt,0));
+ const buds=(S.goals||[]).map(g=>({g,B:goalBudget(g,goalPlan(g))})).filter(x=>x.B);
+ const bcol=B=>B.left<0?'var(--out)':B.used>B.limit*0.85?'var(--warn)':'var(--in)';
+ const budRows=buds.map(({g,B})=>`<button type="button" class="hr" data-go="goals-detail-${g.id}"><span class="t">${esc(g.name)} · spending limit<small>${egp(B.used)} of ${egp(B.limit)}${B.left<0?'':` · about ${money(B.perDay)} a day`}</small><span class="bar" style="display:block"><i style="width:${Math.min(100,B.used/(B.limit||1)*100)}%;background:${bcol(B)}"></i></span></span><span class="v" style="color:${bcol(B)}">${B.left<0?'over '+money(-B.left):money(B.left)+' left'}</span></button>`).join('');
+ const B0=buds[0]&&buds[0].B;
+ const monthSub=B0?(B0.left<0?`Over the spending limit by ${money(-B0.left)}`:`${money(B0.left)} left to spend · about ${money(B0.perDay)} a day`):`Income ${money(inc)} · net ${money(inc-sp)}`;
+ const monthBody=`<div class="kv"><span>Spent</span><b style="color:var(--out)">${money(sp)}</b></div><div class="kv"><span>Income</span><b style="color:var(--in)">${money(inc)}</b></div><div class="kv"><span>Net</span><b>${money(inc-sp)}</b></div>${budRows}<div class="xmore"><button type="button" class="ib" data-go="reports">Reports ›</button></div>`;
+ /* latest entries */
+ const all=tx.filter(t=>!isCheck(t)).sort(byDate),nToday=all.filter(t=>t.date===today).length;
+ const latestBody=all.length?`<ul class="list">${grouped(all.slice(0,6),null)}</ul><div class="xmore"><button type="button" class="ib" data-go="home-all">See all ›</button></div>`:'<p class="empty" style="margin:0">Nothing here yet. Tap <b>+ Add</b> to record your first expense.</p>';
+ $('homeCards').innerHTML=
+  xcard('acc','🏦','Accounts',`Card owes ${money(owed)}`,money(total),total<0?'neg':'',accRows)+
+  xcard('month','📊',MONTHS[+ym.slice(5)-1],monthSub,money(sp),'neg',monthBody)+
+  xcard('latest','🧾','Latest',nToday?`${nToday} entr${nToday===1?'y':'ies'} today`:'Nothing recorded today',null,'',latestBody);
  $('allAccSel').innerHTML='<option value="">All accounts</option>'+accOpts(ACC,homeAcc);
  const list=tx.filter(t=>!homeAcc||touches(t,homeAcc)).sort(byDate);
  $('listTitle').textContent=homeAcc?accName(homeAcc):'Latest';$('clearAcc').hidden=!homeAcc;
@@ -1474,7 +1568,7 @@ $('setBack').addEventListener('click',()=>{if(history.length>1)history.back();el
 let sysNight=null;
 function applyTheme(){const want=S.theme||'system';let dark;
  if(want==='system'){if(window.Android&&Android.isNight){try{dark=sysNight!=null?sysNight:Android.isNight()}catch(e){dark=false}}else dark=matchMedia('(prefers-color-scheme: dark)').matches}else dark=want==='dark';
- document.documentElement.style.colorScheme=dark?'dark':'light';const m=document.querySelector('meta[name=theme-color]');if(m)m.content=dark?'#111513':'#e6ebe8';
+ document.documentElement.style.colorScheme=dark?'dark':'light';document.documentElement.dataset.theme=dark?'dark':'light';const m=document.querySelector('meta[name=theme-color]');if(m)m.content=dark?'#0b1220':'#f3f6f8';
  if(window.Android&&Android.setTheme)try{Android.setTheme(dark?'dark':'light')}catch(e){}
  document.querySelectorAll('#themeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.theme===want))}
 window.onNight=n=>{sysNight=!!n;applyTheme()};
@@ -1504,7 +1598,7 @@ const menuBtn=(go,ic,title,sub,right)=>`<button class="setbtn" data-go="${go}"><
 
 
 /* ripple from the touch point */
-const RIPPLE='.dd,.ddmenu button,.gear,nav a,.btn,.setbtn,.chip,.ib,.acc,.seg button,.list li.tx,.fab,.tile';
+const RIPPLE='.dd,.ddmenu button,.gear,nav a,.btn,.setbtn,.chip,.ib,.xh,.hr,.seg button,.list li.tx,.fab,.mcell,.pkb button,.toast button';
 document.addEventListener('pointerdown',e=>{if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;const el=e.target.closest(RIPPLE);if(!el||el.disabled)return;
  el.classList.add('rp');if(getComputedStyle(el).position==='static')el.classList.add('rpr');const r=el.getBoundingClientRect(),d=Math.max(r.width,r.height)*2.2,sp=document.createElement('span');sp.className='ripple';
  sp.style.cssText=`width:${d}px;height:${d}px;left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px`;el.appendChild(sp);setTimeout(()=>sp.remove(),600)},{passive:true});
@@ -1528,7 +1622,7 @@ function ddOpen(sel,b){const same=ddCur&&ddCur.sel===sel;ddClose();if(same||sel.
  const opts=[...sel.options].filter(o=>!o.disabled&&!o.hidden);if(!opts.length)return;
  const sh=document.createElement('div');sh.className='ddshade';sh.addEventListener('click',ddClose);
  const m=document.createElement('div');m.className='ddmenu';m.setAttribute('role','listbox');
- m.innerHTML=opts.map(o=>`<button type="button" role="option" data-v="${esc(o.value)}"${o.selected?' class="sel" aria-selected="true"':''}><span>${esc(o.textContent)}</span>${o.selected?'<span class="ck">✓</span>':''}</button>`).join('');
+ m.innerHTML=opts.map(o=>`<button type="button" role="option" data-v="${esc(o.value)}"${o.selected?' class="sel" aria-selected="true"':''}><span>${esc(o.textContent)}</span></button>`).join('');
  document.body.append(sh,m);
  const r=b.getBoundingClientRect(),w=Math.max(200,Math.min(r.width,300)),below=innerHeight-r.bottom-14,above=r.top-14,need=Math.min(360,m.scrollHeight),down=below>=need||below>=above;
  m.style.width=w+'px';m.style.left=Math.max(8,Math.min(r.left,innerWidth-w-8))+'px';m.style.maxHeight=Math.min(360,down?below:above)+'px';
@@ -1540,6 +1634,62 @@ window.addEventListener('hashchange',ddClose);window.addEventListener('resize',d
 document.addEventListener('keydown',e=>{if(e.key==='Escape')ddClose()});
 document.querySelectorAll('select').forEach(ddEnhance);
 new MutationObserver(ms=>{for(const mu of ms)for(const n of mu.addedNodes){if(n.nodeType!==1)continue;if(n.tagName==='SELECT')ddEnhance(n);else if(n.querySelectorAll)n.querySelectorAll('select').forEach(ddEnhance)}}).observe(document.body,{childList:true,subtree:true});
+
+/* ---------- Material date and month pickers instead of Android's (same look as Medicine / Time Sheet) ---------- */
+const pkOf=new WeakMap();
+const CAL_IC='<span class="cal" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg></span>';
+const CHEV_L='<svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>';
+const CHEV_R='<svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>';
+const PK_AR='<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg>';
+const okDate=v=>/^\d{4}-\d{2}-\d{2}$/.test(v||''),okMonth=v=>/^\d{4}-\d{2}$/.test(v||'');
+function pkText(inp){const v=inp.value;if(inp.type==='month')return okMonth(v)?monthLbl(v):'Choose a month';return okDate(v)?`${dow(v)} ${fmtS(v)}`:'Choose a date'}
+function pkSync(inp){const b=pkOf.get(inp);if(!b)return;b.querySelector('.v').textContent=pkText(inp);b.classList.toggle('ph',inp.type==='month'?!okMonth(inp.value):!okDate(inp.value));b.disabled=inp.disabled}
+{const d=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value');
+ Object.defineProperty(HTMLInputElement.prototype,'value',{configurable:true,get(){return d.get.call(this)},set(v){d.set.call(this,v);if(pkOf.has(this))pkSync(this)}})}
+function pkEnhance(inp){if(pkOf.has(inp)||(inp.type!=='date'&&inp.type!=='month'))return;const b=document.createElement('button');b.type='button';b.className='dd';
+ b.innerHTML='<span class="v"></span>'+CAL_IC;inp.classList.add('pkn');inp.tabIndex=-1;inp.after(b);pkOf.set(inp,b);
+ if(inp.id){b.id=inp.id+'-pk';const l=document.querySelector(`label[for="${inp.id}"]`);if(l)l.htmlFor=b.id}
+ b.addEventListener('click',()=>{if(inp.disabled)return;(inp.type==='month'?monthPicker:datePicker)(inp)});
+ inp.addEventListener('change',()=>pkSync(inp));pkSync(inp)}
+let PK=null,pkPushed=false;
+function pkShell(inner){let e=$('pk');
+ if(!e){e=document.createElement('div');e.id='pk';document.body.appendChild(e);e.addEventListener('click',ev=>{if(ev.target===e)pkDismiss()});
+  try{history.pushState({pk:1},'');pkPushed=true}catch(x){pkPushed=false}}
+ e.innerHTML='<div class="pkd" role="dialog" aria-modal="true">'+inner+'</div>';return e}
+function pkRemove(){const e=$('pk');if(e)e.remove();PK=null}
+function pkDismiss(){if(pkPushed){pkPushed=false;history.back()}else pkRemove()}
+window.addEventListener('popstate',()=>{if($('pk')){pkPushed=false;pkRemove()}});
+function pkSet(inp,v){pkDismiss();if(inp.value!==v){inp.value=v;inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}))}}
+function datePicker(inp){const v=okDate(inp.value)?inp.value:today,[y,m]=parts(v);PK={kind:'date',inp,sel:v,y,m:m-1,years:false};drawDate()}
+function drawDate(){const P=PK,[sy,sm,sd]=parts(P.sel);
+ let h=`<div class="pkh"><small>Select date</small><div class="big">${DAYS[new Date(sy,sm-1,sd).getDay()]}, ${sd} ${MONTHS[sm-1].slice(0,3)}</div></div>`;
+ h+=`<div class="pknav"><button type="button" class="pkm${P.years?' open':''}" data-pk="years">${MONTHS[P.m]} ${P.y}${PK_AR}</button>${P.years?'':`<button type="button" class="pki" data-pk="prev" aria-label="Previous month">${CHEV_L}</button><button type="button" class="pki" data-pk="next" aria-label="Next month">${CHEV_R}</button>`}</div>`;
+ if(P.years){const ny=+today.slice(0,4);let ys='';for(let y=ny-6;y<=ny+8;y++)ys+=`<button type="button" data-pk="y" data-v="${y}" class="${y===P.y?'sel ':''}${y===ny?'cur':''}">${y}</button>`;h+=`<div class="pky">${ys}</div>`}
+ else{h+='<div class="pkg">'+['M','T','W','T','F','S','S'].map(x=>`<div class="wd">${x}</div>`).join('');
+  const lead=(new Date(P.y,P.m,1).getDay()+6)%7,n=dim(P.y,P.m);for(let i=0;i<lead;i++)h+='<div></div>';
+  for(let k=1;k<=n;k++){const s=`${P.y}-${pad(P.m+1)}-${pad(k)}`;h+=`<button type="button" class="pkday${s===P.sel?' sel':''}${s===today?' today':''}" data-pk="d" data-v="${s}">${k}</button>`}h+='</div>'}
+ h+='<div class="pkb"><button type="button" data-pk="today">Today</button><span class="sp"></span><button type="button" data-pk="cancel">Cancel</button><button type="button" data-pk="ok">OK</button></div>';
+ pkShell(h);if(P.years){const s=document.querySelector('.pky .sel');if(s)s.scrollIntoView({block:'center'})}}
+function monthPicker(inp){const v=okMonth(inp.value)?inp.value:today.slice(0,7);PK={kind:'month',inp,sel:v,y:+v.slice(0,4)};drawMonth()}
+function drawMonth(){const P=PK,cur=today.slice(0,7);let g='';
+ for(let i=0;i<12;i++){const ym=`${P.y}-${pad(i+1)}`;g+=`<button type="button" class="mcell${ym===P.sel?' sel':''}${ym===cur?' cur':''}" data-pk="m" data-v="${ym}">${MONTHS[i].slice(0,3)}</button>`}
+ pkShell(`<div class="pkh"><small>Select month</small><div class="big">${monthLbl(P.sel)}</div></div><div class="pknav"><span class="pkm" style="cursor:default">${P.y}</span><button type="button" class="pki" data-pk="py" aria-label="Previous year">${CHEV_L}</button><button type="button" class="pki" data-pk="ny" aria-label="Next year">${CHEV_R}</button></div><div class="mgrid">${g}</div><div class="pkb"><button type="button" data-pk="thism">This month</button><span class="sp"></span><button type="button" data-pk="cancel">Cancel</button><button type="button" data-pk="ok">OK</button></div>`)}
+document.addEventListener('click',ev=>{const b=ev.target.closest('[data-pk]');if(!b||!PK)return;const k=b.dataset.pk,P=PK;
+ if(k==='cancel'){pkDismiss();return}
+ if(k==='ok'){pkSet(P.inp,P.sel);return}
+ if(P.kind==='date'){
+  if(k==='prev'||k==='next'){const d=new Date(P.y,P.m+(k==='next'?1:-1),1);P.y=d.getFullYear();P.m=d.getMonth()}
+  else if(k==='years')P.years=!P.years;else if(k==='y'){P.y=+b.dataset.v;P.years=false}
+  else if(k==='d')P.sel=b.dataset.v;else if(k==='today'){P.sel=today;P.y=+today.slice(0,4);P.m=+today.slice(5,7)-1;P.years=false}
+  drawDate()}
+ else{if(k==='py'||k==='ny')P.y+=k==='ny'?1:-1;else if(k==='m')P.sel=b.dataset.v;else if(k==='thism'){P.sel=today.slice(0,7);P.y=+today.slice(0,4)}drawMonth()}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('pk'))pkDismiss()});
+document.querySelectorAll('input[type=date],input[type=month]').forEach(pkEnhance);
+new MutationObserver(ms=>{for(const mu of ms)for(const n of mu.addedNodes){if(n.nodeType!==1)continue;if(n.matches&&n.matches('input[type=date],input[type=month]'))pkEnhance(n);else if(n.querySelectorAll)n.querySelectorAll('input[type=date],input[type=month]').forEach(pkEnhance)}}).observe(document.body,{childList:true,subtree:true});
+
+/* round checkboxes: a soft ring ripples out when one is ticked or unticked */
+function cRip(el){if(!el)return;el.classList.remove('crip');void el.offsetWidth;el.classList.add('crip');clearTimeout(el._rt);el._rt=setTimeout(()=>el.classList.remove('crip'),520)}
+document.addEventListener('click',ev=>{const t=ev.target;if(t&&t.matches&&t.matches('input[type=checkbox]')&&!matchMedia('(prefers-reduced-motion: reduce)').matches)cRip(t)},true);
 
 /* ---------- bank SMS ---------- */
 const HAS_SMS=!!(window.Android&&typeof Android.smsTake==='function');

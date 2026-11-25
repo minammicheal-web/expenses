@@ -169,7 +169,7 @@ public class MainActivity extends Activity {
         LinearLayout v = new LinearLayout(this);
         v.setOrientation(LinearLayout.VERTICAL);
         v.setGravity(Gravity.CENTER);
-        v.setBackgroundColor(Color.rgb(16, 35, 28));
+        v.setBackgroundColor(Color.rgb(11, 18, 32));
         v.setClickable(true);
         TextView t = new TextView(this);
         t.setText("Expenses is locked");
@@ -179,7 +179,7 @@ public class MainActivity extends Activity {
         v.addView(t);
         lockMsg = new TextView(this);
         lockMsg.setText("Use your fingerprint or screen lock to open it.");
-        lockMsg.setTextColor(Color.rgb(180, 200, 190));
+        lockMsg.setTextColor(Color.rgb(159, 176, 198));
         lockMsg.setTextSize(15);
         lockMsg.setGravity(Gravity.CENTER);
         lockMsg.setPadding(48, 24, 48, 40);
@@ -189,10 +189,10 @@ public class MainActivity extends Activity {
         b.setAllCaps(false);
         b.setTextSize(17);
         b.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        b.setTextColor(Color.rgb(11, 23, 18));
+        b.setTextColor(Color.rgb(4, 32, 28));
         GradientDrawable bg = new GradientDrawable();
-        bg.setColor(Color.rgb(60, 196, 146));
-        bg.setCornerRadius(dp(16));
+        bg.setColor(Color.rgb(45, 212, 191));
+        bg.setCornerRadius(dp(28));
         b.setBackground(bg);
         b.setStateListAnimator(null);
         b.setPadding(dp(40), 0, dp(40), 0);
@@ -291,11 +291,14 @@ public class MainActivity extends Activity {
 
     private void applyBars(boolean dark) {
         darkUi = dark;
-        getWindow().setStatusBarColor(dark ? Color.rgb(17, 21, 19) : Color.rgb(230, 235, 232));
+        int c = dark ? Color.rgb(11, 18, 32) : Color.rgb(243, 246, 248);
+        getWindow().setStatusBarColor(c);
+        getWindow().setNavigationBarColor(c);
         if (Build.VERSION.SDK_INT >= 23) {
             View d = getWindow().getDecorView();
             int f = d.getSystemUiVisibility();
-            d.setSystemUiVisibility(dark ? (f & ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR) : (f | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR));
+            int light = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | (Build.VERSION.SDK_INT >= 26 ? View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR : 0);
+            d.setSystemUiVisibility(dark ? (f & ~light) : (f | light));
         }
     }
 

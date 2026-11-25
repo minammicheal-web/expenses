@@ -95,6 +95,7 @@ input:focus,select:focus,button:focus-visible,nav a:focus-visible{outline:3px so
 .fab{position:fixed;right:max(18px,calc(50vw - 470px));bottom:calc(18px + env(safe-area-inset-bottom));z-index:4;border:0;border-radius:999px;background:var(--acc);color:var(--on);font:800 17px system-ui,sans-serif;padding:0 24px;min-height:58px;box-shadow:0 6px 18px rgb(0 0 0/.25);cursor:pointer}
 .toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--card);padding:10px 12px 10px 16px;border-radius:12px;display:none;align-items:center;gap:12px;z-index:6;max-width:92vw}
 .toast.show{display:flex}.toast button{background:var(--acc);color:var(--on);border:0;border-radius:8px;min-height:38px;padding:0 12px;font-weight:700;cursor:pointer}
+.alt{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:var(--soft);margin-bottom:8px;flex-wrap:wrap}.alt .t{flex:1 1 170px}.alt .t b{display:block;font-size:19px;margin:2px 0}.alt .t small{display:block;color:var(--mute);font-size:13px}.alt .btn{width:auto;flex:0 0 auto;padding:10px 16px;min-height:44px}
 .subhead{display:flex;align-items:center;gap:10px;margin-bottom:12px}.subhead h2{margin:0}
 .setbtn .amt{font-size:15px}.setbtn .bar{margin-top:6px}
 .setbtn{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--card);border:0;border-radius:14px;padding:14px 16px;margin-bottom:8px;color:var(--ink);font:inherit;cursor:pointer;min-height:64px}
@@ -1276,13 +1277,34 @@ const catLabel=k=>k==='_none'?'Not sorted yet':catName({type:'exp',cat:k});
 let goalEdit=null;
 const FIXED=new Set(['apt','phone','elec','gas','fees','pharm','charity','gam3ya','_none']);
 function goalPlan(g){const st=monthStats(),months=Math.max(1,ymDiff(ymOf(today),ymOf(g.date))+(+g.date.slice(8)>=25?1:0)),need=r2(Math.max(0,g.target-(g.saved||0))),per=r2(need/months);
- const out=r2(st.spend+st.instMonthly+st.gamMonthly+st.charity),free=r2(st.inc-out);
+ const out=r2(st.spend+st.instMonthly+st.gamMonthly+st.charity),freeNow=r2(st.inc-out);
  const flex=Object.entries(st.cats).filter(([k,v])=>!FIXED.has(k)&&v>0).sort((a,b)=>b[1]-a[1]);
+ const P={st,months,need,per,out,flex};
+ /* the same month-by-month view everywhere: installments and gam3ya payments that end free up money */
+ const c0=(goalSim(g,P,0,months).at(-1)||{cum:0}).cum,c30=(goalSim(g,P,0.3,months).at(-1)||{cum:0}).cum,free=r2(c0/months);
  let gap=r2(per-free),cuts=[];
  for(const[k,v]of flex){if(gap<=0)break;const c=r2(Math.min(v*0.3,gap));if(c<1)continue;cuts.push({k,from:v,to:r2(v-c),cut:c});gap=r2(gap-c)}
- const maxCut=r2(flex.reduce((a,[k,v])=>a+v*0.3,0)),canMonth=r2(free+maxCut),realMonths=canMonth>0?Math.ceil(need/canMonth):null;
- return{st,months,need,per,free,out,cuts,gap,ok:free>=per,reachable:gap<=0,canMonth,realMonths}}
-function renderGoals(){
+ return Object.assign(P,{free,freeNow,cuts,gap,ok:c0>=need,reachable:c30>=need})}
+/* month by month from now: income − everyday spending − charity − the installments and gam3ya payments due that
+   month (+ a gam3ya payout in your turn), plus what cutting flexible spending by pct would free up */
+function goalSim(g,P,pct,maxMonths=120){const st=P.st,cur=ymOf(today),cut=r2(P.flex.reduce((a,[k,v])=>a+v*pct,0));
+ const inst={};tx.filter(t=>t.plan).forEach(t=>schedule(t).forEach(x=>{const ym=ymOf(dueOf(x.stmt));inst[ym]=r2((inst[ym]||0)+x.amt)}));
+ const base=r2(st.inc-st.spend-st.charity+cut),out=[];let cum=0;
+ for(let k=1;k<=maxMonths;k++){const ym=addYm(cur,k-1);let f=base-(inst[ym]||0);
+  for(const m of S.gam){const i=ymDiff(m.start,ym),each=m.amt*(m.shares||1);if(i>=0&&i<m.months&&gamPays(m).length<=i)f-=each;if(i===m.turn-1&&!gamGot(m))f+=gamPayout(m)}
+  cum=r2(cum+Math.max(0,f));out.push({ym,save:r2(Math.max(0,f)),cum})}
+ return out}
+function goalAlts(g,P){const need=P.need,saved=g.saved||0,res=[],seen=new Set();
+ const endOf=ym=>mk(+ym.slice(0,4),+ym.slice(5,7)-1,28);
+ const reach=pct=>{const sim=goalSim(g,P,pct),k=sim.findIndex(x=>x.cum>=need);return k<0?null:{k:k+1,ym:sim[k].ym,per:r2(need/(k+1))}};
+ const by=pct=>{const sim=goalSim(g,P,pct,P.months);return r2(saved+(sim.length?sim[sim.length-1].cum:0))};
+ for(const[pct,label,how]of[[0,'Same amount, later date','No cuts — just set aside what is left each month'],[0.15,'Same amount, a bit sooner','Spend 15% less on flexible categories'],[0.3,'Same amount, soonest','Spend 30% less on flexible categories']]){
+  const r=reach(pct);if(!r||seen.has(r.ym))continue;seen.add(r.ym);
+  res.push({title:label,big:`${monthLbl(r.ym)}`,sub:`${how} · about ${egp(r.per)} a month · ${r.k} months`,act:`d:${endOf(r.ym)}`,btn:`Use ${MONTHS[+r.ym.slice(5)-1].slice(0,3)} ${r.ym.slice(0,4)}`})}
+ const a0=by(0),a30=by(0.3);
+ if(a30>saved)res.push({title:'Same date, smaller goal',big:egp(Math.floor(a30/100)*100),sub:`What you can have by ${fmtS(g.date)} with 30% less on flexible spending${a0>saved&&a0<a30?` (${egp(Math.floor(a0/100)*100)} with no cuts)`:''}`,act:`a:${Math.floor(a30/100)*100}`,btn:'Use this amount'});
+ const ends=tx.filter(t=>t.plan).map(t=>{const sc=schedule(t),last=sc.at(-1);return{t,ym:ymOf(dueOf(last.stmt)),each:last.amt}}).filter(x=>x.ym>=ymOf(today)&&x.ym<=addYm(ymOf(today),P.months+24)).sort((a,b)=>a.ym.localeCompare(b.ym)).slice(0,3);
+ return{res,ends,none:!res.length}}function renderGoals(){
  const list=S.goals;
  $('goalRows').innerHTML=list.length?list.map(g=>{const P=goalPlan(g),pct=Math.min(100,(g.saved||0)/g.target*100);return `<button class="setbtn" data-go="goals-detail-${g.id}"><span class="ic">🎯</span><span class="t"><b>${esc(g.name)}</b><small>${money(g.saved||0)} of ${money(g.target)} · ${egp(P.per)} a month · by ${fmtS(g.date)}</small><span class="bar" style="display:block"><i style="width:${pct}%"></i></span></span><span class="go">›</span></button>`}).join(''):'<div class="card empty">No goals yet. Add the amount you want to reach and by when — the app works out how much to set aside each month and where to cut.</div>';
  {const sel=list.filter(g=>g.id===pageArg);$('goalList').innerHTML=sel.length?sel.map(g=>{const P=goalPlan(g),pct=Math.min(100,(g.saved||0)/g.target*100);
@@ -1293,10 +1315,15 @@ function renderGoals(){
   <div class="kv tot"><span>Set aside every month</span><b>${egp(P.per)}</b></div>
   <div class="kv"><span>Your income (3-month average)</span><b>${egp(P.st.inc)}</b></div>
   <div class="kv"><span>Spending + installments + gam3ya + charity</span><b>− ${egp(P.out)}</b></div>
-  <div class="kv"><span>Left over each month now</span><b${P.free<0?' class="neg"':''}>${egp(P.free)}</b></div>
-  <div class="info" style="margin:12px 0;--c:${P.ok?'var(--in)':P.reachable?'var(--warn)':'var(--out)'}">${P.ok?`<b>You can do it as you are.</b> Move ${egp(P.per)} to savings right after your salary arrives each month, before spending.`
+  <div class="kv"><span>Left over each month now</span><b${P.freeNow<0?' class="neg"':''}>${egp(P.freeNow)}</b></div>
+  <div class="kv"><span>Left over per month on average until ${fmtS(g.date)} (as installments end)</span><b>${egp(P.free)}</b></div>
+  <div class="info" style="margin:12px 0;--c:${P.ok?'var(--in)':P.reachable?'var(--warn)':'var(--out)'}">${P.ok?`<b>You can do it as you are.</b> Move ${egp(P.per)} to savings right after your salary arrives each month, before spending.${P.freeNow<P.per?(()=>{const sim=goalSim(g,P,0,P.months),f=sim.find(x=>x.save>=P.per);return f?` Right now only ${egp(Math.max(0,P.freeNow))} is left a month; from ${monthLbl(f.ym)} you'll have about ${egp(f.save)} as installments end — save more then to catch up.`:''})():''}`
    :P.reachable?`<b>Reachable with these monthly limits:</b><br>${P.cuts.map(c=>`• ${esc(catLabel(c.k))}: ${money(c.from)} → <b>${money(c.to)}</b> (−${money(c.cut)})`).join('<br>')}<br>Then move ${egp(P.per)} to savings right after your salary arrives.`
-   :`<b>Not reachable by ${fmtS(g.date)} even with 30% less on flexible spending.</b> At about ${egp(Math.max(0,P.canMonth))} a month you'd need ${P.realMonths?`${P.realMonths} months (around ${monthLbl(addYm(ymOf(today),P.realMonths))})`:'more income first'}.${P.cuts.length?`<br>Start with: ${P.cuts.slice(0,3).map(c=>`${esc(catLabel(c.k))} → ${money(c.to)}`).join(', ')}`:''}`}</div>
+   :`<b>Not reachable by ${fmtS(g.date)}, even with 30% less on flexible spending.</b> Pick one of the options below.`}</div>
+  ${P.ok?'':(()=>{const A=goalAlts(g,P);return `<h2 style="font-size:16px;margin:4px 0 8px">${P.reachable?'Or, without cutting back':'Options that work'}</h2>`
+   +(A.none?`<div class="msg">Within the next 10 years your income doesn't leave enough after your commitments. Add income (e.g. a payout or bonus) or lower the amount.</div>`
+   :A.res.map(o=>`<div class="alt"><div class="t"><small>${esc(o.title)}</small><b>${o.big}</b><small>${esc(o.sub)}</small></div><button class="btn ghost" data-goalalt="${g.id}|${o.act}">${esc(o.btn)}</button></div>`).join(''))
+   +(A.ends.length?`<p class="note" style="margin:8px 0 12px">Money freed up later: ${A.ends.map(e=>`${esc((e.t.note||catName(e.t)).slice(0,24))} (${money(e.each)}/month) ends ${monthLbl(e.ym)}`).join(' · ')} — the dates above already count this.</p>`:'')})()}
   <div class="row" style="margin-bottom:8px"><div><label for="gadd-${g.id}">Add to savings</label><input id="gadd-${g.id}" type="number" inputmode="decimal" placeholder="EGP"></div><div style="align-self:end"><button class="btn ghost" data-goaladd="${g.id}">Add</button></div></div>
   <div class="btns"><button class="btn" data-goalai="${g.id}" style="background:var(--credit)">Ask Claude for a plan</button></div>
   <div id="gai-${g.id}">${g.ai?`<div class="msg" style="white-space:pre-wrap;margin-top:12px">${esc(g.ai.text)}<div class="note" style="margin-top:8px">Claude · ${esc(fmt(g.ai.date))}</div></div>`:''}</div></div>`}).join('')
@@ -1326,6 +1353,8 @@ async function askClaude(g){const box=$('gai-'+g.id);let key='';try{key=localSto
   const j=await r.json();if(!r.ok)throw new Error(j&&j.error&&j.error.message||('error '+r.status));
   const text=(j.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('\n').trim();g.ai={text,date:today};save();if(location.hash==='#goals')renderGoals()}
  catch(e){box.innerHTML=`<div class="msg warn">Claude couldn't be reached: ${esc(e.message||'no internet?')}</div>`}}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-goalalt]');if(!b)return;const[id,act]=b.dataset.goalalt.split('|'),g=S.goals.find(x=>x.id===id);if(!g)return;
+ if(act.startsWith('d:')){g.date=act.slice(2);toast(`Goal moved to ${fmt(g.date)}`,false)}else{g.target=+act.slice(2);toast(`Goal set to ${egp(g.target)}`,false)}delete g.ai;save()});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-goaledit],[data-goaladd],[data-goalai]');if(!b)return;
  if(b.dataset.goaledit){const id=b.dataset.goaledit;if(location.hash!=='#goals'){go('goals');setTimeout(()=>openGoal(id),50)}else openGoal(id)}
  else if(b.dataset.goaladd){const g=S.goals.find(x=>x.id===b.dataset.goaladd),v=r2($('gadd-'+g.id).value);if(!v)return;g.saved=r2((g.saved||0)+v);save();toast(`${egp(v)} added to ${g.name}`,false)}

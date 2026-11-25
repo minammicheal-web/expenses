@@ -1838,6 +1838,23 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-sms]');if(
  else if(a==='clearfails'){fails=[];save()}});
 window.onResumeApp=pollSms;setInterval(pollSms,20000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)pollSms()});
 
+/* ---------- swipe the screen left/right to move between tabs (same as Time Sheet) ---------- */
+{const STABS=['home','credit','cash','goals','gam','charity','subs','reports'];
+ let sx=0,sy=0,mode=0,on=false,sec=null;
+ const cur=()=>{const p=location.hash.slice(1).split('-');return p.length===1&&STABS.includes(p[0]||'home')?(p[0]||'home'):null};
+ const blocked=t=>!$('dlg').hidden||$('pk')||document.querySelector('.ddmenu')||t.closest('input,textarea,select,.dd,nav,header,.toast,.fab');
+ const reset=()=>{if(sec){sec.style.transition='';sec.style.transform=''}};
+ document.addEventListener('touchstart',ev=>{on=false;mode=0;const v=cur();if(ev.touches.length!==1||!v||blocked(ev.target))return;
+  sec=$('v-'+v);sx=ev.touches[0].clientX;sy=ev.touches[0].clientY;on=true;sec.style.transition='none'},{passive:true});
+ document.addEventListener('touchmove',ev=>{if(!on)return;const dx=ev.touches[0].clientX-sx,dy=ev.touches[0].clientY-sy;
+  if(!mode){if(Math.abs(dx)>12&&Math.abs(dx)>Math.abs(dy)*1.4)mode=1;else if(Math.abs(dy)>12){on=false;reset();return}}
+  if(mode){const i=STABS.indexOf(cur()),edge=(dx>0&&i===0)||(dx<0&&i===STABS.length-1);sec.style.transform=`translateX(${dx*(edge?.12:.35)}px)`}},{passive:true});
+ document.addEventListener('touchend',ev=>{if(!on)return;on=false;if(!mode){reset();return}
+  const dx=ev.changedTouches[0].clientX-sx,i=STABS.indexOf(cur()),nxt=dx<0?i+1:i-1;
+  if(Math.abs(dx)>70&&nxt>=0&&nxt<STABS.length){reset();location.hash=STABS[nxt]}
+  else{sec.style.transition='transform .22s ease';sec.style.transform='';setTimeout(()=>{if(sec)sec.style.transition=''},240)}},{passive:true});
+ document.addEventListener('touchcancel',()=>{on=false;reset()},{passive:true});}
+
 /* ---------- routing ---------- */
 const V=['home','credit','cash','goals','gam','charity','subs','reports','settings','add','plan'];
 function go(v){if(location.hash!=='#'+v)location.hash=v;else route()}

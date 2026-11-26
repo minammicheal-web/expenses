@@ -55,7 +55,7 @@ button:focus-visible,nav a:focus-visible,.gear:focus-visible{outline:2px solid v
 .btn[disabled]{opacity:.5}
 .btns{display:flex;gap:10px;flex-wrap:wrap}.btns>*{flex:1 1 140px}
 /* small pill buttons (See all, Back, Close…) */
-.ib{position:relative;overflow:hidden;border:0;background:var(--tint);color:var(--acc);border-radius:999px;min-height:38px;min-width:44px;font:700 14px system-ui,sans-serif;cursor:pointer;padding:0 14px;white-space:nowrap}
+.ib{position:relative;overflow:hidden;border:0;background:var(--tint);color:var(--acc);border-radius:999px;min-height:38px;min-width:44px;font:700 14px system-ui,sans-serif;cursor:pointer;padding:0 14px;white-space:nowrap;flex:none}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{position:relative;overflow:hidden;border:1px solid var(--line);background:var(--card);color:var(--mute);border-radius:999px;padding:8px 14px;font:700 14px system-ui,sans-serif;min-height:40px;cursor:pointer}
 .chip.on{background:var(--c,var(--ink));border-color:var(--c,var(--ink));color:var(--card)}
@@ -134,7 +134,7 @@ input[type=checkbox]:focus-visible{outline:2px solid var(--acc);outline-offset:3
 .xc{padding:0;overflow:hidden}
 .xh{position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;color:var(--ink);font:inherit;text-align:left;padding:14px 12px 14px 16px;cursor:pointer;min-height:66px}
 .xh .ic{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;background:var(--tint);flex:none}
-.xh .t{flex:1;min-width:0}.xh .t b{display:block;font-size:16px}.xh .t small{display:block;color:var(--mute);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xh .t{flex:1;min-width:0}.xh .t b{display:block;font-size:16px}.xh .t small{display:block;color:var(--mute);font-size:13px;overflow-wrap:anywhere}
 .xh .v{font-weight:800;font-size:17px;white-space:nowrap;letter-spacing:-.2px}
 .xh .ch{flex:none;color:var(--mute);transition:transform .3s cubic-bezier(.2,.8,.2,1),color .2s}
 .xc.open .xh .ch{transform:rotate(180deg);color:var(--acc)}
@@ -212,7 +212,7 @@ input.pkn{position:absolute!important;opacity:0!important;pointer-events:none!im
 .btn,.setbtn,.chip,.ib,.xh,.hr,.tile{transition:transform .12s ease,background-color .2s}
 .btn:active,.setbtn:active,.ib:active,.chip:active{transform:scale(.97)}
 @media(prefers-reduced-motion:reduce){.anim-r,.anim-l,.anim-u,.ripple,.crip::before,#dlg,#dlg>.card,.pkd,#pk,.ddmenu{animation:none!important}.ripple{display:none}.btn:active,.setbtn:active,.ib:active,.chip:active,nav a:active,.seg button:active,.fab:active{transform:none}.xb,.xi,.xh .ch{transition:none}}
-@media(max-width:380px){nav a{font-size:14px;padding:10px 14px}.seg button{font-size:13px}h1{font-size:28px}}
+@media(max-width:380px){nav a{font-size:14px;padding:10px 14px}.seg button{font-size:13px;padding:4px 2px;letter-spacing:-.2px}h1{font-size:28px}}
 </style>
 </head>
 <body>

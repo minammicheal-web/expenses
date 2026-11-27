@@ -135,6 +135,20 @@ input[type=checkbox]:focus-visible{outline:2px solid var(--acc);outline-offset:3
 #fcOut .xc{box-shadow:none;border:1px solid var(--line);margin:10px 0;background:var(--soft)}#fcOut .xc .list li:last-child{border-bottom:0}
 .sched{display:flex;flex-wrap:wrap;gap:6px}.sched span{font-size:12px;padding:4px 8px;border-radius:999px;background:var(--soft);color:var(--mute);border:1px solid var(--line)}.sched span.done{color:var(--in)}.sched span.cur{background:var(--tint);color:var(--acc);border-color:var(--acc);font-weight:700}
 #dlg .card{max-height:85vh;overflow:auto}
+.invs{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 10px}
+.inv{position:relative;width:76px;height:96px;border-radius:12px;overflow:hidden;background:var(--tint,rgba(15,118,110,.1));border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;padding:0;color:var(--ink)}
+.inv img{width:100%;height:100%;object-fit:cover;display:block}
+.inv .pdf{font-size:28px;line-height:1}.inv .nm{font-size:11px;padding:4px 6px 0;max-width:100%;overflow-wrap:anywhere;text-align:center;line-height:1.2;max-height:2.4em;overflow:hidden}
+.inv .x{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:rgba(2,6,23,.65);color:#fff;font-size:15px;line-height:24px;text-align:center;border:0;padding:0;min-height:0}
+.invbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#invV{position:fixed;inset:0;z-index:40;background:#020617;display:flex;flex-direction:column;animation:pkF .15s ease-out}
+#invV .ivh{display:flex;align-items:center;gap:10px;padding:12px 14px;color:#fff}
+#invV .ivh b{flex:1;font-size:15px;overflow-wrap:anywhere}
+#invV .ivh button{background:rgba(255,255,255,.14);color:#fff;border:0;border-radius:999px;padding:8px 16px;min-height:0;font-size:14px}
+#invV .ivb{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;align-items:center;gap:10px;padding:0 8px 24px}
+#invV .ivb img,#invV .ivb canvas{width:100%;max-width:900px;height:auto;background:#fff;border-radius:6px}
+#invV .ivb.zoom img{width:220%;max-width:none}
+#invV .ivb .note{color:#cbd5e1}
 .xh{position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;color:var(--ink);font:inherit;text-align:left;padding:14px 12px 14px 16px;cursor:pointer;min-height:66px}
 .xh .ic{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;background:var(--tint);flex:none}
 .xh .t{flex:1;min-width:0}.xh .t b{display:block;font-size:16px}.xh .t small{display:block;color:var(--mute);font-size:13px;overflow-wrap:anywhere}
@@ -218,7 +232,7 @@ input.pkn{position:absolute!important;opacity:0!important;pointer-events:none!im
 @media(max-width:380px){nav a{font-size:14px;padding:10px 14px}.seg button{font-size:13px;padding:4px 2px;letter-spacing:-.2px}h1{font-size:28px}}
 </style>
 <script id="mk-cfg">window.MKCFG={vars:{ink:'--ink',mute:'--mute',acc:'--acc',on:'--on',tint:'--tint'},tabs:'nav',tab:'nav a',
- overlays:[{sel:'#dlg',hidden:true,panel:':scope>.card',kind:'dialog'},{sel:'#pk',panel:'.pkd',kind:'dialog'}],
+ overlays:[{sel:'#invV',hidden:true,panel:':scope>.ivb',kind:'dialog',close:()=>document.getElementById('invVX').click()},{sel:'#dlg',hidden:true,panel:':scope>.card',kind:'dialog'},{sel:'#pk',panel:'.pkd',kind:'dialog'}],
  menus:[{sel:'.ddmenu',mask:'.ddshade'}],title:'header h1',dotSel:'b',gear:'.gear',autoDate:false};</script>
 <!-- mkit:start · Mina's shared Material kit (same block in every app; only MKCFG changes) -->
 <style id="mk-css">
@@ -1114,7 +1128,7 @@ if(D.readyState==='loading')D.addEventListener('DOMContentLoaded',boot);else boo
  <div class="card" data-sec="backup">
   <h2>Backup file</h2>
   <p class="note" style="margin-top:-6px">Save everything in one file, or restore from one. Restoring adds and updates entries; it never deletes anything.</p>
-  <div class="btns"><button class="btn" id="bkExport">Export backup</button><div class="upbox"><span class="btn ghost" style="display:flex;align-items:center;justify-content:center" aria-hidden="true">Restore from file</span><input type="file" id="bkFile" aria-label="Restore from backup file"></div></div>
+  <p class="note" style="margin-top:0">The backup file includes your invoice photos and PDFs. The Google Drive backup doesn't, to keep it small.</p><div class="btns"><button class="btn" id="bkExport">Export backup</button><div class="upbox"><span class="btn ghost" style="display:flex;align-items:center;justify-content:center" aria-hidden="true">Restore from file</span><input type="file" id="bkFile" aria-label="Restore from backup file"></div></div>
   <div id="bkMsg"></div>
  </div>
 </section>
@@ -1137,6 +1151,10 @@ if(D.readyState==='loading')D.addEventListener('DOMContentLoaded',boot);else boo
   <label class="check" id="ipnWrap" hidden><input type="checkbox" id="aIpn"> <span>InstaPay transfer <span class="note">(adds the fee: 0.1%, min 0.50, max 20)</span></span></label>
   <div class="info" id="aInfo" hidden></div>
   <div class="row"><div><label for="aDate">Date</label><input id="aDate" type="date"></div><div><label for="aNote">Note</label><input id="aNote" maxlength="120" placeholder="Optional"></div></div>
+  <div id="invWrap"><span class="lbl">Invoices</span>
+   <div class="invs" id="aInv"></div>
+   <div class="invbtns"><label class="upbox"><span class="btn ghost" style="display:flex;align-items:center;justify-content:center" aria-hidden="true">📷 Take photo</span><input type="file" id="invCam" accept="image/*" capture="environment" aria-label="Take a photo of the invoice"></label><label class="upbox"><span class="btn ghost" style="display:flex;align-items:center;justify-content:center" aria-hidden="true">📎 Attach file</span><input type="file" id="invPick" accept="image/*,application/pdf,.pdf" multiple aria-label="Attach invoice images or PDFs"></label></div>
+  </div>
   <div class="info" id="aSms" hidden style="--c:var(--warn);white-space:pre-wrap;font-size:13px"></div>
   <div id="aErr"></div>
   <div class="btns" style="margin-top:6px"><button class="btn" id="aSave">Save</button><button class="btn ghost" id="aPlan" hidden style="background:color-mix(in srgb,var(--credit) 14%,transparent)">Turn into installments</button><button class="btn danger" id="aDel" hidden>Delete</button></div>
@@ -1159,6 +1177,7 @@ if(D.readyState==='loading')D.addEventListener('DOMContentLoaded',boot);else boo
 </section>
 </div>
 <button class="fab" id="fab">+ Add</button>
+<div id="invV" hidden><div class="ivh"><b id="invVT"></b><button id="invVX">Close</button></div><div class="ivb" id="invVB"></div></div>
 <div id="dlg" hidden><div class="card" role="dialog"><h2 id="dlgT"></h2><div id="dlgB" class="note" style="font-size:15px;color:var(--ink);margin-bottom:14px"></div><div id="dlgBtns" style="display:grid;gap:8px"></div></div></div>
 <div class="toast" id="toast"><span id="toastT"></span><button id="toastB">Undo</button></div>
 
@@ -1297,7 +1316,7 @@ function sub(t,a){const bits=[];
  if(t.toAmt)bits.push(`${money(t.toAmt)} reaches Telda (${money(r2(t.amt-t.toAmt))} load fee)`);if(t.note)bits.push(esc(t.note));if(t.fxFee)bits.push(`incl. ${money(t.fxFee)} FX fee`);if(t.ipFee)bits.push(`incl. ${money(t.ipFee)} InstaPay fee`);if(t.sms)bits.push('SMS');if(t.stmtKey)bits.push('statement');if(t.payKey)bits.push('payslip');return bits.join(' · ')}
 const ACOL={debit:'var(--debit)',credit:'var(--credit)',od:'var(--od)',telda:'var(--telda)',cash:'var(--cash)'};
 function row(t,a){const d=delta(t,a),cls=d<0?'o':d>0?'i':'n',sign=d<0?'−':d>0?'+':'';
- return `<li class="tx" data-tx="${t.id}" style="--c:${ACOL[t.type==='pay'?'credit':t.acc]}"><span class="dot"></span><span class="t">${esc(title(t))}<small>${sub(t,a)}</small></span><span class="amt ${cls}">${sign}${money(t.amt)}</span></li>`}
+ return `<li class="tx" data-tx="${t.id}" style="--c:${ACOL[t.type==='pay'?'credit':t.acc]}"><span class="dot"></span><span class="t">${esc(title(t))}${t.inv&&t.inv.length?' 📎':''}<small>${sub(t,a)}</small></span><span class="amt ${cls}">${sign}${money(t.amt)}</span></li>`}
 function grouped(list,a){let out='',last='';
  for(const t of list){if(t.date!==last){last=t.date;out+=`<li class="day" style="border:0">${t.date===today?'Today':dow(t.date)+' '+fmt(t.date)}</li>`}out+=row(t,a)}return out}
 const byDate=(x,y)=>y.date.localeCompare(x.date)||(y.created||0)-(x.created||0);
@@ -1517,12 +1536,12 @@ document.addEventListener('change',e=>{const r=e.target.dataset&&e.target.datase
 
 /* ---------- add / edit ---------- */
 let F=null,editId=null,backTo='home';
-const fresh=(type)=>({type,acc:type==='pay'?'debit':type==='exp'?'cash':'debit',to:'cash',cat:null,mode:'full'});
+const fresh=(type)=>({type,acc:type==='pay'?'debit':type==='exp'?'cash':'debit',to:'cash',cat:null,mode:'full',inv:[]});
 function openAdd(type,acc,amt){editId=null;F=fresh(type||'exp');if(acc)F.acc=acc;
  $('aAmt').value=amt||'';$('aNote').value='';$('aIpn').checked=false;$('aFx').checked=false;$('aDate').value=today;$('aErr').innerHTML='';
- $('addTitle').textContent='New entry';$('aDel').hidden=true;$('aSms').hidden=true;go('add')}
+ $('addTitle').textContent='New entry';$('aDel').hidden=true;$('aSms').hidden=true;drawInv();go('add')}
 function openEdit(id){const t=tx.find(x=>x.id===id);if(!t)return;editId=id;
- F={type:t.type,acc:t.acc,to:t.to||'cash',cat:t.cat||null,mode:t.plan?'inst':'full'};
+ F={type:t.type,acc:t.acc,to:t.to||'cash',cat:t.cat||null,mode:t.plan?'inst':'full',inv:(t.inv||[]).map(x=>({...x}))};drawInv();
  $('aAmt').value=r2(t.amt-(t.ipFee||0)-(t.fxFee||0));$('aIpn').checked=!!t.ipFee;$('aFx').checked=!!t.fxFee;
  $('aNote').value=t.note||'';$('aDate').value=t.date;$('aErr').innerHTML='';$('addTitle').textContent='Edit entry';$('aDel').hidden=false;$('aSms').hidden=!t.sms;$('aSms').textContent=t.sms?'From SMS'+(t.sms.from?' ('+t.sms.from+')':'')+':\n'+t.sms.body:'';go('add')}
 function accChoices(){return F.type==='pay'?NONCC:ACC}
@@ -1570,6 +1589,7 @@ function readForm(){const e=[],amt=r2($('aAmt').value),date=$('aDate').value;
  {const old0=editId&&tx.find(x=>x.id===editId);if(old0&&old0.sub&&t.cat==='subs')t.sub=old0.sub;if(old0&&old0.fxKey)t.fxKey=old0.fxKey;if(old0&&old0.sub&&t.cat!=='subs')t.notSub=true}
  const old=editId&&tx.find(x=>x.id===editId);if(old&&old.sms)t.sms={...old.sms,guess:false};['stmtKey','bill','payKey','instKey'].forEach(k=>{if(old&&old[k]!=null&&t[k]==null)t[k]=old[k]});
  if(F.type==='exp'&&F.acc==='credit'&&F.mode==='inst'&&old&&old.plan)t.plan=old.plan;
+ if(F.inv&&F.inv.length)t.inv=F.inv.map(x=>({...x}));
  return{t,e}}
 /* a small choice dialog: resolves with the value of the button tapped */
 function ask(title,body,buttons){return new Promise(res=>{$('dlgT').textContent=title;$('dlgB').innerHTML=body;
@@ -1611,7 +1631,7 @@ $('aDel').addEventListener('click',()=>{if(!editId)return;const b=$('aDel');if(b
  b.dataset.sure='';b.textContent='Delete';const t=tx.find(x=>x.id===editId);tx=tx.filter(x=>x.id!==editId);if(t&&t.sms)skip.push(t.sms.key);save();undo=t;toast('Entry deleted',true);closeAdd()});
 function closeAdd(){editId=null;if(history.length>1&&location.hash==='#add')history.back();else go(backTo)}
 $('addClose').addEventListener('click',closeAdd);
-$('aType').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const keepAmt=$('aAmt').value,ty=b.dataset.type,f=fresh(ty),ch=ty==='pay'?NONCC:ACC;if(ch.includes(F.acc))f.acc=F.acc;F=f;$('aAmt').value=keepAmt;renderAdd()});
+$('aType').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const keepAmt=$('aAmt').value,ty=b.dataset.type,f=fresh(ty),ch=ty==='pay'?NONCC:ACC;if(ch.includes(F.acc))f.acc=F.acc;f.inv=F.inv||[];F=f;$('aAmt').value=keepAmt;renderAdd()});
 $('aMode').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;F.mode=b.dataset.mode;renderAdd()});
 ['aAmt','aNote'].forEach(id=>$(id).addEventListener('input',info));$('aIpn').addEventListener('change',info);$('aFx').addEventListener('change',info);
 $('aDate').addEventListener('input',renderAdd);
@@ -1658,7 +1678,7 @@ let tt;function toast(t,u){$('toastT').textContent=t;$('toastB').hidden=!u;$('to
 
 /* ---------- backup ---------- */
 let pending=null;
-$('bkExport').addEventListener('click',async()=>{const json=backupJSON(),name=`expenses-backup-${today}.json`;
+$('bkExport').addEventListener('click',async()=>{const json=await exportJSON(),name=`expenses-backup-${today}.json`;
  if(window.Android&&Android.saveFile){const r=Android.saveFile(name,json);toast(r?`Backup saved to ${r}: ${name}`:'Could not save the backup',false);return}
  try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([json],{type:'application/json'}));a.download=name;document.body.appendChild(a);a.click();a.remove();toast('Backup downloaded',false)}catch(e){toast('Could not export here',false)}});
 function offerRestore(d,box){if(!d||d.app!=='expenses'||!Array.isArray(d.tx))throw 0;pending=d;
@@ -1666,9 +1686,60 @@ function offerRestore(d,box){if(!d||d.app!=='expenses'||!Array.isArray(d.tx))thr
 $('bkFile').addEventListener('change',async ev=>{const f=ev.target.files[0];ev.target.value='';if(!f)return;
  try{offerRestore(JSON.parse(await f.text()),$('bkMsg'))}catch(e){$('bkMsg').innerHTML='<div class="msg warn">That file is not an Expenses backup.</div>'}});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-restore]');if(!b||!pending)return;const d=pending;pending=null;
+ if(d.invoices&&typeof d.invoices==='object')for(const[k,v]of Object.entries(d.invoices))if(typeof v==='string')INV.put(k,v);
  const m=new Map(tx.map(t=>[t.id,t]));d.tx.filter(t=>t&&t.id&&t.type&&t.date).forEach(t=>m.set(t.id,t));tx=[...m.values()];tx.forEach(fixPlan);skip=[...new Set([...skip,...(d.skip||[])])];S=merge(d.settings);save();pushSmsConfig();
  b.closest('.msg').innerHTML=`Restored ${d.tx.length} entries.`});
 
+
+/* ---------- invoices: photos / PDFs attached to an entry ----------
+   Files live in the app's private storage (Android.invPut…); in a browser, in IndexedDB. The entry keeps only {id,name,mime,size}. */
+const INV=(()=>{const A=window.Android&&typeof Android.invPut==='function'?Android:null;let db=null;
+ const idb=()=>db||(db=new Promise((res,rej)=>{const r=indexedDB.open('exp-inv',1);r.onupgradeneeded=()=>r.result.createObjectStore('f');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}));
+ const tx_=(m,f)=>idb().then(d=>new Promise((res,rej)=>{const q=f(d.transaction('f',m).objectStore('f'));q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)}));
+ return{put:(id,b64)=>A?Promise.resolve(A.invPut(id,b64)):tx_('readwrite',o=>o.put(b64,id)).then(()=>true),
+  get:id=>A?Promise.resolve(A.invGet(id)||''):tx_('readonly',o=>o.get(id)).then(v=>v||''),
+  del:id=>A?Promise.resolve(A.invDel(id)):tx_('readwrite',o=>o.delete(id)),
+  list:()=>A?Promise.resolve(JSON.parse(A.invList()||'[]')):tx_('readonly',o=>o.getAllKeys())}})();
+const thumbs=new Map();
+const b64of=buf=>{const u=new Uint8Array(buf);let s='';for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s)};
+const isPdf=x=>/pdf/i.test(x.mime||'')||/\.pdf$/i.test(x.name||'');
+function invTiles(list,edit){if(!list||!list.length)return edit?'':'';
+ return (edit?'':'<p class="lbl" style="margin:12px 0 0">Invoices</p>')+`<div class="invs">${list.map((x,i)=>`<div class="inv" role="button" tabindex="0" data-invopen="${esc(x.id)}" aria-label="Open ${esc(x.name)}">${isPdf(x)?`<span class="pdf">📄</span><span class="nm">${esc(x.name)}</span>`:`<img data-thumb="${esc(x.id)}" alt="${esc(x.name)}">`}${edit?`<button class="x" data-invdel="${i}" aria-label="Remove">×</button>`:''}</div>`).join('')}</div>`}
+async function fillThumbs(root){for(const im of root.querySelectorAll('img[data-thumb]')){const id=im.dataset.thumb;
+ if(!thumbs.has(id)){const b=await INV.get(id);if(!b){im.alt='Missing';continue}thumbs.set(id,await shrink('data:image/jpeg;base64,'+b,240,.7))}im.src=thumbs.get(id)}}
+function loadImg(src){return new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src})}
+async function shrink(src,max,q){const i=await loadImg(src),k=Math.min(1,max/Math.max(i.naturalWidth,i.naturalHeight)),c=document.createElement('canvas');
+ c.width=Math.max(1,Math.round(i.naturalWidth*k));c.height=Math.max(1,Math.round(i.naturalHeight*k));const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(i,0,0,c.width,c.height);return c.toDataURL('image/jpeg',q)}
+function drawInv(){if(!F)return;const box=$('aInv');box.innerHTML=F.inv&&F.inv.length?invTiles(F.inv,true).replace(/^<div class="invs">|<\/div>$/g,''):'<span class="note">No invoice attached</span>';fillThumbs(box)}
+async function addInvFiles(files){let n=0;for(const f of files){try{
+  const id='i'+uid();let meta;
+  if(/pdf/i.test(f.type)||/\.pdf$/i.test(f.name)){if(f.size>15e6){toast(`${f.name} is too big (max 15 MB)`,false);continue}
+   if(!await INV.put(id,b64of(await f.arrayBuffer())))throw 0;meta={id,name:f.name||'invoice.pdf',mime:'application/pdf',size:f.size}}
+  else{const url=URL.createObjectURL(f);let d;try{d=await shrink(url,2200,.85)}finally{URL.revokeObjectURL(url)}
+   const b=d.split(',')[1];if(!await INV.put(id,b))throw 0;thumbs.delete(id);
+   meta={id,name:/^invoice-\d+\.jpg$/.test(f.name||'')||!f.name?`Photo ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short'})}`:f.name.replace(/\.[^.]+$/,'')+'.jpg',mime:'image/jpeg',size:Math.round(b.length*.75)}}
+  meta.at=Date.now();F.inv=(F.inv||[]).concat(meta);n++}catch(e){toast(`Could not attach ${f.name||'the file'}`,false)}}
+ drawInv();if(n)toast(n===1?'Invoice attached — tap Save to keep it':`${n} invoices attached — tap Save to keep them`,false)}
+['invCam','invPick'].forEach(k=>$(k).addEventListener('change',e=>{const fs=[...e.target.files];e.target.value='';if(fs.length)addInvFiles(fs)}));
+$('aInv').addEventListener('click',e=>{const d=e.target.closest('[data-invdel]');if(d){e.stopPropagation();const i=+d.dataset.invdel;F.inv.splice(i,1);drawInv();toast('Invoice removed — tap Save to keep the change',false)}},true);
+document.addEventListener('click',e=>{const o=e.target.closest('[data-invopen]');if(!o||e.target.closest('[data-invdel]'))return;
+ const id=o.dataset.invopen,x=((F&&F.inv)||[]).concat(...tx.map(t=>t.inv||[])).find(v=>v.id===id);if(x)viewInv(x)});
+async function viewInv(x){const B=$('invVB');$('invVT').textContent=x.name;B.className='ivb';B.innerHTML='<p class="note">Opening…</p>';$('invV').hidden=false;
+ const b=await INV.get(x.id);if($('invV').hidden)return;if(!b){B.innerHTML='<p class="note">This file is no longer on the phone.</p>';return}
+ if(!isPdf(x)){$('invVT').textContent=x.name+' · tap to zoom';B.innerHTML=`<img alt="${esc(x.name)}" src="data:image/jpeg;base64,${b}">`;B.firstChild.onclick=()=>B.classList.toggle('zoom');return}
+ try{await loadPdf();const raw=atob(b),u=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)u[i]=raw.charCodeAt(i);
+  const doc=await pdfjsLib.getDocument({data:u,isEvalSupported:false}).promise;B.innerHTML='';
+  for(let p=1;p<=doc.numPages;p++){if($('invV').hidden)return;const pg=await doc.getPage(p),w=Math.min(B.clientWidth-16,900)*Math.min(3,(window.devicePixelRatio||1)*1.5),vp=pg.getViewport({scale:w/pg.getViewport({scale:1}).width}),c=document.createElement('canvas');
+   c.width=vp.width;c.height=vp.height;B.appendChild(c);await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise}}
+ catch(e){B.innerHTML='<p class="note">Could not open this PDF.</p>'}}
+$('invVX').addEventListener('click',()=>{$('invV').hidden=true;$('invVB').innerHTML=''});
+/* full export (backup file) carries the invoice files too */
+async function exportJSON(){const o=JSON.parse(backupJSON()),inv={};
+ for(const t of tx)for(const x of t.inv||[]){const b=await INV.get(x.id);if(b)inv[x.id]=b}
+ if(Object.keys(inv).length)o.invoices=inv;return JSON.stringify(o)}
+/* files no entry uses any more (entry deleted, invoice removed, form cancelled) are cleaned up a while after opening */
+setTimeout(async()=>{try{const used=new Set(tx.flatMap(t=>(t.inv||[]).map(x=>x.id)));if(F&&F.inv)F.inv.forEach(x=>used.add(x.id));
+ for(const id of await INV.list())if(!used.has(id)&&location.hash!=='#add')await INV.del(id)}catch(e){}},20000);
 /* ---------- Google Drive (Android app only) ---------- */
 const HAS_DRIVE=!!(window.Android&&typeof Android.driveStatus==='function');
 function driveRender(st){if(!HAS_DRIVE)return;try{st=st||JSON.parse(Android.driveStatus())}catch(e){return}
@@ -1759,7 +1830,7 @@ $('fcDate').addEventListener('input',renderForecast);
 const kvs=rows=>rows.filter(r=>r&&r[1]!=null&&r[1]!=='').map(([k,v])=>`<div class="kv"><span>${k}</span><b style="text-align:right">${v}</b></div>`).join('');
 $('fcOut').addEventListener('click',e=>{const v=e.target.closest('[data-fv]'),pl=e.target.closest('[data-fp]');if(!v&&!pl)return;e.stopPropagation();
  if(v){const t=tx.find(x=>x.id===v.dataset.fv);if(!t)return;const tm=t.sms&&t.sms.ts?new Date(t.sms.ts):null;
-  ask(t.note||catName(t),kvs([['Amount',egp(t.amt)],t.fxFee?['Includes FX fee (3%)',egp(t.fxFee)]:null,['Date',`${dow(t.date)} ${fmt(t.date)}${tm?' · '+String(tm.getHours()).padStart(2,'0')+':'+String(tm.getMinutes()).padStart(2,'0'):''}`],['Category',esc(catName(t))],['Paid with',esc(accName(t.acc))],['On the bill of',fmt(billOf(t))],['Due',`${dow(dueOf(billOf(t)))} ${fmt(dueOf(billOf(t)))}`],['Found in',t.stmtKey&&t.sms?'Bank SMS and statement':t.stmtKey?'Bank statement':t.sms?'Bank SMS':'Added by you']])+(t.sms&&t.sms.body?`<p class="note" style="margin:10px 0 0;direction:auto;unicode-bidi:plaintext;overflow-wrap:anywhere">${esc(t.sms.body)}</p>`:''),[{label:'Close',value:0}]);return}
+  ask(t.note||catName(t),kvs([['Amount',egp(t.amt)],t.fxFee?['Includes FX fee (3%)',egp(t.fxFee)]:null,['Date',`${dow(t.date)} ${fmt(t.date)}${tm?' · '+String(tm.getHours()).padStart(2,'0')+':'+String(tm.getMinutes()).padStart(2,'0'):''}`],['Category',esc(catName(t))],['Paid with',esc(accName(t.acc))],['On the bill of',fmt(billOf(t))],['Due',`${dow(dueOf(billOf(t)))} ${fmt(dueOf(billOf(t)))}`],['Found in',t.stmtKey&&t.sms?'Bank SMS and statement':t.stmtKey?'Bank statement':t.sms?'Bank SMS':'Added by you']])+(t.sms&&t.sms.body?`<p class="note" style="margin:10px 0 0;direction:auto;unicode-bidi:plaintext;overflow-wrap:anywhere">${esc(t.sms.body)}</p>`:'')+invTiles(t.inv,false),[{label:'Close',value:0}]);fillThumbs($('dlgB'));return}
  const t=tx.find(x=>x.id===pl.dataset.fp);if(!t||!t.plan)return;const sc=schedule(t),n=t.plan.months,i=+pl.dataset.fi,done=sc.filter(p=>p.stmt<today),left=sc.filter(p=>p.stmt>=today),tot=cost(t),extra=r2(tot-t.amt);
  ask(t.note||catName(t),kvs([['This installment',`${i} of ${n} · ${egp(sc.find(p=>p.i===i)?.amt??t.plan.each)}`],['Price',egp(t.amt)],['Monthly installment',egp(t.plan.each)],['Months',n],['Total of all installments',egp(tot)],extra>0.5?['Interest / fees',egp(extra)]:null,['Bought',`${dow(t.date)} ${fmt(t.date)}`],['First due',fmt(dueOf(stmtOf(t.plan.first)))],sc.length?['Last due',fmt(dueOf(sc.at(-1).stmt))]:null,['Already billed',`${done.length} of ${n}`],['Still to pay',`${egp(r2(left.reduce((a,p)=>a+p.amt,0)))} · ${left.length} month${left.length===1?'':'s'}`],t.plan.stop?['Status','Cancelled']:null])
   +`<div class="sched" style="margin-top:10px">${sc.map(p=>`<span class="${p.stmt<today?'done':''}${p.i===i?' cur':''}">${p.i}. ${fmtS(dueOf(p.stmt))}</span>`).join('')}</div>`,[{label:'Close',value:0}])},true);

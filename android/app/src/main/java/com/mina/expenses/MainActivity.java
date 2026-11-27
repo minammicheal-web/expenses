@@ -48,6 +48,8 @@ import org.json.JSONObject;
 public class MainActivity extends Activity {
     private static final int PICK = 1;
     private static final int AUTH = 2;
+    private static final int CAM = 7;
+    private Uri camUri;
     private WebView web;
     private ValueCallback<Uri[]> fileCallback;
     private volatile String pendingAction = "";
@@ -92,6 +94,20 @@ public class MainActivity extends Activity {
             public boolean onShowFileChooser(WebView v, ValueCallback<Uri[]> cb, FileChooserParams p) {
                 if (fileCallback != null) fileCallback.onReceiveValue(null);
                 fileCallback = cb;
+                if (p.isCaptureEnabled()) {
+                    try {
+                        for (File f : CamProvider.dir(MainActivity.this).listFiles()) f.delete();
+                        camUri = Uri.parse("content://" + CamProvider.AUTH + "/invoice-" + System.currentTimeMillis() + ".jpg");
+                        Intent c = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                        c.putExtra(MediaStore.EXTRA_OUTPUT, camUri);
+                        c.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        c.setClipData(android.content.ClipData.newRawUri("", camUri));
+                        startActivityForResult(c, CAM);
+                        return true;
+                    } catch (Exception e) {
+                        camUri = null;
+                    }
+                }
                 Intent i = new Intent(Intent.ACTION_GET_CONTENT);
                 i.addCategory(Intent.CATEGORY_OPENABLE);
                 i.setType("*/*");
@@ -131,6 +147,16 @@ public class MainActivity extends Activity {
             } catch (Exception e) {
                 fail(e);
             }
+            return;
+        }
+        if (req == CAM) {
+            if (fileCallback == null) return;
+            Uri u = camUri;
+            camUri = null;
+            boolean ok = false;
+            try { ok = res == RESULT_OK && u != null && new File(CamProvider.dir(this), u.getLastPathSegment()).length() > 0; } catch (Exception ignored) { }
+            fileCallback.onReceiveValue(ok ? new Uri[]{ u } : null);
+            fileCallback = null;
             return;
         }
         if (req != PICK || fileCallback == null) return;
@@ -468,6 +494,56 @@ public class MainActivity extends Activity {
             } catch (Exception e) {
                 return "";
             }
+        }
+
+        /** Invoice files (photos / PDFs), kept in the app's private storage. */
+        private File invFile(String id) {
+            if (id == null || !id.matches("[A-Za-z0-9_-]{1,64}")) return null;
+            File d = new File(getFilesDir(), "invoices");
+            d.mkdirs();
+            return new File(d, id);
+        }
+
+        @JavascriptInterface
+        public boolean invPut(String id, String b64) {
+            File f = invFile(id);
+            if (f == null) return false;
+            try (FileOutputStream o = new FileOutputStream(f)) {
+                o.write(android.util.Base64.decode(b64, android.util.Base64.DEFAULT));
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+
+        @JavascriptInterface
+        public String invGet(String id) {
+            File f = invFile(id);
+            if (f == null || !f.exists()) return "";
+            try {
+                byte[] b = new byte[(int) f.length()];
+                try (java.io.FileInputStream in = new java.io.FileInputStream(f)) {
+                    int off = 0, n;
+                    while (off < b.length && (n = in.read(b, off, b.length - off)) > 0) off += n;
+                }
+                return android.util.Base64.encodeToString(b, android.util.Base64.NO_WRAP);
+            } catch (Exception e) {
+                return "";
+            }
+        }
+
+        @JavascriptInterface
+        public void invDel(String id) {
+            File f = invFile(id);
+            if (f != null) f.delete();
+        }
+
+        @JavascriptInterface
+        public String invList() {
+            JSONArray a = new JSONArray();
+            File[] fs = new File(getFilesDir(), "invoices").listFiles();
+            if (fs != null) for (File f : fs) a.put(f.getName());
+            return a.toString();
         }
 
         @JavascriptInterface

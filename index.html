@@ -905,7 +905,7 @@ if(D.readyState==='loading')D.addEventListener('DOMContentLoaded',boot);else boo
 <body>
 <div class="wrap">
 <header><h1>Expenses<b>.</b></h1><div class="hright"><span class="status" id="status">Saved on this phone</span><a href="#settings" id="t-settings" class="gear" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6a.5.5 0 0 0 .1-.6l-2-3.5a.5.5 0 0 0-.6-.2l-2.5 1a7.4 7.4 0 0 0-1.7-1l-.4-2.6a.5.5 0 0 0-.5-.4h-4a.5.5 0 0 0-.5.4l-.4 2.6c-.6.3-1.2.6-1.7 1l-2.5-1a.5.5 0 0 0-.6.2l-2 3.5a.5.5 0 0 0 .1.6L4.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6a.5.5 0 0 0-.1.6l2 3.5c.1.2.4.3.6.2l2.5-1c.5.4 1.1.7 1.7 1l.4 2.6c0 .2.3.4.5.4h4c.2 0 .5-.2.5-.4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1c.2.1.5 0 .6-.2l2-3.5a.5.5 0 0 0-.1-.6L19.4 13zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"/></svg></a></div></header>
-<nav><a href="#home" id="t-home">Home</a><a href="#credit" id="t-credit">Credit</a><a href="#cash" id="t-cash">Cash</a><a href="#goals" id="t-goals">Goals</a><a href="#gam" id="t-gam">Gam3ya</a><a href="#charity" id="t-charity">Charity</a><a href="#subs" id="t-subs">Subs</a><a href="#reports" id="t-reports">Reports</a></nav>
+<nav><a href="#home" id="t-home">Home</a><a href="#house" id="t-house">House</a><a href="#credit" id="t-credit">Credit</a><a href="#cash" id="t-cash">Cash</a><a href="#goals" id="t-goals">Goals</a><a href="#gam" id="t-gam">Gam3ya</a><a href="#charity" id="t-charity">Charity</a><a href="#subs" id="t-subs">Subs</a><a href="#reports" id="t-reports">Reports</a></nav>
 
 <!-- HOME -->
 <section id="v-home">
@@ -926,6 +926,20 @@ if(D.readyState==='loading')D.addEventListener('DOMContentLoaded',boot);else boo
   <button class="btn ghost" id="more" hidden style="margin-top:10px">Show more</button>
  </div>
  </div>
+</section>
+
+<!-- HOUSE (home bills: electricity, gas, water, building fees, internet, home phone, groceries…) -->
+<section id="v-house" hidden>
+ <div data-main>
+ <div class="card" style="margin-bottom:14px"><div class="f" style="margin-bottom:0"><label for="hMonth">Period</label><select id="hMonth"></select></div></div>
+ <div class="tiles" id="hTiles"></div>
+ <div id="hReview"></div>
+ <div class="card"><h2>Home bills</h2><p class="note" style="margin-top:-6px">Tap a category to see its payments.</p><div id="hCats"></div>
+  <div class="btns" style="margin-top:6px"><button class="btn" id="hAdd">+ Add</button><button class="btn ghost" data-go="house-list">See all</button></div></div>
+ <div class="card"><h2>Month by month</h2><div id="hMonths"></div></div>
+ <button class="setbtn" data-go="settings-cats"><span class="ic">🏠</span><span class="t"><b>Home categories</b><small id="hCatsShort">Choose which categories count as home</small></span><span class="go">›</span></button>
+ </div>
+ <div data-sub="list" data-title="Home expenses"><div class="card"><h2 id="hListTitle">All home expenses</h2><div id="hListSum" class="note" style="margin-top:-6px"></div><ul class="list" id="hList"></ul></div></div>
 </section>
 
 <!-- CREDIT -->
@@ -1142,6 +1156,7 @@ if(D.readyState==='loading')D.addEventListener('DOMContentLoaded',boot);else boo
   <div class="f"><label for="aAccSel" id="accLbl">Paid with</label><select id="aAccSel"></select></div>
   <div class="f" id="toWrap"><label for="aToSel">To</label><select id="aToSel"></select></div>
   <div class="f" id="catWrap"><label for="aCatSel">Category</label><select id="aCatSel"></select>
+   <div id="homeChips" style="margin-top:10px"></div>
    <div class="catrow" id="quickCat" hidden style="margin-top:8px"><input id="quickCatIn" placeholder="New category name" maxlength="40"><button class="ib" id="quickCatAdd">Add</button></div></div>
   <div id="ccWrap">
    <span class="lbl">How will you pay it?</span>
@@ -1185,7 +1200,7 @@ if(D.readyState==='loading')D.addEventListener('DOMContentLoaded',boot);else boo
 {
 /* ---------- settings & data ---------- */
 const ACC=['debit','credit','od','telda','cash'],NONCC=ACC.filter(a=>a!=='credit');
-const DEF_EXP=[['food','Food'],['groc','Groceries'],['phone','Phone bill'],['elec','Electricity charge card'],['gas','Gas charge card'],['deliv','Delivery'],['pharm','Pharmacy'],['trans','Transportation'],['apt','Apartment fees'],['sent','Sent to people'],['subs','Subscriptions'],['charity','Church (charity)'],['gam3ya','Gam3ya payments'],['other','Other']];
+const DEF_EXP=[['food','Food'],['groc','Groceries'],['phone','Phone bill'],['elec','Electricity charge card'],['gas','Gas charge card'],['deliv','Delivery'],['pharm','Pharmacy'],['trans','Transportation'],['apt','Building maintenance fees'],['water','Water'],['net','Internet'],['hphone','Home phone'],['sent','Sent to people'],['subs','Subscriptions'],['charity','Church (charity)'],['gam3ya','Gam3ya payments'],['other','Other']];
 const DEF_INC=[['salary','Salary'],['gam3ya','Gam3ya payout'],['recv','Received from people'],['bonus','Bonus'],['gift','Gift'],['refund','Refund / cashback'],['other','Other']];
 const DEF={acc:{debit:{n:'CIB Debit',open:0},credit:{n:'CIB Credit',limit:0},od:{n:'CIB Overdraft',open:0,limit:0},telda:{n:'Telda',open:0},cash:{n:'Cash',open:0}},
  stmt:11,due:5,remind:3,sms:{on:false,kw:{debit:'6396, 8659, 100044358659',credit:'3577',od:'5669, 100044925669',telda:'2501'},ipAcc:'debit'},payDay:28,goals:[],gam:[],charity:{pct:10,acc:'debit'},subs:[{id:'claude',n:'Claude',kw:'claude, anthropic',price:0,fx:true,acc:'credit',cycle:'m'},{id:'netflix',n:'Netflix',kw:'netflix',price:0,fx:true,acc:'credit',cycle:'m'},{id:'spotify',n:'Spotify',kw:'spotify',price:0,fx:true,acc:'credit',cycle:'m'},{id:'gone',n:'Google One',kw:'google one, google storage, google *one',price:0,fx:true,acc:'credit',cycle:'m'}],merch:{},exp:DEF_EXP.map(([id,n])=>({id,n})),inc:DEF_INC.map(([id,n])=>({id,n}))};
@@ -1216,6 +1231,9 @@ const monthLbl=ym=>`${MONTHS[+ym.slice(5,7)-1]} ${ym.slice(0,4)}`;
 const daysTo=s=>Math.round((new Date(s+'T00:00')-new Date(today+'T00:00'))/864e5);
 const accName=a=>S.acc[a]?.n||a;
 const catList=k=>S[k].filter(c=>!c.hidden);
+const HOME_DEF=new Set(['apt','elec','gas','water','net','hphone','groc']);
+const homeCats=()=>S.exp.filter(c=>c.home&&!c.hidden);
+const isHome=t=>t.type==='exp'&&!!t.cat&&S.exp.some(c=>c.id===t.cat&&c.home);
 const catName=(t)=>{if(t.type==='exp'||t.type==='inc'){const c=S[t.type].find(c=>c.id===t.cat);return c?c.n:'Uncategorised'}return ''};
 
 /* ---------- credit card billing ---------- */
@@ -1341,6 +1359,9 @@ function migrate(){tx.forEach(fixPlan);
   if(ipnOut||ipnIn){t.cat=peopleCat(t.type,t.note==='InstaPay transfer'?'':t.note);t.review=false}});
  tx.forEach(t=>{if(t.cat==='apt'&&(t.stmtKey||t.note==='InstaPay fee')&&/\bfees?\b|interest|insurance|overdraft/i.test(t.note||''))t.cat=feeCat()});
  if(!S.exp.some(c=>c.id==='subs'))S.exp.push({id:'subs',n:'Subscriptions'});
+ /* v32 home categories: the House tab shows every expense in a category marked home */
+ for(const[id,n]of[['water','Water'],['net','Internet'],['hphone','Home phone']])if(!S.exp.some(c=>c.id===id))S.exp.push({id,n,home:true});
+ if(!S.homeV){S.homeV=1;S.exp.forEach(c=>{if(HOME_DEF.has(c.id))c.home=true});const a=S.exp.find(c=>c.id==='apt');if(a&&a.n==='Apartment fees')a.n='Building maintenance fees'}
  for(const[k,id,n]of[['exp','charity','Church (charity)'],['exp','gam3ya','Gam3ya payments'],['inc','gam3ya','Gam3ya payout']])if(!S[k].some(c=>c.id===id))S[k].push({id,n});
  {const g=S.subs.find(x=>x.id==='gone');if(g&&!/google google o/.test(g.kw))g.kw+=', google google o'}
  /* v2–v8 read statement notices and "installment" messages as payments, and code messages as extra purchases */
@@ -1503,6 +1524,47 @@ function renderReports(){
  $('rList').innerHTML=list.length?grouped(list,null):'<li class="empty" style="display:block;border:0">Nothing to show.</li>';
 }
 
+/* ---------- house: home bills ---------- */
+function renderHouse(){
+ const hc=homeCats(),hs=new Set(S.exp.filter(c=>c.home).map(c=>c.id)),H=tx.filter(t=>t.type==='exp'&&hs.has(t.cat)&&!voided(t));
+ const ym=today.slice(0,7),ms=[...new Set([ym,...H.map(t=>t.date.slice(0,7))])].sort().reverse(),ys=[...new Set(ms.map(m=>m.slice(0,4)))];
+ const cur=$('hMonth').value||ym;
+ $('hMonth').innerHTML=ms.map(m=>`<option value="${m}">${monthLbl(m)}</option>`).join('')+ys.map(y=>`<option value="${y}">All of ${y}</option>`).join('');$('hMonth').value=cur;if(!$('hMonth').value)$('hMonth').value=ym;
+ const p=$('hMonth').value,isY=p.length===4,sum=(list)=>r2(list.reduce((s,t)=>s+cost(t),0));
+ const prevP=isY?String(+p-1):(()=>{const[y,m]=p.split('-').map(Number);const d=new Date(y,m-2,1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')})();
+ const inP=H.filter(t=>t.date.startsWith(p)),total=sum(inP),prev=sum(H.filter(t=>t.date.startsWith(prevP)));
+ /* average of the last 6 full months before this one (only months since the first home entry) */
+ const first=H.reduce((m,t)=>t.date<m?t.date:m,'9999').slice(0,7),last6=[];
+ {const[y,m]=ym.split('-').map(Number);for(let i=1;i<=6;i++){const d=new Date(y,m-1-i,1),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');if(k>=first)last6.push(k)}}
+ const avgOf=f=>last6.length?r2(last6.reduce((s,k)=>s+sum(H.filter(t=>t.date.startsWith(k)&&f(t))),0)/last6.length):0;
+ const avg=avgOf(()=>true),diff=r2(total-prev);
+ const nMon=isY?(p===ym.slice(0,4)?+ym.slice(5):12):1;
+ $('hTiles').innerHTML=`<div class="tile"><div class="k">${isY?'Total '+p:'This month'}</div><div class="v" style="color:var(--out)">${money(total)}</div></div>`+
+  `<div class="tile"><div class="k">vs ${isY?prevP:MONTHS[+prevP.slice(5)-1].slice(0,3)}</div><div class="v" style="color:${diff>0?'var(--out)':diff<0?'var(--in)':'inherit'}">${diff>0?'+':diff<0?'−':''}${money(Math.abs(diff))}</div></div>`+
+  `<div class="tile"><div class="k">${isY?'Per month':'6-month avg'}</div><div class="v">${money(isY?r2(total/nMon):avg)}</div></div>`;
+ const rv=tx.filter(t=>t.review&&!isCheck(t)).length;
+ $('hReview').innerHTML=rv?`<button class="setbtn" data-go="home-review"><span class="ic">🏷️</span><span class="t"><b>${rv} transaction${rv===1?'':'s'} need${rv===1?'s':''} a category</b><small>Home bill? Tap it and pick a 🏠 category — it shows up here</small></span><span class="go">›</span></button>`:'';
+ const rows=hc.map(c=>{const v=sum(inP.filter(t=>t.cat===c.id)),pv=sum(H.filter(t=>t.date.startsWith(prevP)&&t.cat===c.id)),n=inP.filter(t=>t.cat===c.id).length;return{c,v,pv,n,a:avgOf(t=>t.cat===c.id)}});
+ const extra=[...new Set(inP.map(t=>t.cat))].filter(k=>!hc.some(c=>c.id===k)).map(k=>{const c=S.exp.find(x=>x.id===k);const v=sum(inP.filter(t=>t.cat===k));return{c,v,pv:0,n:inP.filter(t=>t.cat===k).length,a:0}});
+ const all=[...rows,...extra].sort((a,b)=>b.v-a.v||a.c.n.localeCompare(b.c.n)),max=Math.max(1,...all.map(r=>r.v));
+ $('hCats').innerHTML=all.length?all.map(r=>`<div class="meter" data-hcat="${esc(r.c.id)}"><div class="top"><span>${esc(r.c.n)}${r.n?` <small class="note">· ${r.n}</small>`:''}</span><b>${money(r.v)}${total?` · ${Math.round(r.v/total*100)}%`:''}</b></div><div class="bar"><i style="width:${r.v/max*100}%"></i></div><div class="note" style="font-size:13px;margin-top:3px">${isY?prevP:'Last month'} ${money(r.pv)}${isY?'':` · avg ${money(r.a)}`}</div></div>`).join('')
+  :'<div class="empty">No home categories yet. Mark some in Settings → Categories.</div>';
+ /* month by month (last 12 months) */
+ const mm=[];{const[y,m]=ym.split('-').map(Number);for(let i=0;i<12;i++){const d=new Date(y,m-1-i,1),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');if(k<first&&i)break;mm.push([k,sum(H.filter(t=>t.date.startsWith(k)))])}}
+ const mx=Math.max(1,...mm.map(x=>x[1]));
+ $('hMonths').innerHTML=mm.map(([k,v])=>`<div class="meter${k===p?' on':''}" data-hmon="${k}"><div class="top"><span>${monthLbl(k)}</span><b>${money(v)}</b></div><div class="bar"><i style="width:${v/mx*100}%"></i></div></div>`).join('');
+ $('hCatsShort').textContent=hc.length?hc.map(c=>c.n).sort().join(', '):'Choose which categories count as home';
+ /* list sub-page: #house-list or #house-list-<category> */
+ const lc=pageSub==='list'?pageArg:null,lcat=lc&&S.exp.find(c=>c.id===lc),list=inP.filter(t=>!lc||t.cat===lc).sort(byDate);
+ $('hListTitle').textContent=(lcat?lcat.n:'All home expenses')+' · '+(isY?p:monthLbl(p));
+ $('hListSum').textContent=`${list.length} payment${list.length===1?'':'s'} · ${money(sum(list))}`;
+ $('hList').innerHTML=list.length?grouped(list,null):'<li class="empty" style="display:block;border:0">Nothing in this period.</li>';
+}
+$('hMonth').addEventListener('change',renderHouse);
+document.addEventListener('click',e=>{const c=e.target.closest('[data-hcat]');if(c){location.hash='house-list-'+c.dataset.hcat;return}
+ const m=e.target.closest('[data-hmon]');if(m){$('hMonth').value=m.dataset.hmon;renderHouse();window.scrollTo({top:0,behavior:'smooth'})}});
+$('hAdd').addEventListener('click',()=>{openAdd('exp');$('homeChips').scrollIntoView({block:'center'})});
+
 /* ---------- settings ---------- */
 function renderSettings(){
  $('accSet').innerHTML=ACC.map(a=>`<div class="row"><div><label for="n-${a}">Name</label><input id="n-${a}" value="${esc(accName(a))}" maxlength="30"></div>${a==='credit'?'<div></div>':`<div><label for="o-${a}">Balance now</label><input id="o-${a}" type="number" inputmode="decimal" step="0.01" value="${bal(a)}"></div>`}</div>${a==='od'?`<div class="row"><div><label for="l-od">Overdraft limit</label><input id="l-od" type="number" inputmode="decimal" min="0" value="${+S.acc.od.limit||''}"></div><div></div></div>`:''}`).join('');
@@ -1520,12 +1582,13 @@ function renderCatEdit(){document.querySelectorAll('#catTypeSeg button').forEach
  const list=byName(catList(catType).map(c=>({v:c.id,n:c.n})));if(catSel!=='__new'&&!list.some(o=>o.v===catSel))catSel=list[0]?list[0].v:'__new';
  $('catPick').innerHTML=list.map(o=>`<option value="${esc(o.v)}"${o.v===catSel?' selected':''}>${esc(o.n)}</option>`).join('')+`<option value="__new"${catSel==='__new'?' selected':''}>＋ Add new category</option>`;
  const used=catSel!=='__new'?tx.filter(t=>t.type===catType&&t.cat===catSel).length:0,c=S[catType].find(x=>x.id===catSel);
- $('catEdit').innerHTML=catSel==='__new'?`<div class="f"><label for="catName">New ${catType==='exp'?'expense':'income'} category</label><input id="catName" maxlength="40" placeholder="e.g. Gym"></div><button class="btn" data-catdo="add">Add category</button>`
-  :`<div class="f"><label for="catName">Name</label><input id="catName" maxlength="40" value="${esc(c?c.n:'')}"></div><p class="note" style="margin-top:-6px">${used} entr${used===1?'y':'ies'} in this category.</p><div class="btns"><button class="btn" data-catdo="ren">Save name</button><button class="btn danger" data-catdo="rm">Remove</button></div>`}
+ $('catEdit').innerHTML=catSel==='__new'?`<div class="f"><label for="catName">New ${catType==='exp'?'expense':'income'} category</label><input id="catName" maxlength="40" placeholder="e.g. Gym"></div>${catType==='exp'?'<label class="check"><input type="checkbox" id="catHome"> <span>🏠 Home expense — show on the House tab</span></label>':''}<button class="btn" data-catdo="add">Add category</button>`
+  :`<div class="f"><label for="catName">Name</label><input id="catName" maxlength="40" value="${esc(c?c.n:'')}"></div><p class="note" style="margin-top:-6px">${used} entr${used===1?'y':'ies'} in this category.</p>${catType==='exp'?`<label class="check"><input type="checkbox" id="catHome"${c&&c.home?' checked':''}> <span>🏠 Home expense — show on the House tab</span></label>`:''}<div class="btns"><button class="btn" data-catdo="ren">Save name</button><button class="btn danger" data-catdo="rm">Remove</button></div>`}
 $('catTypeSeg').addEventListener('click',e=>{const b=e.target.closest('[data-ctype]');if(!b)return;catType=b.dataset.ctype;catSel=null;renderCatEdit()});
+document.addEventListener('change',e=>{if(e.target.id!=='catHome'||catSel==='__new')return;const c=S.exp.find(x=>x.id===catSel);if(!c)return;c.home=e.target.checked;save();toast(c.home?`${c.n} now shows on the House tab`:`${c.n} removed from the House tab`,false)});
 $('catPick').addEventListener('change',()=>{catSel=$('catPick').value;renderCatEdit();if(catSel==='__new')$('catName').focus()});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-catdo]');if(!b)return;const a=b.dataset.catdo,v=($('catName').value||'').trim();
- if(a==='add'){if(!v)return;catSel=addCat(catType,v);save();toast(`"${v}" added`,false)}
+ if(a==='add'){if(!v)return;const hm=!!($('catHome')&&$('catHome').checked);catSel=addCat(catType,v);if(hm&&catType==='exp'){const c=S.exp.find(x=>x.id===catSel);if(c)c.home=true}save();toast(`"${v}" added`,false)}
  else if(a==='ren'){const c=S[catType].find(x=>x.id===catSel);if(c&&v){c.n=v;save();toast('Name saved',false)}}
  else if(a==='rm'){if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Tap again to remove';return}
   const used=tx.some(t=>t.type===catType&&t.cat===catSel);if(used)S[catType].find(c=>c.id===catSel).hidden=true;else S[catType]=S[catType].filter(c=>c.id!==catSel);catSel=null;save();toast(used?'Removed from the list (old entries keep it)':'Category removed',false)}});
@@ -1556,7 +1619,9 @@ function renderAdd(){if(!F)F=fresh('exp');
  const hasCat=F.type==='exp'||F.type==='inc';$('catWrap').hidden=!hasCat;
  if(hasCat){const k=F.type,cl=catList(k);if(F.cat&&!S[k].some(c=>c.id===F.cat))F.cat=null;
   const extra=F.cat&&!cl.some(c=>c.id===F.cat)?S[k].filter(c=>c.id===F.cat):[];
-  $('aCatSel').innerHTML=(F.cat?'':'<option value="" selected disabled>Choose a category…</option>')+byName([...cl,...extra].map(c=>({v:c.id,n:c.n}))).map(o=>`<option value="${esc(o.v)}"${F.cat===o.v?' selected':''}>${esc(o.n)}</option>`).join('')+'<option value="__new">＋ New category…</option>'}
+  $('aCatSel').innerHTML=(F.cat?'':'<option value="" selected disabled>Choose a category…</option>')+byName([...cl,...extra].map(c=>({v:c.id,n:c.n,h:c.home}))).map(o=>`<option value="${esc(o.v)}"${F.cat===o.v?' selected':''}>${o.h?'🏠 ':''}${esc(o.n)}</option>`).join('')+'<option value="__new">＋ New category…</option>'}
+ {const hc=F.type==='exp'?byName(homeCats()):[];$('homeChips').hidden=!hc.length;
+  $('homeChips').innerHTML=hc.length?`<span class="lbl">🏠 Home expense? Tap one</span><div class="chips">${hc.map(c=>`<button type="button" class="chip${F.cat===c.id?' on':''}" data-hchip="${esc(c.id)}" style="--c:var(--acc)">${esc(c.n)}</button>`).join('')}</div>`:''}
  const cc=F.type==='exp'&&F.acc==='credit';$('ccWrap').hidden=!cc;$('ipnWrap').hidden=!ipnOK();$('fxWrap').hidden=!fxOK();if(!fxOK())$('aFx').checked=false;
  if(cc){document.querySelectorAll('#aMode button').forEach(b=>b.classList.toggle('on',b.dataset.mode===F.mode));
 }
@@ -1640,6 +1705,7 @@ const accOpts=(list,sel)=>[...list].sort((a,b)=>accName(a).localeCompare(accName
 const byName=list=>[...list].sort((a,b)=>a.n.localeCompare(b.n,undefined,{sensitivity:'base'}));
 $('aAccSel').addEventListener('change',()=>{F.acc=$('aAccSel').value;if(F.type==='xfer'&&F.to===F.acc)F.to=null;renderAdd()});
 $('aToSel').addEventListener('change',()=>{F.to=$('aToSel').value;renderAdd()});
+$('homeChips').addEventListener('click',e=>{const b=e.target.closest('[data-hchip]');if(!b||!F)return;F.cat=b.dataset.hchip;$('quickCat').hidden=true;renderAdd()});
 $('aCatSel').addEventListener('change',()=>{const v=$('aCatSel').value;if(v==='__new'){$('quickCat').hidden=false;$('quickCatIn').focus();$('aCatSel').value=F.cat||'';return}F.cat=v;$('quickCat').hidden=true;renderAdd()});
 $('quickCatAdd').addEventListener('click',()=>{const id=addCat(F.type,$('quickCatIn').value);if(!id)return;F.cat=id;$('quickCatIn').value='';$('quickCat').hidden=true;save();renderAdd()});
 
@@ -2157,7 +2223,7 @@ const catLabel=k=>k==='_none'?'Not sorted yet':catName({type:'exp',cat:k});
 
 /* ---------- goals ---------- */
 let goalEdit=null;
-const FIXED=new Set(['apt','phone','elec','gas','fees','pharm','charity','gam3ya','_none']);
+const FIXED=new Set(['apt','phone','elec','gas','water','net','hphone','fees','pharm','charity','gam3ya','_none']);
 function goalPlan(g){const st=monthStats(),months=Math.max(1,ymDiff(ymOf(today),ymOf(g.date))+(+g.date.slice(8)>=25?1:0)),need=r2(Math.max(0,g.target-(g.saved||0))),per=r2(need/months);
  const out=r2(st.spend+st.instMonthly+st.gamMonthly+st.charity),freeNow=r2(st.inc-out);
  const flex=Object.entries(st.cats).filter(([k,v])=>!FIXED.has(k)&&v>0).sort((a,b)=>b[1]-a[1]);
@@ -2626,7 +2692,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-sms]');if(
 window.onResumeApp=pollSms;setInterval(pollSms,20000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)pollSms()});
 
 /* ---------- swipe the screen left/right to move between tabs (same as Time Sheet) ---------- */
-{const STABS=['home','credit','cash','goals','gam','charity','subs','reports'];
+{const STABS=['home','house','credit','cash','goals','gam','charity','subs','reports'];
  let sx=0,sy=0,mode=0,on=false,sec=null;
  const cur=()=>{const p=location.hash.slice(1).split('-');return p.length===1&&STABS.includes(p[0]||'home')?(p[0]||'home'):null};
  const blocked=t=>!$('dlg').hidden||$('pk')||document.querySelector('.ddmenu')||t.closest('input,textarea,select,.dd,nav,header,.toast,.fab');
@@ -2643,15 +2709,15 @@ window.onResumeApp=pollSms;setInterval(pollSms,20000);document.addEventListener(
  document.addEventListener('touchcancel',()=>{on=false;reset()},{passive:true});}
 
 /* ---------- routing ---------- */
-const V=['home','credit','cash','goals','gam','charity','subs','reports','settings','add','plan'];
+const V=['home','house','credit','cash','goals','gam','charity','subs','reports','settings','add','plan'];
 function go(v){if(location.hash!=='#'+v)location.hash=v;else route()}
-const TABS=['home','credit','cash','goals','gam','charity','subs','reports','settings'];let lastView=null,lastDepth=0;
+const TABS=['home','house','credit','cash','goals','gam','charity','subs','reports','settings'];let lastView=null,lastDepth=0;
 function animate(el,cls){if(!el)return;el.classList.remove('anim-r','anim-l','anim-u');void el.offsetWidth;el.classList.add(cls)}
 function route(){if(lastHash!==null&&lastHash!==location.hash)closeCards();lastHash=location.hash;const h0=location.hash.slice(1),parts=h0.split('-'),h=parts[0],v=V.includes(h)?h:'home';setSub=v==='settings'?parts[1]||null:null;pageSub=v==='settings'?null:parts[1]||null;pageArg=parts.slice(2).join('-')||null;
  if(v!=='add'&&v!=='plan')backTo=v;else if(v==='add'&&!F)F=fresh('exp');
  V.forEach(k=>{$('v-'+k).hidden=k!==v;const t=$('t-'+k);if(t)t.classList.toggle('on',k===v)});
  $('fab').hidden=['add','plan','settings','goals','gam','charity'].includes(v);document.querySelector('nav').hidden=v==='add'||v==='plan';
- if(v==='home')renderHome();else if(v==='credit')renderCredit();else if(v==='cash')renderCash();else if(v==='reports')renderReports();else if(v==='subs')renderSubs();else if(v==='goals')renderGoals();else if(v==='gam')renderGam();else if(v==='charity')renderCharity();else if(v==='settings')renderSettings();else if(v==='plan')renderPlan();else renderAdd();
+ if(v==='home')renderHome();else if(v==='house')renderHouse();else if(v==='credit')renderCredit();else if(v==='cash')renderCash();else if(v==='reports')renderReports();else if(v==='subs')renderSubs();else if(v==='goals')renderGoals();else if(v==='gam')renderGam();else if(v==='charity')renderCharity();else if(v==='settings')renderSettings();else if(v==='plan')renderPlan();else renderAdd();
  applySub(v);
  {const depth=h0.split('-').length>1?1:0,sec=$('v-'+v),i=TABS.indexOf(v),j=TABS.indexOf(lastView);let cls;
   if(v==='add'||v==='plan')cls='anim-u';else if(lastView===v)cls=depth>lastDepth?'anim-r':depth<lastDepth?'anim-l':null;else cls=i<0||j<0?'anim-u':i>j?'anim-r':'anim-l';

@@ -1149,12 +1149,14 @@ function dueHTML(c,withBtn){
 function renderBalCheck(){const show=S.balChecked!==1;$('balCheck').hidden=!show;if(!show)return;
  $('balRows').innerHTML=NONCC.map(a=>`<div class="catrow"><label for="bc-${a}" style="flex:1;margin:0;color:var(--ink)">${esc(accName(a))}</label><input id="bc-${a}" type="number" inputmode="decimal" step="0.01" value="${!anchorOf(a)&&+S.acc[a].open?+S.acc[a].open:bal(a)}" style="flex:1"></div>`).join('')}
 /* Home: a short page of cards that open and close; what each one holds is summed up in its header */
-let homeOpen={acc:0,month:0,latest:1};try{Object.assign(homeOpen,JSON.parse(localStorage.getItem('exp-home-open')||'{}'))}catch(e){}
+/* expandable cards start closed and close again whenever you leave the page */
+let homeOpen={};try{localStorage.removeItem('exp-home-open')}catch(e){}
+let lastHash=null;function closeCards(){homeOpen={};document.querySelectorAll('.xc.open').forEach(c=>{c.classList.remove('open');const b=c.querySelector('[data-xt]');if(b)b.setAttribute('aria-expanded','false')})}
 const CHEV='<svg class="ch" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg>';
 function xcard(id,ic,title,sub,val,valCls,body){const o=!!homeOpen[id];
  return `<section class="card xc${o?' open':''}"><button type="button" class="xh" data-xt="${id}" aria-expanded="${o}"><span class="ic" aria-hidden="true">${ic}</span><span class="t"><b>${title}</b>${sub?`<small>${sub}</small>`:''}</span>${val!=null?`<span class="v${valCls?' '+valCls:''}">${val}</span>`:''}${CHEV}</button><div class="xb"><div class="xi">${body}</div></div></section>`}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-xt]');if(!b)return;const c=b.closest('.xc'),id=b.dataset.xt,o=!c.classList.contains('open');
- c.classList.toggle('open',o);b.setAttribute('aria-expanded',o);homeOpen[id]=o?1:0;try{localStorage.setItem('exp-home-open',JSON.stringify(homeOpen))}catch(x){}});
+ c.classList.toggle('open',o);b.setAttribute('aria-expanded',o);homeOpen[id]=o?1:0});
 function renderHome(){renderBalCheck();
  const c=credit();$('dueBox').innerHTML=dueHTML(c,true);
  const rv=tx.filter(t=>t.review&&!isCheck(t)).sort(byDate);
@@ -2339,7 +2341,7 @@ const V=['home','credit','cash','goals','gam','charity','subs','reports','settin
 function go(v){if(location.hash!=='#'+v)location.hash=v;else route()}
 const TABS=['home','credit','cash','goals','gam','charity','subs','reports','settings'];let lastView=null,lastDepth=0;
 function animate(el,cls){if(!el)return;el.classList.remove('anim-r','anim-l','anim-u');void el.offsetWidth;el.classList.add(cls)}
-function route(){const h0=location.hash.slice(1),parts=h0.split('-'),h=parts[0],v=V.includes(h)?h:'home';setSub=v==='settings'?parts[1]||null:null;pageSub=v==='settings'?null:parts[1]||null;pageArg=parts.slice(2).join('-')||null;
+function route(){if(lastHash!==null&&lastHash!==location.hash)closeCards();lastHash=location.hash;const h0=location.hash.slice(1),parts=h0.split('-'),h=parts[0],v=V.includes(h)?h:'home';setSub=v==='settings'?parts[1]||null:null;pageSub=v==='settings'?null:parts[1]||null;pageArg=parts.slice(2).join('-')||null;
  if(v!=='add'&&v!=='plan')backTo=v;else if(v==='add'&&!F)F=fresh('exp');
  V.forEach(k=>{$('v-'+k).hidden=k!==v;const t=$('t-'+k);if(t)t.classList.toggle('on',k===v)});
  $('fab').hidden=['add','plan','settings','goals','gam','charity'].includes(v);document.querySelector('nav').hidden=v==='add'||v==='plan';

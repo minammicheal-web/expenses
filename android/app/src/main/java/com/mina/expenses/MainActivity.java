@@ -78,6 +78,7 @@ public class MainActivity extends Activity {
         s.setDatabaseEnabled(true);
         s.setAllowFileAccess(true);
         web.addJavascriptInterface(new Bridge(), "Android");
+        web.addJavascriptInterface(new M3Update(this, web, "expenses"), "M3U");
         web.addJavascriptInterface(new M3Feedback(this, web), "M3");
         voice = new Voice(this, web);
         web.addJavascriptInterface(voice, "Voice");

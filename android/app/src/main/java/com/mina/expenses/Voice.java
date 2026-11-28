@@ -17,6 +17,7 @@ import org.json.JSONObject;
 /** Voice entry: Android speech recognition (Egyptian Arabic by default). Results go to window.onVoice({text, alts} | {err} | {state}). */
 public class Voice {
     static final int REQ = 7401;
+    static final int ACT = 7402;
     private final Activity act;
     private final WebView web;
     private SpeechRecognizer sr;
@@ -39,7 +40,33 @@ public class Voice {
             act.runOnUiThread(() -> act.requestPermissions(new String[]{ Manifest.permission.RECORD_AUDIO }, REQ));
             return;
         }
-        act.runOnUiThread(() -> start(l));
+        act.runOnUiThread(() -> begin(l));
+    }
+
+    /** Google's voice typing popup first (works on most phones); the in-app recognizer only if no popup is installed. */
+    private void begin(String lang) {
+        Intent i = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        i.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        i.putExtra(RecognizerIntent.EXTRA_LANGUAGE, lang);
+        i.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, lang);
+        i.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
+        i.putExtra(RecognizerIntent.EXTRA_PROMPT, lang.startsWith("ar") ? "قول المصروف… مثلًا: صرفت 150 أكل من الكاش" : "Say the entry");
+        try {
+            if (i.resolveActivity(act.getPackageManager()) != null) { sendState("popup"); act.startActivityForResult(i, ACT); return; }
+        } catch (Exception e) { /* fall back below */ }
+        start(lang);
+    }
+
+    /** called by MainActivity.onActivityResult */
+    void onActivityResult(int res, Intent data) {
+        ArrayList<String> r = data != null ? data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS) : null;
+        if (res != Activity.RESULT_OK) { sendErr(res == Activity.RESULT_CANCELED ? "cancel" : "error" + res); return; }
+        if (r == null || r.isEmpty()) { sendErr("nomatch"); return; }
+        try {
+            JSONArray alts = new JSONArray();
+            for (String x : r) alts.put(x);
+            send(new JSONObject().put("text", r.get(0)).put("alts", alts));
+        } catch (Exception ignored) { }
     }
 
     @JavascriptInterface
@@ -52,7 +79,7 @@ public class Voice {
     void onPermission(boolean granted) {
         if (pendingLang == null) return;
         String l = pendingLang; pendingLang = null;
-        if (granted) act.runOnUiThread(() -> start(l)); else sendErr("permission");
+        if (granted) act.runOnUiThread(() -> begin(l)); else sendErr("permission");
     }
 
     private void release() { if (sr != null) { try { sr.cancel(); sr.destroy(); } catch (Exception ignored) { } sr = null; } }

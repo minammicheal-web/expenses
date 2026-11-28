@@ -138,6 +138,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int req, int res, Intent data) {
         super.onActivityResult(req, res, data);
+        if (req == Voice.ACT) { if (voice != null) voice.onActivityResult(res, data); return; }
         if (req == LOCK) {
             authing = false;
             if (res == RESULT_OK) authOk(); else authFailed("Not unlocked.");

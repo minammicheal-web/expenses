@@ -38,7 +38,7 @@
         </receiver>
         <service
             android:name=".TeldaListener"
-            android:label="Expenses: read Telda notifications"
+            android:label="Expenses: read bank app notifications"
             android:exported="true"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
             <intent-filter>

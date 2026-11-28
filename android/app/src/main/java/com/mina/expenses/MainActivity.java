@@ -591,8 +591,10 @@ public class MainActivity extends Activity {
             try {
                 JSONObject o = new JSONObject(json);
                 JSONArray w = o.optJSONArray("words");
+                JSONArray snd = o.optJSONArray("senders");
                 SmsReceiver.prefs(MainActivity.this).edit().putBoolean("on", o.optBoolean("on", false))
-                        .putString("words", w == null ? "[]" : w.toString()).apply();
+                        .putString("words", w == null ? "[]" : w.toString())
+                        .putString("senders", snd == null ? "[]" : snd.toString()).apply();
             } catch (Exception ignored) { }
         }
 
@@ -613,6 +615,10 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void notifConfig(boolean on) { SmsReceiver.prefs(MainActivity.this).edit().putBoolean("notif", on).apply(); }
+
+        /** Which bank / wallet apps to read: [{id, kw:[words in the package name or app name]}]. */
+        @JavascriptInterface
+        public void notifApps(String json) { SmsReceiver.prefs(MainActivity.this).edit().putString("apps", json == null ? "[]" : json).apply(); }
 
         /* ---- planned reminders, alerts now, home-screen widget ---- */
         @JavascriptInterface
@@ -643,8 +649,8 @@ public class MainActivity extends Activity {
                 if (cur != null) {
                     while (cur.moveToNext()) {
                         String body = cur.getString(1);
-                        if (!SmsReceiver.matches(MainActivity.this, body)) continue;
                         String from = cur.getString(0);
+                        if (!SmsReceiver.matches(MainActivity.this, from, body)) continue;
                         out.put(new JSONObject().put("from", from == null ? "" : from).put("body", body).put("ts", cur.getLong(2)));
                     }
                 }

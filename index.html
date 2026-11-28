@@ -115,6 +115,8 @@ input[type=checkbox]:focus-visible{outline:2px solid var(--acc);outline-offset:3
 .empty{color:var(--mute);text-align:center;padding:22px 8px}
 .fab{position:fixed;right:max(18px,calc(50vw - 292px));bottom:calc(18px + env(safe-area-inset-bottom));z-index:4;border:0;border-radius:999px;background:var(--acc);color:var(--on);font:800 17px system-ui,sans-serif;padding:0 24px;min-height:58px;box-shadow:0 10px 22px rgba(15,23,42,.28),0 3px 7px rgba(15,23,42,.18);cursor:pointer;overflow:hidden}
 .fab:active{transform:scale(.96)}
+#setup{position:fixed;inset:0;z-index:60;background:var(--bg);overflow:auto;padding:calc(24px + env(safe-area-inset-top)) 18px calc(30px + env(safe-area-inset-bottom));animation:wIn .3s ease}#setupBox{max-width:560px;margin:0 auto}#setupBox h1{font:800 30px/1.15 system-ui,sans-serif;margin:8px 0 10px}#setupBox h2{font-size:22px;margin:6px 0 8px}.wico{font-size:52px}.wdots{display:flex;gap:6px;margin-bottom:18px}.wdots i{flex:1;height:5px;border-radius:9px;background:var(--line)}.wdots i.on{background:var(--acc)}.wdots i.done{background:color-mix(in srgb,var(--acc) 45%,var(--line))}.wchips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.wchips .chip.on,#dlgB .chip.on{background:var(--acc);color:var(--on);border-color:var(--acc)}body.insetup{overflow:hidden}@keyframes wIn{from{opacity:0;transform:translateY(12px)}}
+.acbox{border:1px solid var(--line);border-radius:16px;padding:12px 12px 6px;margin-bottom:12px;border-left:4px solid var(--c,var(--acc))}.acth{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:10px}.acth .dot{width:10px;height:10px;border-radius:50%;background:var(--c);align-self:center}.acth small{color:var(--mute)}.acbox>.ib{margin:0 0 8px}
 li.tx.sel{background:var(--soft);border-radius:14px}li.tx.sel .dot{background:var(--acc)!important;box-shadow:0 0 0 4px color-mix(in srgb,var(--acc) 25%,transparent)}
 body.selmode .fab{opacity:0;pointer-events:none}
 #selBar{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translate(-50%,calc(100% + 60px));visibility:hidden;z-index:6;display:flex;gap:6px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 6px 6px 16px;box-shadow:0 12px 28px rgba(15,23,42,.28),0 3px 8px rgba(15,23,42,.14);transition:transform .28s cubic-bezier(.2,.8,.2,1),visibility 0s .28s;max-width:calc(100vw - 24px)}
@@ -1104,11 +1106,21 @@ if(D.readyState==='loading')D.addEventListener('DOMContentLoaded',boot);else boo
   <div id="lockBox"></div>
   <h2 style="margin-top:18px">Appearance</h2>
   <div class="seg" id="themeSeg" style="grid-template-columns:repeat(3,minmax(0,1fr))"><button data-theme="system">Phone setting</button><button data-theme="light">Light</button><button data-theme="dark">Dark</button></div>
+  <h2 style="margin-top:18px">Tabs</h2>
+  <p class="note" style="margin-top:-6px">Show only the pages you use. Hidden pages keep their data.</p>
+  <div id="tabChk"></div>
  </div>
  <div class="card" data-sec="acc">
   <h2>Accounts</h2>
-  <p class="note" style="margin-top:-6px">Balance now is what's in each account today. Change it to correct the app; only entries after that count on top of it.</p>
+  <p class="note" style="margin-top:-6px">Your banks, cards and wallets. <b>Balance now</b> is what's in each one today — change it to correct the app; only entries after that count on top of it. <b>Numbers</b> are the last 4 digits of the card or account as they appear in the bank's SMS.</p>
   <div id="accSet"></div>
+  <button class="btn ghost" id="accNew" style="margin-top:4px">+ Add a bank account, card or wallet</button>
+  <div id="accAdd" hidden class="acbox" style="margin-top:12px">
+   <div class="row"><div><label for="naBank">Bank or wallet</label><select id="naBank"></select></div><div><label for="naKind">Type</label><select id="naKind"></select></div></div>
+   <div class="row"><div><label for="naName">Name in the app</label><input id="naName" maxlength="30"></div><div><label for="naKw">Last 4 digits (card / account)</label><input id="naKw" inputmode="numeric" maxlength="60" placeholder="e.g. 1234"></div></div>
+   <div class="row"><div><label for="naBal">Balance now</label><input id="naBal" type="number" inputmode="decimal" step="0.01" placeholder="0"></div><div></div></div>
+   <div class="btns"><button class="btn" id="naSave">Add</button><button class="btn ghost" id="naCancel">Cancel</button></div>
+  </div>
   <h2 style="margin-top:18px">Credit card</h2>
   <div class="row"><div><label for="sLimit">Credit limit (EGP)</label><input id="sLimit" type="number" inputmode="decimal" min="0"></div><div><label for="sRemind">Remind me (days before due)</label><input id="sRemind" type="number" min="0" max="20"></div></div>
   <div class="row"><div><label for="sStmt">Bill issued on day</label><input id="sStmt" type="number" min="1" max="28"></div><div><label for="sDue">Payment due on day</label><input id="sDue" type="number" min="1" max="28"></div></div>
@@ -1143,14 +1155,16 @@ if(D.readyState==='loading')D.addEventListener('DOMContentLoaded',boot);else boo
   <div id="smsState" style="margin-top:14px"></div>
   <div id="smsScanBox" hidden style="margin-top:14px"><div class="row" style="margin-bottom:8px"><div><label for="scanDays">Add messages already on the phone from</label><select id="scanDays"><option value="7">the last 7 days</option><option value="30" selected>the last 30 days</option><option value="90">the last 3 months</option><option value="365">the last year</option><option value="3650">all messages</option></select></div><div style="align-self:end"><button class="btn ghost" data-sms="scan">Add old messages</button></div></div></div>
   <div id="smsMsg"></div>
-  <h2 style="margin-top:18px;font-size:16px">🔔 Telda app notifications</h2>
-  <p class="note" style="margin-top:-6px">Telda card purchases send no SMS, only a notification in the Telda app. Turn this on and the app reads <b>only Telda's</b> notifications and records them on your Telda account. When the same money also comes by SMS, the two are joined into one entry.</p>
+  <h2 style="margin-top:18px;font-size:16px">🔔 Bank &amp; wallet app notifications</h2>
+  <p class="note" style="margin-top:-6px">Some cards and wallets (Telda, for example) send no SMS, only a notification in their app. Turn this on and the app reads <b>only</b> the notifications of the banks and wallets in your accounts, and records them on the right account. When the same money also comes by SMS, the two are joined into one entry.</p>
   <div id="notifState"></div>
   <h2 style="margin-top:18px;font-size:16px">Test a message</h2>
+  <div class="f"><label for="smsFrom">Sender (optional, e.g. NBE or CIB)</label><input id="smsFrom" maxlength="30"></div>
   <div class="f"><textarea id="smsTest" rows="4" placeholder="Paste a bank SMS here to see what the app would record" style="width:100%;font:15px system-ui,sans-serif;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--soft);color:var(--ink)"></textarea></div>
   <button class="btn ghost" data-sms="test">Test</button>
   <div id="smsTestOut"></div>
   <div id="smsFails"></div>
+  <div id="smsLearn"></div>
  </div>
  <div class="card" id="driveCard" data-sec="drive" hidden>
   <h2>Google Drive backup</h2>
@@ -1245,22 +1259,47 @@ if(D.readyState==='loading')D.addEventListener('DOMContentLoaded',boot);else boo
 <button class="fab" id="fab">+ Add</button>
 <div id="invV" hidden><div class="ivh"><b id="invVT"></b><button id="invVX">Close</button></div><div class="ivb" id="invVB"></div></div>
 <div id="dlg" hidden><div class="card" role="dialog"><h2 id="dlgT"></h2><div id="dlgB" class="note" style="font-size:15px;color:var(--ink);margin-bottom:14px"></div><div id="dlgBtns" style="display:grid;gap:8px"></div></div></div>
+<div id="setup" hidden role="dialog" aria-label="Set up"><div id="setupBox"></div></div>
 <div id="selBar" role="toolbar" aria-label="Selected entries"><b id="selN">0 selected</b><button class="ib" id="selAll">All</button><button class="ib" id="selCat">Category</button><button class="ib" id="selDel" style="color:var(--danger)">Delete</button><button class="ib" id="selX" aria-label="Stop selecting">✕</button></div>
 <div class="toast" id="toast"><span id="toastT"></span><button id="toastB">Undo</button></div>
 
 <script>
 {
 /* ---------- settings & data ---------- */
-const ACC=['debit','credit','od','telda','cash'],NONCC=ACC.filter(a=>a!=='credit');
-const DEF_EXP=[['food','Food'],['groc','Groceries'],['phone','Phone bill'],['elec','Electricity charge card'],['gas','Gas charge card'],['deliv','Delivery'],['pharm','Pharmacy'],['trans','Transportation'],['apt','Building maintenance fees'],['water','Water'],['net','Internet'],['hphone','Home phone'],['sent','Sent to people'],['subs','Subscriptions'],['charity','Church (charity)'],['gam3ya','Gam3ya payments'],['other','Other']];
+/* Egyptian banks and wallets: SMS sender names and words in their app's name / package (for notifications) */
+const BANKS=[
+ ['cib','CIB','bank',['cib'],['cib']],['nbe','National Bank of Egypt (NBE)','bank',['nbe','alahly','ahly','nbeegypt'],['nbe','ahly net','al ahly mobile','الأهلي نت','الأهلى نت']],
+ ['bm','Banque Misr','bank',['banquemisr','bmisr','bm'],['banque misr','banquemisr','bm online','بنك مصر']],['qnb','QNB','bank',['qnb','qnbalahli'],['qnb']],
+ ['bdc','Banque du Caire','bank',['bdc','banqueducaire'],['banque du caire','bdc']],['aaib','AAIB','bank',['aaib'],['aaib']],
+ ['hsbc','HSBC','bank',['hsbc'],['hsbc']],['alex','Alexbank','bank',['alexbank'],['alexbank']],['adib','ADIB','bank',['adib'],['adib']],
+ ['cae','Crédit Agricole','bank',['caegypt','creditagricole','ca-egypt'],['credit agricole','crédit agricole']],['enbd','Emirates NBD','bank',['emiratesnbd','enbd'],['emirates nbd']],
+ ['faisal','Faisal Islamic Bank','bank',['faisal','fibe'],['faisal']],['mashreq','Mashreq','bank',['mashreq'],['mashreq']],['saib','SAIB','bank',['saib'],['saib']],
+ ['abk','Al Ahli Bank of Kuwait','bank',['abk'],['abk']],['nbk','NBK','bank',['nbk'],['nbk']],['fab','FAB Misr','bank',['fabmisr','fab'],['fab misr','fabmisr']],
+ ['aib','Arab International Bank','bank',['aib'],['arab international']],['ebe','Export Development Bank','bank',['ebe'],['ebe']],['abe','Agricultural Bank of Egypt','bank',['abe','agribank'],['agricultural bank','البنك الزراعي']],
+ ['telda','Telda','wallet',['telda'],['telda']],['vfcash','Vodafone Cash','wallet',['vf-cash','vfcash','vodafonecash','vodafone'],['vodafone cash','ana vodafone']],
+ ['ecash','e& cash (Etisalat)','wallet',['etisalat','e&cash','ecash'],['e& cash','etisalat cash','e& money']],['ocash','Orange Cash','wallet',['orangecash','orange'],['orange cash','orange money']],
+ ['wepay','WE Pay','wallet',['wepay'],['we pay']],['instapay','InstaPay','wallet',['instapay'],['instapay']],['fawry','myfawry','wallet',['fawry'],['myfawry','fawry']],
+ ['valu','valU','wallet',['valu'],['valu']],['khazna','Khazna','wallet',['khazna'],['khazna']],['other','Other bank / wallet','bank',[],[]]];
+const bankOf=id=>BANKS.find(b=>b[0]===id);
+const bankName=id=>{const b=bankOf(id);if(!b)return '';const m=b[1].match(/\(([A-Z]{2,6})\)$/);return m?m[1]:b[1].replace(/ \(.*\)$/,'')};
+const BUILTIN={debit:{bank:'cib',kind:'debit'},credit:{bank:'cib',kind:'credit'},od:{bank:'cib',kind:'od'},telda:{bank:'telda',kind:'wallet',loadFee:2},cash:{kind:'cash'}};
+const KINDS={debit:'Bank account / debit card',credit:'Credit card',od:'Overdraft account',wallet:'Wallet / prepaid card',cash:'Cash'};
+let ACC=['debit','credit','od','telda','cash'],NONCC=ACC.filter(a=>a!=='credit'),SMS_ACC=ACC.filter(a=>a!=='cash');
+const kindOf=a=>(S.acc[a]&&S.acc[a].kind)||(BUILTIN[a]&&BUILTIN[a].kind)||'debit';
+function syncAcc(){if(!S.acc.cash)S.acc.cash={n:'Cash',open:0,kind:'cash'};if(!S.acc.credit)S.acc.credit={n:'Credit card',limit:0,kind:'credit',hidden:true};
+ const k=Object.keys(S.acc).filter(a=>S.acc[a]&&!S.acc[a].hidden&&a!=='cash');ACC=[...k,'cash'];NONCC=ACC.filter(a=>a!=='credit');SMS_ACC=ACC.filter(a=>a!=='cash')}
+/* the account money usually comes from when nothing says otherwise: the first bank account */
+const defAcc=()=>NONCC.find(a=>a!=='cash'&&kindOf(a)!=='wallet')||NONCC.find(a=>a!=='cash')||'cash';
+const bankAccs=()=>NONCC.filter(a=>a!=='cash');
+const DEF_EXP=[['food','Food'],['groc','Groceries'],['phone','Phone bill'],['elec','Electricity charge card'],['gas','Gas charge card'],['deliv','Delivery'],['pharm','Pharmacy'],['trans','Transportation'],['apt','Building maintenance fees'],['water','Water'],['net','Internet'],['hphone','Home phone'],['sent','Sent to people'],['subs','Subscriptions'],['charity','Charity'],['gam3ya','Gam3ya payments'],['other','Other']];
 const DEF_INC=[['salary','Salary'],['gam3ya','Gam3ya payout'],['recv','Received from people'],['bonus','Bonus'],['gift','Gift'],['refund','Refund / cashback'],['other','Other']];
-const DEF={acc:{debit:{n:'CIB Debit',open:0},credit:{n:'CIB Credit',limit:0},od:{n:'CIB Overdraft',open:0,limit:0},telda:{n:'Telda',open:0},cash:{n:'Cash',open:0}},
- stmt:11,due:5,remind:3,sms:{on:false,kw:{debit:'6396, 8659, 100044358659',credit:'3577',od:'5669, 100044925669',telda:'2501'},ipAcc:'debit'},payDay:28,rates:{loan:23.5,loanFee:2,loanSrc:'CIB personal loan from 23.5% a year (reducing balance) + 2% admin fee — Banky, checked 26 Oct 2026',card:[[3,3.17],[6,3.08],[12,2.75]],cardFee:0,cardSrc:'CIB credit-card installment plan (IPP) terms: monthly reducing rate 3.17% (3–5 months), 3.08% (6–11), 2.75% (12–60)',checked:'2026-11-28'},rec:[],bud:{},nfy:{home:true,rec:true,sum:true,bud:true,days:2},goals:[],gam:[],charity:{pct:10,acc:'debit'},subs:[{id:'claude',n:'Claude',kw:'claude, anthropic',price:0,fx:true,acc:'credit',cycle:'m'},{id:'netflix',n:'Netflix',kw:'netflix',price:0,fx:true,acc:'credit',cycle:'m'},{id:'spotify',n:'Spotify',kw:'spotify',price:0,fx:true,acc:'credit',cycle:'m'},{id:'gone',n:'Google One',kw:'google one, google storage, google *one',price:0,fx:true,acc:'credit',cycle:'m'}],merch:{},exp:DEF_EXP.map(([id,n])=>({id,n})),inc:DEF_INC.map(([id,n])=>({id,n}))};
+const DEF={acc:{credit:{n:'Credit card',limit:0,kind:'credit',hidden:true},cash:{n:'Cash',open:0,kind:'cash'}},tabsOff:[],learn:[],
+ stmt:11,due:5,remind:3,sms:{on:false,kw:{},ipAcc:''},payDay:28,rates:{loan:23.5,loanFee:2,loanSrc:'CIB personal loan from 23.5% a year (reducing balance) + 2% admin fee — Banky, checked 26 Oct 2026',card:[[3,3.17],[6,3.08],[12,2.75]],cardFee:0,cardSrc:'CIB credit-card installment plan (IPP) terms: monthly reducing rate 3.17% (3–5 months), 3.08% (6–11), 2.75% (12–60)',checked:'2026-11-28'},rec:[],bud:{},nfy:{home:true,rec:true,sum:true,bud:true,days:2},goals:[],gam:[],charity:{pct:10,acc:'cash'},subs:[{id:'claude',n:'Claude',kw:'claude, anthropic',price:0,fx:true,acc:'credit',cycle:'m'},{id:'netflix',n:'Netflix',kw:'netflix',price:0,fx:true,acc:'credit',cycle:'m'},{id:'spotify',n:'Spotify',kw:'spotify',price:0,fx:true,acc:'credit',cycle:'m'},{id:'gone',n:'Google One',kw:'google one, google storage, google *one',price:0,fx:true,acc:'credit',cycle:'m'}],merch:{},exp:DEF_EXP.map(([id,n])=>({id,n})),inc:DEF_INC.map(([id,n])=>({id,n}))};
 const FEE_CAT={id:'_fee',n:'Installment interest & fees'};
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const clone=o=>JSON.parse(JSON.stringify(o));
-let S=clone(DEF),tx=[],skip=[],fails=[];
+let S=clone(DEF),tx=[],skip=[],fails=[],firstRun=false;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const r2=n=>Math.round((+n||0)*100)/100;
@@ -1383,8 +1422,10 @@ function sub(t,a){const bits=[];
  if(!a||t.type==='exp'||t.type==='inc')if(t.type!=='xfer'&&t.type!=='pay')bits.push(accName(t.acc));
  if(t.type==='xfer'&&t.acc==='credit')bits.push(`bill of ${fmtS(billOf(t))}`);
  if(t.type==='exp'&&t.acc==='credit')bits.push(t.plan?`${t.plan.months} × ${money(t.plan.each)} installments`:`bill of ${fmtS(billOf(t))}`);
- if(t.toAmt)bits.push(`${money(t.toAmt)} reaches Telda (${money(r2(t.amt-t.toAmt))} load fee)`);if(t.note)bits.push(esc(t.note));if(t.fxFee)bits.push(`incl. ${money(t.fxFee)} FX fee`);if(t.ipFee)bits.push(`incl. ${money(t.ipFee)} InstaPay fee`);if(t.sms)bits.push(t.sms.alt?'SMS + Telda notification':t.sms.app?'Telda notification':'SMS');if(t.stmtKey)bits.push('statement');if(t.payKey)bits.push('payslip');return bits.join(' · ')}
-const ACOL={debit:'var(--debit)',credit:'var(--credit)',od:'var(--od)',telda:'var(--telda)',cash:'var(--cash)'};
+ if(t.toAmt)bits.push(`${money(t.toAmt)} reaches ${esc(accName(t.to))} (${money(r2(t.amt-t.toAmt))} load fee)`);if(t.note)bits.push(esc(t.note));if(t.fxFee)bits.push(`incl. ${money(t.fxFee)} FX fee`);if(t.ipFee)bits.push(`incl. ${money(t.ipFee)} InstaPay fee`);if(t.sms)bits.push(t.sms.alt?'SMS + '+srcName(t.sms.app?t.sms:{app:1,from:t.sms.alt.from}):t.sms.app?srcName(t.sms):'SMS');if(t.stmtKey)bits.push('statement');if(t.payKey)bits.push('payslip');return bits.join(' · ')}
+const ACOL0={debit:'var(--debit)',credit:'var(--credit)',od:'var(--od)',telda:'var(--telda)',cash:'var(--cash)'},APAL=['#0ea5e9','#d97706','#db2777','#6366f1','#059669','#e11d48','#7c3aed','#0891b2'];
+const accCol=a=>ACOL0[a]||APAL[Math.max(0,Object.keys(S.acc).filter(k=>!ACOL0[k]).indexOf(a))%APAL.length];
+const ACOL=new Proxy({},{get:(o,a)=>typeof a==='string'?accCol(a):undefined});
 function row(t,a){const d=delta(t,a),cls=d<0?'o':d>0?'i':'n',sign=d<0?'−':d>0?'+':'';
  return `<li class="tx" data-tx="${t.id}" style="--c:${ACOL[t.type==='pay'?'credit':t.acc]}"><span class="dot"></span><span class="t">${esc(title(t))}${t.inv&&t.inv.length?' 📎':''}<small>${sub(t,a)}</small></span><span class="amt ${cls}">${sign}${money(t.amt)}</span></li>`}
 function grouped(list,a){let out='',last='';
@@ -1392,7 +1433,7 @@ function grouped(list,a){let out='',last='';
 const byDate=(x,y)=>y.date.localeCompare(x.date)||(y.created||0)-(x.created||0);
 
 /* ---------- storage ---------- */
-function load(){try{const j=JSON.parse(localStorage.getItem('exp-data')||'{}');tx=Array.isArray(j.tx)?j.tx:[];skip=j.skip||[];fails=j.fails||[];S=merge(j.settings)}catch(e){tx=[];S=clone(DEF)}
+function load(){try{const j=JSON.parse(localStorage.getItem('exp-data')||'{}');tx=Array.isArray(j.tx)?j.tx:[];skip=j.skip||[];fails=j.fails||[];S=merge(j.settings);firstRun=!j.settings}catch(e){tx=[];S=clone(DEF)}syncAcc();
  try{migrate()}catch(e){console.error(e)}}
 /* the same money seen twice: an SMS and a statement line, or a card payment and the debit-side transfer that paid it */
 function dedupe(){const drop=new Set(),near=(a,b,d)=>Math.abs(dayDiff(a.date,b.date))<=d;
@@ -1400,7 +1441,7 @@ function dedupe(){const drop=new Set(),near=(a,b,d)=>Math.abs(dayDiff(a.date,b.d
   const x=tx.find(x=>x!==y&&!drop.has(x)&&x.stmtKey&&x.acc===y.acc&&(x.type===y.type||(x.type==='xfer'&&y.type==='exp'))&&baseAmt(x)===baseAmt(y)&&near(x,y,3)&&(!x.sms||x.sms.otp2));
   if(x){if(!x.sms||x.sms.otp2)x.sms=y.sms;if((!x.note||/^InstaPay transfer$/.test(x.note))&&y.note)x.note=y.note;if(x.review&&y.cat){x.cat=y.cat;x.review=false}drop.add(y)}}
  for(const P of tx){if(P.type!=='pay'||drop.has(P))continue;
-  const E=tx.find(E=>E!==P&&!drop.has(E)&&E.acc!=='credit'&&(E.type==='exp'||(E.type==='xfer'&&E.to==='debit'))&&E.sms&&/transfer to\s+another account/i.test(E.sms.body)&&baseAmt(E)===P.amt&&near(E,P,3)&&!E.stmtKey);
+  const E=tx.find(E=>E!==P&&!drop.has(E)&&E.acc!=='credit'&&(E.type==='exp'||(E.type==='xfer'&&kindOf(E.to)==='debit'))&&E.sms&&/transfer to\s+another account/i.test(E.sms.body)&&baseAmt(E)===P.amt&&near(E,P,3)&&!E.stmtKey);
   if(E){P.acc=E.acc;if(!P.sms)P.sms=E.sms;else P.sms2=E.sms.key;drop.add(E)}}
  if(drop.size){drop.forEach(t=>{if(t.sms&&t.sms.key)skip.push(t.sms.key)});tx=tx.filter(t=>!drop.has(t))}
  return drop.size}
@@ -1450,14 +1491,16 @@ function migrate(){tx.forEach(fixPlan);
  tagSubs()}
 function merge(s){const o=clone(DEF);if(!s)return o;
  for(const k of ['stmt','due','remind'])if(s[k]!=null)o[k]=s[k];
- if(s.acc)for(const a of ACC)o.acc[a]={...o.acc[a],...(s.acc[a]||{})};
+ if(s.acc&&typeof s.acc==='object'){const old=!s.setupV;for(const[a,v]of Object.entries(s.acc)){if(!v||typeof v!=='object')continue;o.acc[a]={...(o.acc[a]||{}),...(old&&BUILTIN[a]?{...BUILTIN[a],hidden:false}:{}),...v};if(old&&BUILTIN[a])o.acc[a].hidden=false}}
+ if(s.setupV)o.setupV=s.setupV;else if(s.acc)o.setupV=1;
  if(s.sms){const kw={...o.sms.kw};for(const[k,v]of Object.entries(s.sms.kw||{}))if(String(v||'').trim())kw[k]=v;o.sms={...o.sms,...s.sms,kw}}if(s.payDay)o.payDay=s.payDay;if(s.mig)o.mig=s.mig;if(s.balChecked)o.balChecked=s.balChecked;if(s.theme)o.theme=s.theme;if(Array.isArray(s.subs))o.subs=s.subs;if(Array.isArray(s.goals))o.goals=s.goals;if(Array.isArray(s.gam))o.gam=s.gam;if(s.charity)o.charity={...o.charity,...s.charity};if(s.merch&&typeof s.merch==='object')o.merch=s.merch;if(s.ccBase)o.ccBase=s.ccBase;
  if(Array.isArray(s.exp))o.exp=s.exp;if(Array.isArray(s.inc))o.inc=s.inc;
- for(const k of ['homeV','invDrive'])if(s[k]!=null)o[k]=s[k];
+ for(const k of ['homeV','invDrive','salAcc'])if(s[k]!=null)o[k]=s[k];if(Array.isArray(s.tabsOff))o.tabsOff=s.tabsOff;if(Array.isArray(s.learn))o.learn=s.learn;
  if(s.rates&&typeof s.rates==='object')o.rates={...o.rates,...s.rates};if(Array.isArray(s.rec))o.rec=s.rec;if(s.bud&&typeof s.bud==='object')o.bud=s.bud;if(s.nfy&&typeof s.nfy==='object')o.nfy={...o.nfy,...s.nfy};return o}
 const backupJSON=()=>JSON.stringify({app:'expenses',version:1,exported:new Date().toISOString(),settings:S,tx,skip},null,1);
-function teldaLoads(){for(const t of tx){if(t.type!=='xfer'||t.to!=='telda'||t.toAmt!=null)continue;const x=t.amt/1.02;if(Math.abs(x-Math.round(x))<0.005&&t.amt>=50)t.toAmt=Math.round(x)}}
-function save(){teldaLoads();
+const loadFee=a=>+((S.acc[a]&&S.acc[a].loadFee)||0);
+function teldaLoads(){for(const t of tx){if(t.type!=='xfer'||!loadFee(t.to)||t.toAmt!=null)continue;const x=t.amt/(1+loadFee(t.to)/100);if(Math.abs(x-Math.round(x))<0.005&&t.amt>=50)t.toAmt=Math.round(x)}}
+function save(){syncAcc();teldaLoads();
  let ok=true;try{localStorage.setItem('exp-data',JSON.stringify({tx,settings:S,skip,fails}))}catch(e){ok=false;toast('Could not save on this phone',false)}
  if(window.Android){try{Android.storeBackup&&Android.storeBackup(backupJSON())}catch(e){}pushReminder()}pushExtras();
  renderAll();return ok}
@@ -1495,7 +1538,7 @@ function renderHome(){renderBalCheck();
  const lim=+S.acc.credit.limit||0,owed=Math.max(0,c.used),total=r2(NONCC.reduce((s,a)=>s+bal(a),0));
  const accRows=ACC.map(a=>{
   if(a==='credit')return `<button type="button" class="hr" data-acc="${a}" style="--c:${ACOL[a]}"><span class="dot"></span><span class="t">${esc(accName(a))}<small>${lim?`owed · ${money(c.avail)} available`:'owed · set the limit in Settings'}</small>${lim?`<span class="bar" style="display:block"><i style="width:${Math.min(100,Math.max(0,c.used/lim*100))}%"></i></span>`:''}</span><span class="v">${money(owed)}</span></button>`;
-  const b=bal(a),l=a==='od'?+S.acc.od.limit||0:0,A=anchorOf(a);
+  const b=bal(a),l=kindOf(a)==='od'?+S.acc[a].limit||0:0,A=anchorOf(a);
   return `<button type="button" class="hr" data-acc="${a}" style="--c:${ACOL[a]}"><span class="dot"></span><span class="t">${esc(accName(a))}<small>${l?`${money(l+b)} available`:'balance'}${A?` · from ${A.src==='sms'?'bank SMS':A.src==='you'?'your balance':'statement'} ${fmtS(A.date)}`:''}</small></span><span class="v${b<0?' neg':''}">${money(b)}</span></button>`}).join('');
  /* this month and the goal spending limits */
  const ym=today.slice(0,7),inM=tx.filter(t=>t.date.startsWith(ym));
@@ -1622,16 +1665,42 @@ $('hAdd').addEventListener('click',()=>{openAdd('exp');$('homeChips').scrollInto
 
 /* ---------- settings ---------- */
 function renderSettings(){
- $('accSet').innerHTML=ACC.map(a=>`<div class="row"><div><label for="n-${a}">Name</label><input id="n-${a}" value="${esc(accName(a))}" maxlength="30"></div>${a==='credit'?'<div></div>':`<div><label for="o-${a}">Balance now</label><input id="o-${a}" type="number" inputmode="decimal" step="0.01" value="${bal(a)}"></div>`}</div>${a==='od'?`<div class="row"><div><label for="l-od">Overdraft limit</label><input id="l-od" type="number" inputmode="decimal" min="0" value="${+S.acc.od.limit||''}"></div><div></div></div>`:''}`).join('');
+ renderAccSet();
  $('sLimit').value=+S.acc.credit.limit||'';$('sRemind').value=S.remind;$('sStmt').value=S.stmt;$('sDue').value=S.due;
  renderCatEdit();
- driveRender();renderSms();renderRec();renderBud();renderNfy();showSettingsPage();
+ driveRender();renderSms();renderRec();renderBud();renderNfy();renderTabChk();showSettingsPage();
 }
 $('sSave').addEventListener('click',()=>{
  const st=parseInt($('sStmt').value),du=parseInt($('sDue').value),rm=parseInt($('sRemind').value);
  if(!(st>=1&&st<=28)||!(du>=1&&du<=28)){toast('Bill and due days must be between 1 and 28',false);return}
- for(const a of ACC){S.acc[a].n=$('n-'+a).value.trim()||DEF.acc[a].n;if(a!=='credit'){const v=r2($('o-'+a).value);if(Math.abs(v-bal(a))>0.004)setBalance(a,v)}}S.acc.od.limit=r2($('l-od').value);
+ for(const a of ACC){const A=S.acc[a];A.n=$('n-'+a).value.trim()||A.n||bankName(A.bank)||'Account';if($('b-'+a))A.bank=$('b-'+a).value;if($('k-'+a))S.sms.kw[a]=$('k-'+a).value.trim();if(a!=='credit'){const v=r2($('o-'+a).value);if(Math.abs(v-bal(a))>0.004)setBalance(a,v)}if($('l-'+a))A.limit=r2($('l-'+a).value);if($('f-'+a))A.loadFee=Math.max(0,+$('f-'+a).value||0)}pushSmsConfig();pushNotifConfig();
  S.acc.credit.limit=r2($('sLimit').value);S.stmt=st;S.due=du;S.remind=rm>=0?rm:3;save();toast('Settings saved',false)});
+const bankOpts=sel=>BANKS.map(b=>`<option value="${b[0]}"${b[0]===sel?' selected':''}>${esc(b[1])}${b[2]==='wallet'?' · wallet':''}</option>`).join('');
+function renderAccSet(){const used=a=>tx.some(t=>t.acc===a||t.to===a);
+ $('accSet').innerHTML=ACC.map(a=>{const A=S.acc[a],k=kindOf(a);return `<div class="acbox" style="--c:${accCol(a)}"><div class="acth"><span class="dot"></span><b>${esc(accName(a))}</b><small>${esc(KINDS[k]||'')}${A.bank&&k!=='cash'?' · '+esc(bankName(A.bank)):''}</small></div>
+  <div class="row"><div><label for="n-${a}">Name</label><input id="n-${a}" value="${esc(accName(a))}" maxlength="30"></div>${a==='credit'?'<div></div>':`<div><label for="o-${a}">Balance now</label><input id="o-${a}" type="number" inputmode="decimal" step="0.01" value="${bal(a)}"></div>`}</div>
+  ${k==='cash'?'':`<div class="row"><div><label for="b-${a}">Bank or wallet</label><select id="b-${a}">${bankOpts(A.bank||'other')}</select></div><div><label for="k-${a}">Numbers in SMS</label><input id="k-${a}" value="${esc(S.sms.kw[a]||'')}" placeholder="e.g. 1234"></div></div>`}
+  ${k==='od'?`<div class="row"><div><label for="l-${a}">Overdraft limit</label><input id="l-${a}" type="number" inputmode="decimal" min="0" value="${+A.limit||''}"></div><div></div></div>`:''}
+  ${k==='wallet'?`<div class="row"><div><label for="f-${a}">Top-up fee (%)</label><input id="f-${a}" type="number" inputmode="decimal" min="0" step="0.1" value="${+A.loadFee||0}"></div><div></div></div>`:''}
+  ${a==='cash'?'':`<button class="ib" data-accrm="${a}" style="color:var(--danger)">${used(a)?'Hide this account':'Remove this account'}</button>`}</div>`}).join('')+
+  (Object.keys(S.acc).some(a=>S.acc[a].hidden&&a!=='credit')?`<p class="note">Hidden: ${Object.keys(S.acc).filter(a=>S.acc[a].hidden&&a!=='credit').map(a=>`<button class="ib" data-accshow="${a}">${esc(accName(a))} — show again</button>`).join(' ')}</p>`:'');
+ $('sLimit').closest('.row').previousElementSibling.hidden=$('sLimit').closest('.row').hidden=$('sStmt').closest('.row').hidden=!ACC.includes('credit');}
+function naFill(){const b=bankOf($('naBank').value)||BANKS[0],kinds=b[2]==='wallet'?['wallet']:['debit','credit','od'];
+ $('naKind').innerHTML=kinds.map(k=>`<option value="${k}"${k==='credit'&&ACC.includes('credit')?' disabled':''}>${KINDS[k]}${k==='credit'&&ACC.includes('credit')?' (one card for now)':''}</option>`).join('');
+ if(ACC.includes('credit')&&$('naKind').value==='credit')$('naKind').value=kinds[0];ddSync($('naKind'));
+ const k=$('naKind').value;$('naName').value=b[0]==='other'?'':`${bankName(b[0])}${k==='credit'?' Credit':k==='od'?' Overdraft':b[2]==='wallet'?'':' Debit'}`}
+function addAccount(bank,kind,name,kw,balNow){let id;
+ if(kind==='credit'){if(ACC.includes('credit'))return null;id='credit';S.acc.credit={...S.acc.credit,n:name,bank,kind:'credit',hidden:false}}
+ else{id='a'+uid().slice(-6);S.acc[id]={n:name,bank,kind,open:0,...(bank==='telda'?{loadFee:2}:{})}}
+ if(kw)S.sms.kw[id]=kw;syncAcc();if(kind!=='credit'&&balNow)setBalance(id,balNow);return id}
+document.addEventListener('click',e=>{const id=e.target.id;
+ if(id==='accNew'){$('accAdd').hidden=false;$('accNew').hidden=true;$('naBank').innerHTML=bankOpts('nbe');naFill();ddSync($('naBank'));$('naKw').value='';$('naBal').value=''}
+ else if(id==='naCancel'){$('accAdd').hidden=true;$('accNew').hidden=false}
+ else if(id==='naSave'){const n=$('naName').value.trim()||bankName($('naBank').value)||'Account',k=$('naKind').value;const a=addAccount($('naBank').value,k,n,$('naKw').value.trim(),r2($('naBal').value));
+  if(!a){toast('Only one credit card for now',false);return}$('accAdd').hidden=true;$('accNew').hidden=false;save();pushSmsConfig();pushNotifConfig();toast(`${n} added`,false)}
+ const rm=e.target.closest('[data-accrm]');if(rm){const a=rm.dataset.accrm;sure(rm,'Tap again to confirm',()=>{if(a==='credit'||tx.some(t=>t.acc===a||t.to===a))S.acc[a].hidden=true;else{delete S.acc[a];delete S.sms.kw[a]}save();pushSmsConfig();pushNotifConfig();toast(`${accName(a)} ${S.acc[a]?'hidden':'removed'}`,false)})}
+ const sh=e.target.closest('[data-accshow]');if(sh){S.acc[sh.dataset.accshow].hidden=false;save();pushSmsConfig()}});
+document.addEventListener('change',e=>{if(e.target.id==='naBank'||e.target.id==='naKind')naFill()});
 let catType='exp',catSel=null;
 function renderCatEdit(){document.querySelectorAll('#catTypeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.ctype===catType));
  const list=byName(catList(catType).map(c=>({v:c.id,n:c.n})));if(catSel!=='__new'&&!list.some(o=>o.v===catSel))catSel=list[0]?list[0].v:'__new';
@@ -1654,14 +1723,14 @@ document.addEventListener('change',e=>{const r=e.target.dataset&&e.target.datase
 
 /* ---------- add / edit ---------- */
 let F=null,editId=null,backTo='home';
-const fresh=(type)=>({type,acc:type==='pay'?'debit':type==='exp'?'cash':'debit',to:'cash',cat:null,mode:'full',inv:[]});
+const fresh=(type)=>({type,acc:type==='exp'?'cash':defAcc(),to:'cash',cat:null,mode:'full',inv:[]});
 function openAdd(type,acc,amt){editId=null;F=fresh(type||'exp');if(acc)F.acc=acc;
  $('aAmt').value=amt||'';$('aNote').value='';$('aIpn').checked=false;$('aFx').checked=false;$('aDate').value=today;$('aErr').innerHTML='';
  $('addTitle').textContent='New entry';$('aDel').hidden=true;$('aSms').hidden=true;drawInv();go('add')}
 function openEdit(id){const t=tx.find(x=>x.id===id);if(!t)return;editId=id;
  F={type:t.type,acc:t.acc,to:t.to||'cash',cat:t.cat||null,mode:t.plan?'inst':'full',inv:(t.inv||[]).map(x=>({...x}))};drawInv();
  $('aAmt').value=r2(t.amt-(t.ipFee||0)-(t.fxFee||0));$('aIpn').checked=!!t.ipFee;$('aFx').checked=!!t.fxFee;
- $('aNote').value=t.note||'';$('aDate').value=t.date;$('aErr').innerHTML='';$('addTitle').textContent='Edit entry';$('aDel').hidden=false;$('aSms').hidden=!t.sms;$('aSms').textContent=t.sms?(t.sms.app?'From the Telda app':'From SMS'+(t.sms.from?' ('+t.sms.from+')':''))+':\n'+t.sms.body+(t.sms.alt?'\n\n'+(t.sms.alt.from==='Telda app'?'Also in the Telda app':'Also by SMS'+(t.sms.alt.from?' ('+t.sms.alt.from+')':''))+':\n'+t.sms.alt.body:''):'';go('add')}
+ $('aNote').value=t.note||'';$('aDate').value=t.date;$('aErr').innerHTML='';$('addTitle').textContent='Edit entry';$('aDel').hidden=false;$('aSms').hidden=!t.sms;$('aSms').textContent=t.sms?(t.sms.app?'From the '+srcName(t.sms):'From SMS'+(t.sms.from?' ('+t.sms.from+')':''))+':\n'+t.sms.body+(t.sms.alt?'\n\n'+(appBank(t.sms.alt.from)?'Also in the '+bankName(appBank(t.sms.alt.from))+' app':'Also by SMS'+(t.sms.alt.from?' ('+t.sms.alt.from+')':''))+':\n'+t.sms.alt.body:''):'';go('add')}
 function accChoices(){return F.type==='pay'?NONCC:ACC}
 function renderAdd(){if(!F)F=fresh('exp');
  document.querySelectorAll('#aType button').forEach(b=>b.classList.toggle('on',b.dataset.type===F.type));
@@ -1695,7 +1764,7 @@ function info(){const el=$('aInfo'),amt0=r2($('aAmt').value),amt=r2((ipnOn()&&am
  else if(F.type!=='inc'||F.acc!=='credit'){const a=F.type==='xfer'||F.type==='pay'||F.type==='exp'?F.acc:null;
   if(a&&amt){const t=editId?tx.find(x=>x.id===editId):null,undo=t?-delta(t,a):0,after=r2(bal(a)+undo-amt);h=`${esc(accName(a))} after this: <b${after<0?' class="neg"':''}>${egp(after)}</b>`}}
  el.hidden=!h;el.innerHTML=h}
-const ipnOK=()=>F&&(F.type==='exp'||F.type==='xfer')&&['debit','od','telda'].includes(F.acc);
+const ipnOK=()=>F&&(F.type==='exp'||F.type==='xfer')&&bankAccs().includes(F.acc);
 const ipnOn=()=>ipnOK()&&$('aIpn').checked;
 const fxOK=()=>F&&F.type==='exp'&&F.cat==='subs';
 const fxOn=()=>fxOK()&&$('aFx').checked;
@@ -1840,7 +1909,7 @@ $('bkFile').addEventListener('change',async ev=>{const f=ev.target.files[0];ev.t
  try{offerRestore(JSON.parse(await f.text()),$('bkMsg'))}catch(e){$('bkMsg').innerHTML='<div class="msg warn">That file is not an Expenses backup.</div>'}});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-restore]');if(!b||!pending)return;const d=pending;pending=null;
  if(d.invoices&&typeof d.invoices==='object')for(const[k,v]of Object.entries(d.invoices))if(typeof v==='string')INV.put(k,v);
- const m=new Map(tx.map(t=>[t.id,t]));d.tx.filter(t=>t&&t.id&&t.type&&t.date).forEach(t=>m.set(t.id,t));tx=[...m.values()];tx.forEach(fixPlan);skip=[...new Set([...skip,...(d.skip||[])])];S=merge(d.settings);save();pushSmsConfig();
+ const m=new Map(tx.map(t=>[t.id,t]));d.tx.filter(t=>t&&t.id&&t.type&&t.date).forEach(t=>m.set(t.id,t));tx=[...m.values()];tx.forEach(fixPlan);skip=[...new Set([...skip,...(d.skip||[])])];S=merge(d.settings);syncAcc();save();pushSmsConfig();
  b.closest('.msg').innerHTML=`Restored ${d.tx.length} entries.`});
 
 
@@ -2128,10 +2197,10 @@ function parseCibAccount(lines){
  const d=r2(st.rows.reduce((a,r)=>a+r.debit,0)),c=r2(st.rows.reduce((a,r)=>a+r.credit,0));
  st.ok=!st.check||(Math.abs(d-st.check.debit)<0.02&&Math.abs(c-st.check.credit)<0.02);st.sumDebit=d;st.sumCredit=c;
  return st}
-function accOfNumber(n){const l4=n.slice(-4);for(const a of ['debit','od','telda'])if(kwList(a).some(k=>k===n||k===l4))return a;return null}
+function accOfNumber(n){const l4=n.slice(-4);for(const a of bankAccs())if(kwList(a).some(k=>k===n||k===l4))return a;return null}
 const nameIn=(d,re)=>{const m=d.match(re);return m?m[1].replace(/\s+(?:Living|Liv|Li|L|نفقات).*$/i,'').replace(/\s*Payer.*$/i,'').trim():''};
 function importAccount(st,N,R,linked){
- const a=accOfNumber(st.acct)||(R.askOd?'od':'debit'),other=a==='od'?'debit':'od';st.acc=a;
+ const a=accOfNumber(st.acct)||(R.askOd&&ACC.includes('od')?'od':ACC.includes('debit')?'debit':defAcc()),other=a==='od'?'debit':'od';st.acc=a;
  const near=(x,date,days)=>Math.abs(dayDiff(x.date,date))<=days;
  for(const r of st.rows){
   if(linked.has(r.key)){R.known++;continue}
@@ -2195,7 +2264,7 @@ function planImport(sts){
    if(drop.has(i)){R.skipped++;return}
    if(linked.has(l.key)){R.known++;return}
    let type='exp',acc='credit',cat=null,to=null;
-   if(l.cr){if(/payment|سداد/i.test(l.desc)){type='pay';acc='debit'}else{type='inc';cat='refund'}}
+   if(l.cr){if(/payment|سداد/i.test(l.desc)){type='pay';acc=defAcc()}else{type='inc';cat='refund'}}
    else if(/telda/i.test(l.desc)&&!FEERE.test(l.desc)){type='xfer';to='telda'}
    else if(FEERE.test(l.desc)){if(/interest/i.test(l.desc)&&instInt&&Math.abs(l.amt-instInt)<0.02){R.skipped++;return}
     if(/foreign exchange|fx fee|currency conversion/i.test(l.desc)){const y=N.find(y=>y.type==='exp'&&y.acc==='credit'&&!y.fxKey&&Math.abs(FX(r2(y.amt-(y.fxFee||0)))-l.amt)<=0.02&&near(y,l.date,3)&&(y.sub||y.fxFee||y.date===l.date));
@@ -2294,7 +2363,7 @@ function parsePayslip(html){
  return p}
 async function readText(f){const buf=await f.arrayBuffer();let t=new TextDecoder('utf-8').decode(buf);if(!/[؀-ۿ]/.test(t)){try{t=new TextDecoder('windows-1256').decode(buf)}catch(e){}}return t}
 let payPending=[];
-function payMatch(p,date){return tx.find(x=>x.type==='inc'&&x.acc==='debit'&&!x.payKey&&Math.abs(x.amt-p.totals.net)<1&&Math.abs(dayDiff(x.date,date))<=10)}
+function payMatch(p,date){return tx.find(x=>x.type==='inc'&&x.acc===salAcc()&&!x.payKey&&Math.abs(x.amt-p.totals.net)<1&&Math.abs(dayDiff(x.date,date))<=10)}
 function renderPayPending(){const box=$('payOut');if(!payPending.length){box.innerHTML='';return}
  box.innerHTML=payPending.map((q,i)=>{if(q.err)return `<div class="msg warn"><b>${esc(q.name)}</b>: ${esc(q.err)}</div>`;
   const p=q.p,had=tx.find(t=>t.payKey==='pay:'+p.ym),m=!had&&payMatch(p,q.date);
@@ -2310,7 +2379,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-payimp]');
  for(const q of payPending){if(q.err||!q.date)continue;const p=q.p,key='pay:'+p.ym,had=tx.find(t=>t.payKey===key);
   if(had){had.amt=p.totals.net;had.date=q.date;continue}
   const m=payMatch(p,q.date);if(m){m.payKey=key;m.cat='salary';m.review=false;linked++;continue}
-  tx.push({id:uid(),type:'inc',acc:'debit',amt:p.totals.net,date:q.date,cat:'salary',note:'',created:Date.parse(q.date)||Date.now(),payKey:key});added++}
+  tx.push({id:uid(),type:'inc',acc:salAcc(),amt:p.totals.net,date:q.date,cat:'salary',note:'',created:Date.parse(q.date)||Date.now(),payKey:key});added++}
  S.payDay=+(payPending.find(q=>q.date)||{date:'x-x-28'}).date.slice(8)||S.payDay;
  payPending=[];save();$('payOut').innerHTML=`<div class="msg">${added} salar${added===1?'y':'ies'} added${linked?`, ${linked} matched with salaries already here`:''}.</div>`;toast('Payslips added',false)});
 
@@ -2524,7 +2593,7 @@ function renderGam(){
 function gmInfo(){const a=r2($('gmAmt').value),n=+$('gmMonths').value,sh=+$('gmShares').value||1,t=+$('gmTurn').value,st=$('gmStart').value;
  $('gmInfo').innerHTML=a&&n?`You pay ${egp(a*sh)} a month for ${n} months and get <b>${egp(a*n*sh)}</b>${t&&st?` in ${monthLbl(addYm(st,t-1))}`:''}.${t&&t<n?` After that you keep paying ${egp(a*sh*(n-t))}.`:''}`:'Enter the monthly amount and the number of months.'}
 ['gmAmt','gmMonths','gmShares','gmTurn','gmStart'].forEach(id=>$(id).addEventListener('input',gmInfo));
-function openGam(id){gamEdit=id;const g=id?S.gam.find(x=>x.id===id):{name:'',amt:'',months:10,start:ymOf(today),turn:1,acc:'debit',shares:1,day:1};
+function openGam(id){gamEdit=id;const g=id?S.gam.find(x=>x.id===id):{name:'',amt:'',months:10,start:ymOf(today),turn:1,acc:defAcc(),shares:1,day:1};
  $('gamForm').hidden=false;$('gamFormTitle').textContent=id?'Edit gam3ya':'New gam3ya';$('gmName').value=g.name;$('gmAmt').value=g.amt;$('gmMonths').value=g.months;$('gmStart').value=g.start;$('gmTurn').value=g.turn;$('gmAcc').value=g.acc;$('gmShares').value=g.shares||1;$('gmDay').value=g.day||1;$('gmDel').hidden=!id;gmInfo();$('gamForm').scrollIntoView({behavior:'smooth'})}
 $('gamAddBtn').addEventListener('click',()=>openGam(null));
 $('gmCancel').addEventListener('click',()=>{$('gamForm').hidden=true});
@@ -2650,9 +2719,56 @@ document.addEventListener('change',e=>{const id=e.target.id,m={nfyHome:'home',nf
  if(m[id]){S.nfy[m[id]]=e.target.checked;save()}else if(id==='nfyDays'){S.nfy.days=+e.target.value;save()}
  else if(id==='invDrive'){S.invDrive=e.target.checked;save();toast(S.invDrive?'Invoices will go to Google Drive with the next backup':'Invoices stay on the phone only',false)}});
 
+
+/* ---------- which tabs show ---------- */
+const TABN={house:'🏠 House — home bills',credit:'💳 Credit — credit card bills & installments',cash:'💵 Cash — pocket money',goals:'🎯 Goals — saving targets',gam:'🤝 Gam3ya',charity:'🙏 Charity — a share of salary',subs:'🔁 Subs — subscriptions',reports:'📊 Reports'};
+function applyTabs(){const off=S.tabsOff||[];document.querySelectorAll('nav a').forEach(a=>{const k=a.id.slice(2),h=off.includes(k);if(a.hidden!==h)a.hidden=h})}
+function renderTabChk(){const box=$('tabChk');if(!box)return;box.innerHTML=Object.entries(TABN).map(([k,n])=>`<label class="check"><input type="checkbox" data-tabchk="${k}"${(S.tabsOff||[]).includes(k)?'':' checked'}> <span>${n}</span></label>`).join('')}
+document.addEventListener('change',e=>{const k=e.target.dataset&&e.target.dataset.tabchk;if(!k)return;const off=new Set(S.tabsOff||[]);if(e.target.checked)off.delete(k);else off.add(k);S.tabsOff=[...off];save();applyTabs()});
+
+/* ---------- first-run setup: banks and wallets, tabs, reading messages ---------- */
+let W=null;
+function setupOpen(){W={step:0,banks:[],accs:[],tabsOff:['charity','gam']};$('setup').hidden=false;document.body.classList.add('insetup');setupDraw()}
+function setupClose(){$('setup').hidden=true;document.body.classList.remove('insetup');W=null}
+function setupReadAccs(){if(!W||W.step!==2)return;W.accs.forEach((x,i)=>{const g=k=>$(`w${k}-${i}`);if(g('k'))x.kind=g('k').value;if(g('n'))x.name=g('n').value;if(g('d'))x.kw=g('d').value;if(g('b'))x.bal=g('b').value})}
+function setupDraw(){const box=$('setupBox'),st=W.step,dots=`<div class="wdots">${[0,1,2,3,4].map(i=>`<i class="${i===st?'on':i<st?'done':''}"></i>`).join('')}</div>`;let h='';
+ if(st===0)h=`<div class="wico">💸</div><h1>Welcome to Expenses<span class="dot">.</span></h1><p class="note" style="font-size:15px">Track what you spend from any bank or wallet in Egypt. Your bank SMS and app notifications become entries automatically, so you only add cash by hand.<br><br>Everything stays on your phone.</p><div class="btns" style="margin-top:20px"><button class="btn" data-w="next">Start</button><button class="btn ghost" data-w="skip">Skip for now</button></div>`;
+ else if(st===1)h=`<h2>Which banks and wallets do you use?</h2><p class="note">Tap all that apply. You can add more later in Settings → Accounts.</p><div class="wchips">${BANKS.filter(b=>b[0]!=='other').map(b=>`<button class="chip${W.banks.includes(b[0])?' on':''}" data-wbank="${b[0]}" aria-pressed="${W.banks.includes(b[0])}">${esc(b[1])}</button>`).join('')}<button class="chip${W.banks.includes('other')?' on':''}" data-wbank="other">Other</button></div><div class="btns" style="margin-top:18px"><button class="btn" data-w="next">Next</button><button class="btn ghost" data-w="back">Back</button></div>`;
+ else if(st===2)h=`<h2>Your cards and accounts</h2><p class="note">For each one, choose the type and type the <b>last 4 digits</b> as they appear in the bank's SMS (card number or account number). They tell the app which account a message is about. Only one credit card for now.</p>${W.accs.map((x,i)=>`<div class="acbox" style="--c:${APAL[i%APAL.length]}"><div class="acth"><span class="dot"></span><b>${esc(bankName(x.bank)||'Other')}</b><button class="ib" data-wrm="${i}" style="margin-left:auto">Remove</button></div>
+   <div class="row"><div><label for="wk-${i}">Type</label><select id="wk-${i}">${(bankOf(x.bank)[2]==='wallet'?['wallet']:['debit','credit','od']).map(k=>`<option value="${k}"${k===x.kind?' selected':''}>${KINDS[k]}</option>`).join('')}</select></div><div><label for="wn-${i}">Name in the app</label><input id="wn-${i}" value="${esc(x.name)}" maxlength="30"></div></div>
+   <div class="row"><div><label for="wd-${i}">Last 4 digits</label><input id="wd-${i}" value="${esc(x.kw||'')}" inputmode="numeric" maxlength="60" placeholder="e.g. 1234"></div><div><label for="wb-${i}">Balance now (optional)</label><input id="wb-${i}" type="number" inputmode="decimal" step="0.01" value="${esc(x.bal||'')}"></div></div></div>`).join('')}
+   ${W.banks.filter(b=>bankOf(b)[2]==='bank').map(b=>`<button class="ib" data-wmore="${b}">+ another ${esc(bankName(b)||'account')} card or account</button>`).join(' ')}
+   <p id="wErr"></p><div class="btns" style="margin-top:14px"><button class="btn" data-w="next">Next</button><button class="btn ghost" data-w="back">Back</button></div>`;
+ else if(st===3)h=`<h2>Which pages do you want?</h2><p class="note">You can change this any time in Settings → Lock &amp; appearance.</p>${Object.entries(TABN).map(([k,n])=>`<label class="check"><input type="checkbox" data-wtab="${k}"${W.tabsOff.includes(k)?'':' checked'}> <span>${n}</span></label>`).join('')}<div class="btns" style="margin-top:18px"><button class="btn" data-w="next">Next</button><button class="btn ghost" data-w="back">Back</button></div>`;
+ else h=`<h2>Read your bank messages</h2><p class="note">The app reads <b>only</b> messages that mention your card numbers or come from your banks, and notifications from your banks' and wallets' apps. Nothing leaves your phone.</p>${window.Android?`<p class="note">After you finish, open <b>Settings → Bank SMS &amp; apps</b> and tap <b>Turn on SMS reading</b> and <b>Turn on app notifications</b>. Android asks you to allow them.</p>`:'<p class="note">This works in the Android app.</p>'}<div class="btns" style="margin-top:18px"><button class="btn" data-w="finish">Finish</button><button class="btn ghost" data-w="back">Back</button></div>`;
+ box.innerHTML=dots+h;box.scrollTop=0}
+function setupFinish(){for(const x of W.accs){const kind=x.kind==='credit'&&ACC.includes('credit')?'debit':x.kind;addAccount(x.bank,kind,(x.name||'').trim()||bankName(x.bank)||'Account',(x.kw||'').trim(),r2(x.bal))}
+ S.tabsOff=W.tabsOff;if(!ACC.includes('credit')&&!S.tabsOff.includes('credit'))S.tabsOff.push('credit');
+ const ba=bankAccs();if(ba.length){S.sms.ipAcc=defAcc();S.charity.acc=defAcc()}
+ S.setupV=1;setupClose();save();applyTabs();pushSmsConfig();pushNotifConfig();go(window.Android&&ba.length?'settings-sms':'home');if(ba.length)toast(`${ba.length} account${ba.length===1?'':'s'} added`,false)}
+document.addEventListener('click',e=>{if(!W)return;const b=e.target.closest('[data-w],[data-wbank],[data-wmore],[data-wrm]');if(!b)return;
+ if(b.dataset.wbank){const k=b.dataset.wbank,i=W.banks.indexOf(k);if(i<0)W.banks.push(k);else W.banks.splice(i,1);const on=i<0;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on);return}
+ setupReadAccs();
+ if(b.dataset.wmore){W.accs.push({bank:b.dataset.wmore,kind:'debit',name:bankName(b.dataset.wmore)+' Debit',kw:''});setupDraw();return}
+ if(b.dataset.wrm!=null){W.accs.splice(+b.dataset.wrm,1);setupDraw();return}
+ const a=b.dataset.w;
+ if(a==='skip'){S.setupV=1;setupClose();save();return}
+ if(a==='back'){W.step=Math.max(0,W.step-1);setupDraw();return}
+ if(a==='finish'){setupFinish();return}
+ if(a==='next'){
+  if(W.step===1){if(!W.banks.length){toast('Choose at least one, or go back and tap Skip',false);return}
+   const have=new Set(W.accs.map(x=>x.bank));W.accs=W.accs.filter(x=>W.banks.includes(x.bank));
+   for(const k of W.banks)if(!have.has(k)){const w=bankOf(k)[2]==='wallet';W.accs.push({bank:k,kind:w?'wallet':'debit',name:k==='other'?'':bankName(k)+(w?'':' Debit'),kw:''})}}
+  if(W.step===2){const cc=W.accs.filter(x=>x.kind==='credit').length;if(cc>1){$('wErr').innerHTML='<div class="msg warn">Only one credit card for now — set the others to another type or remove them.</div>';return}
+   if(W.accs.some(x=>!x.name.trim()&&x.bank==='other')){$('wErr').innerHTML='<div class="msg warn">Give the "Other" account a name.</div>';return}}
+  W.step++;setupDraw()}});
+document.addEventListener('change',e=>{if(!W)return;const k=e.target.dataset&&e.target.dataset.wtab;if(k){const off=new Set(W.tabsOff);if(e.target.checked)off.delete(k);else off.add(k);W.tabsOff=[...off];return}
+ const m=/^wk-(\d+)$/.exec(e.target.id);if(m){setupReadAccs();const x=W.accs[+m[1]];const base=bankName(x.bank);if(base&&/ (Debit|Credit|Overdraft)$/.test(x.name)||x.name===base)x.name=base+(x.kind==='credit'?' Credit':x.kind==='od'?' Overdraft':x.kind==='wallet'?'':' Debit');setupDraw()}});
+if(window.MK){const ob2=MK.back;MK.back=function(){if(W&&W.step>0){setupReadAccs();W.step--;setupDraw();return true}if(W)return false;return ob2?ob2.apply(this,arguments):false}}
+
 /* ---------- settings pages ---------- */
 const SECS=[['sec','🔒','Lock & appearance','Fingerprint lock, light or dark'],['acc','🏦','Accounts & credit card','Balances, limit, bill and due days'],['cats','🏷️','Categories','Add, rename or remove'],
- ['stm','📄','Bank statements','Import CIB PDF statements'],['pay','💵','Payslips','Add your salary from payslips'],['sms','✉️','Bank SMS & Telda','Card numbers, messages, Telda notifications'],
+ ['stm','📄','Bank statements','Import CIB PDF statements'],['pay','💵','Payslips','Add your salary from payslips'],['sms','✉️','Bank SMS & apps','Card numbers, messages, bank app notifications'],
  ['rec','🔁','Recurring payments','Monthly bills: reminder or added for you'],['bud','🎯','Category budgets','A monthly limit per category, alert at 80%'],['nfy','🔔','Reminders & widget','Home bills, monthly summary, home-screen widget'],
  ['drive','☁️','Google Drive backup','Daily backup to your Drive'],['backup','💾','Backup file','Export or restore everything']];
 let setSub=null;
@@ -2794,13 +2910,40 @@ new MutationObserver(ms=>{for(const mu of ms)for(const n of mu.addedNodes){if(n.
 function cRip(el){if(!el)return;el.classList.remove('crip');void el.offsetWidth;el.classList.add('crip');clearTimeout(el._rt);el._rt=setTimeout(()=>el.classList.remove('crip'),520)}
 document.addEventListener('click',ev=>{const t=ev.target;if(t&&t.matches&&t.matches('input[type=checkbox]')&&!matchMedia('(prefers-reduced-motion: reduce)').matches)cRip(t)},true);
 
+
+/* ---------- teach the app a message it couldn't read: account, type, which number is the amount ---------- */
+const NUMRE=/\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?/g;
+const numsOf=b=>(digits(b).match(NUMRE)||[]).map(x=>parseFloat(x.replace(/,/g,'')));
+const skelOf=b=>norm(b).replace(NUMRE,' ').replace(/[^a-z؀-ۿ\s]/g,' ').split(/\s+/).filter(w=>w.length>=2).slice(0,16);
+function learnMatch(b){const w=new Set(skelOf(b));if(w.size<3)return null;let best=null,bs=0;
+ for(const L of S.learn||[]){const v=new Set(L.sk.split(' '));let i=0;w.forEach(x=>{if(v.has(x))i++});const j=i/(w.size+v.size-i);if(j>bs){bs=j;best=L}}
+ return bs>=0.6?best:null}
+async function teach(key){const f=fails.find(x=>x.key===key);if(!f)return;const nums=numsOf(f.body);
+ const accs=SMS_ACC.length?SMS_ACC:['cash'],guess=(parseSms(f.body,f.from).acc)||accs[0];
+ const def=nums.findIndex(x=>x>0&&!(x>=1900&&x<=2100&&Number.isInteger(x))&&!(f.body.includes(String(x))&&String(x).length===4&&/(card|كارت|بطاقة)\s*\D{0,6}$/i.test(f.body.split(String(x))[0])));
+ const body=`<p class="note" style="white-space:pre-wrap;background:var(--soft);padding:10px;border-radius:10px;margin-top:0">${esc(f.body)}</p>
+  <div class="f"><label for="tcWhat">This message is</label><select id="tcWhat"><option value="exp">Money out (expense)</option><option value="inc">Money in (income)</option><option value="ignore">Not a payment — ignore messages like this</option></select></div>
+  <div class="f" id="tcAccW"><label for="tcAcc">Account</label><select id="tcAcc">${accOpts(accs,guess)}</select></div>
+  <div id="tcAmtW"><label style="display:block;font-weight:700;font-size:13px;margin-bottom:6px">Which number is the amount?</label><div class="wchips" style="margin-top:0">${nums.map((n,i)=>`<button type="button" class="chip${i===def?' on':''}" data-tcamt="${i}">${money(n)}</button>`).join('')||'<p class="note">No numbers in this message.</p>'}</div></div>`;
+ const pr=ask('Teach the app',body,[{label:'Save',value:1},{label:'Cancel',value:0,ghost:true}]);
+ const sync=()=>{const ig=$('tcWhat').value==='ignore';$('tcAccW').hidden=ig;$('tcAmtW').hidden=ig};$('tcWhat').addEventListener('change',sync);
+ let st={};const grab=()=>{const r=document.querySelector('[data-tcamt].on');st={what:$('tcWhat').value,acc:$('tcAcc').value,ai:r?+r.dataset.tcamt:-1}};
+ $('dlgB').addEventListener('change',grab);$('dlgB').addEventListener('click',e=>{const c=e.target.closest('[data-tcamt]');if(!c)return;document.querySelectorAll('[data-tcamt].on').forEach(x=>x.classList.remove('on'));c.classList.add('on');grab()});grab();
+ if(!await pr)return;
+ if(st.what!=='ignore'&&!(st.ai>=0)){toast('Choose the amount',false);return}
+ const L={id:uid(),sk:skelOf(f.body).join(' '),type:st.what,acc:st.acc,ai:st.ai};S.learn=[...(S.learn||[]),L];
+ const like=fails.filter(x=>learnMatch(norm(x.body))===L);fails=fails.filter(x=>!like.includes(x));
+ const r=ingest(like.map(x=>({from:x.from,body:x.body,ts:x.ts})));save();
+ toast(st.what==='ignore'?`Got it — ${like.length} message${like.length===1?'':'s'} like this ignored from now on`:`Got it — ${r.added+r.merged} added; new messages like this will be read too`,false)}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-teach]');if(b)teach(b.dataset.teach);const f=e.target.closest('[data-forget]');if(f){S.learn=(S.learn||[]).filter(x=>x.id!==f.dataset.forget);save()}});
+
 /* ---------- bank SMS ---------- */
 const HAS_SMS=!!(window.Android&&typeof Android.smsTake==='function');
 const digits=s=>String(s??'').replace(/[٠-٩]/g,d=>d.charCodeAt(0)-1632).replace(/[۰-۹]/g,d=>d.charCodeAt(0)-1776).replace(/٫/g,'.').replace(/٬/g,',');
 const norm=s=>digits(s).toLowerCase().replace(/\s+/g,' ');
 const hash=s=>{let h=5381;for(let i=0;i<s.length;i++)h=((h*33)^s.charCodeAt(i))>>>0;return h.toString(36)+s.length.toString(36)};
 const mkey=m=>String(m).toLowerCase().replace(/[^a-z؀-ۿ]+/g,' ').trim();
-const SMS_ACC=['credit','debit','od','telda'];
+const salAcc=()=>S.salAcc&&ACC.includes(S.salAcc)?S.salAcc:ACC.includes('debit')?'debit':defAcc();
 const kwList=a=>norm(S.sms.kw[a]||'').split(/[,;\s]+/).map(x=>x.trim()).filter(x=>x.length>=3);
 const reEsc=x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 const hasKw=(b,k)=>new RegExp((/^\d/.test(k)?'(?<!\\d)':'')+reEsc(k)+(/\d$/.test(k)?'(?!\\d)':'')).test(b);
@@ -2826,9 +2969,20 @@ const NOTICE=/كشف حساب شهر|statement (?:of|for) .{0,40}(?:card|account
 const INSTRE=/تقسيط مبلغ\s*([\d,]+(?:\.\d+)?)\s*(?:جم|جنيه|egp)?\s*من\s*(.+?)\s*على\s*بطاقت.*?بقسط\s*شهري\s*([\d,]+(?:\.\d+)?)\s*(?:جم|جنيه|egp)?\s*على\s*(\d+)\s*(?:شهر|اشهر|أشهر).*?(?:أول|اول)\s*قسط\s*(?:يوم|في)?\s*(\d{1,2})\/(\d{1,2})\/(\d{4})/i;
 const OTPBUY=/الرقم السري المتغير|كلمة (?:السر|المرور) (?:المؤقتة|لمرة واحدة)|one[- ]?time (?:password|pin)|\botp\b/i;
 const TELDA_SRC='Telda app';
+/* where a message came from: a bank app's notification ("app:<bank>"), or an SMS from a bank's sender name */
+const appBank=from=>from===TELDA_SRC?'telda':/^app:/.test(from||'')?String(from).slice(4):null;
+const senderBank=from=>{const f=norm(from||'').replace(/[^a-z0-9؀-ۿ&-]/g,'');if(!f||/^\+?\d+$/.test(f))return null;
+ for(const b of BANKS)for(const x of b[3]){const y=x.replace(/[^a-z0-9&-]/g,'');if(y&&(y.length<=4?f===y:f.startsWith(y)))return b[0]}return null};
+function accOfBank(bank,b){const l=SMS_ACC.filter(a=>S.acc[a]&&S.acc[a].bank===bank);if(l.length<=1)return l[0]||null;
+ const cc=l.find(a=>kindOf(a)==='credit');if(cc&&/credit|ائتمان/i.test(b))return cc;return l.find(a=>kindOf(a)!=='credit')||l[0]}
+const srcName=sm=>sm.app?`${bankName(sm.bank||appBank(sm.from)||'telda')} app`:'SMS';
+/* adverts from a bank's sender name or app (no card / account number in them) */
+const PROMO=/(?:invite|refer|\bwin\b|offer|promo|apply|enjoy|get up to|up to|discount|cashback up to|loan|ادع|اكسب|عرض|خصم يصل|استمتع|اطلب|قدم الآن|فرصة|لغاية|حتى \d|قرض)/i;
+const REALTX=/(?:spent|paid|sent|received|added|deposit|withdr|purchase|charged|debited|credited|refund|تم|خصم مبلغ|دفعت|استلمت|سحب|ايداع|إيداع)/i;
 function parseSms(body,from){
- const app=from===TELDA_SRC||/^\s*telda\b/i.test(String(body||''));
+ const ab=appBank(from)||(!from&&/^\s*telda\b/i.test(String(body||''))?'telda':null),sb=ab?null:senderBank(from),app=!!ab;
  const b=norm(body).replace(/(egp|جم|جنيه)\s*-\s*(?=\d)/g,'$1 ');
+ {const L=learnMatch(b);if(L){if(L.type==='ignore')return{err:'Ignored (you taught the app)',ignore:true};const n=numsOf(body)[L.ai];if(n>0&&ACC.includes(L.acc))return{type:L.type,acc:L.acc,amt:r2(n),to:null,bal:null,m:merchantOf(body).replace(/\s*>\s*$/,''),ip:false,taught:true}}}
  if(NOTICE.test(b)&&!/charged|خصم|debited/.test(b))return{err:'Statement notice',ignore:true};
  {const m=b.match(INSTRE);if(m)return{inst:true,acc:'credit',amt:numv(m[1]),m:m[2].trim(),each:numv(m[3]),months:+m[4],firstDue:`${m[7]}-${pad(+m[6])}-${pad(+m[5])}`}}
  if(/تم رفض|declined|was rejected|لم تتم العملية/i.test(b))return{err:'Declined transaction',ignore:true};
@@ -2838,16 +2992,18 @@ function parseSms(body,from){
  const balM=b.match(/الرصيد المتاح\s*(?:egp\s*)?([\d,]+\.\d+)|available balance(?: is)?\s*(?:egp\s*)?([\d,]+\.\d+)/);
  let acc=null,ip=false;
  for(const a of SMS_ACC)if(kwList(a).some(k=>hasKw(b,k))){acc=a;break}
- if(app&&!acc)acc='telda';
- if(app&&/(?:invite|refer|win\b|offer|promo|cashback up to|ادع|اكسب|عرض|خصم يصل|استمتع)/i.test(b)&&!/(?:spent|paid|sent|received|added|deposit|withdr|purchase|تم|خصم مبلغ|دفعت|استلمت)/i.test(b))return{err:'Telda advert',ignore:true};
- if(!acc&&IPRE.test(b)){acc=S.sms.ipAcc||'debit';ip=true}
+ const byNum=!!acc;if(!acc&&(ab||sb))acc=accOfBank(ab||sb,b);
+ if(!byNum&&acc&&(sb||ab)&&PROMO.test(b)&&!REALTX.test(b))return{err:'Advert',ignore:true};
+ if(!byNum&&acc&&sb&&!REALTX.test(b))return{err:'Not a payment',ignore:true};
+ if(app&&/(?:invite|refer|win\b|offer|promo|cashback up to|ادع|اكسب|عرض|خصم يصل|استمتع)/i.test(b)&&!/(?:spent|paid|sent|received|added|deposit|withdr|purchase|تم|خصم مبلغ|دفعت|استلمت)/i.test(b))return{err:'Advert',ignore:true};
+ if(!acc&&IPRE.test(b)){acc=ACC.includes(S.sms.ipAcc)&&S.sms.ipAcc!=='cash'?S.sms.ipAcc:defAcc();if(acc==='cash')acc=null;else ip=true}
  if(!acc)return{err:'None of your card or account numbers is in this message.'};
  let amt=null;const re=new RegExp(CUR+'\\s*:?\\s*'+NUM+'|'+NUM+'\\s*'+CUR,'g');let m;
  while((m=re.exec(b))){const v=parseFloat((m[1]||m[2]).replace(/,/g,''));if(!(v>0))continue;if(BALW.test(b.slice(Math.max(0,m.index-40),m.index)))continue;amt=v;break}
  if(amt==null){const m2=b.match(/(?:amount|\bamt\b|مبلغ|بمبلغ|قيمة|بقيمة)\s*(?:of|:)?\s*(\d[\d,]*(?:\.\d+)?)/);if(m2)amt=parseFloat(m2[1].replace(/,/g,''))}
  const inI=b.search(INW),outI=b.search(OUTW);
  if(OTP.test(b)&&inI<0&&outI<0)return{err:'This looks like a code message, not a payment.',otp:true};
- if(!(amt>0))return app?{err:'Telda notification without an amount',ignore:true}:{err:'Could not find the amount.',noAmt:true,acc};
+ if(!(amt>0))return app?{err:'App notification without an amount',ignore:true}:{err:'Could not find the amount.',noAmt:true,acc};
  amt=r2(amt);const mer=merchantOf(body).replace(/\s*>\s*$/,'');
  let type;
  if(acc==='credit')type=REFW.test(b)?'inc':(PAYW.test(b)||(inI>=0&&(outI<0||inI<=outI)))?'pay':'exp';
@@ -2855,11 +3011,11 @@ function parseSms(body,from){
  else type=ATMW.test(b)?'xfer':'exp';
  let to=type==='xfer'?'cash':null,mer2=mer;
  if(inbound){const nm=body.match(/من\s+(.+?)\s+برقم/);if(nm)mer2=nm[1].trim()}
- if(!isOtp&&type==='exp'&&acc!=='telda'&&/\btelda\b/i.test(mer+' '+b)){type='xfer';to='telda'}
- if(acc==='od'&&type==='exp'&&/transfer to\s+another account/i.test(b)){type='xfer';to='debit'}
+ if(!isOtp&&type==='exp'){const hay=(mer+' '+b).toLowerCase(),w=bankAccs().find(a=>a!==acc&&kindOf(a)==='wallet'&&S.acc[a].bank!=='instapay'&&((bankOf(S.acc[a].bank)||[])[4]||[]).some(k=>k.length>=4&&new RegExp('(^|[^a-z])'+reEsc(k)+'([^a-z]|$)').test(hay)));if(w){type='xfer';to=w}}
+ if(kindOf(acc)==='od'&&type==='exp'&&/transfer to\s+another account/i.test(b)){const d=bankAccs().find(a=>a!==acc&&kindOf(a)==='debit'&&S.acc[a].bank===S.acc[acc].bank);if(d){type='xfer';to=d}}
  return{type:isOtp?'exp':type,acc,amt,to,bal:balM&&acc!=='credit'?numv(balM[1]||balM[2]):null,m:isOtp?(b.match(/من\s+(.+?)\s+لبطاقة/)||[])[1]||mer:mer2,ip,otp2:isOtp,ipn:!isOtp&&!inbound&&IPRE.test(b)&&(type==='exp'||type==='xfer')&&acc!=='credit'}}
 function describe(p){if(p.err)return p.err;
- const what={exp:`Expense from ${accName(p.acc)}`,inc:p.acc==='credit'?`Refund on ${accName(p.acc)}`:`Income to ${accName(p.acc)}`,pay:`Credit card payment (from the account whose SMS for it arrives too, otherwise ${accName('debit')})`,xfer:p.to==='telda'?`Telda top-up: ${accName(p.acc)} → ${accName('telda')}`:p.to==='debit'?`Transfer: ${accName(p.acc)} → ${accName('debit')}`:`Cash withdrawal: ${accName(p.acc)} → ${accName('cash')}`}[p.type];
+ const what={exp:`Expense from ${accName(p.acc)}`,inc:p.acc==='credit'?`Refund on ${accName(p.acc)}`:`Income to ${accName(p.acc)}`,pay:`Credit card payment (from the account whose SMS for it arrives too, otherwise ${accName(defAcc())})`,xfer:p.to==='cash'?`Cash withdrawal: ${accName(p.acc)} → ${accName('cash')}`:kindOf(p.to)==='wallet'?`Top-up: ${accName(p.acc)} → ${accName(p.to)}`:`Transfer: ${accName(p.acc)} → ${accName(p.to)}`}[p.type];
  return `${what}${p.bal!=null?` · balance after: ${egp(p.bal)}`:''} · <b>${egp(p.ipn?p.amt+ipFee(p.amt):p.amt)}</b>${p.ipn?` (${money(p.amt)} + ${money(ipFee(p.amt))} InstaPay fee)`:''}${p.m?` · ${esc(p.m)}`:''}${p.ip?' · InstaPay':''}`}
 /* the same money seen in two messages (bank + InstaPay, or both sides of a transfer / card payment) */
 const baseAmt=x=>r2(x.amt-(x.ipFee||0));
@@ -2877,18 +3033,18 @@ const otpTwin=(a,b)=>a.acc===b.acc&&a.type===b.type&&baseAmt(a)===baseAmt(b)&&a.
 function splitFee(x,from){if(!x.ipFee)return;tx.push({id:uid(),type:'exp',acc:from,amt:x.ipFee,date:x.date,cat:feeCat(),note:'InstaPay fee',created:(x.created||0)+1});x.amt=baseAmt(x);delete x.ipFee}
 /* the same Telda money seen as a Telda app notification and as an SMS (or a bank SMS for the top-up) */
 const viaApp=x=>!!(x.sms&&x.sms.app);
-const teldaLoad=(xfer,amt)=>Math.abs(xfer.amt-amt)<0.01||Math.abs(xfer.amt/1.02-amt)<1;
+const teldaLoad=(xfer,amt)=>Math.abs(xfer.amt-amt)<0.01||(loadFee(xfer.to)>0&&Math.abs(xfer.amt/(1+loadFee(xfer.to)/100)-amt)<1);
 function joinAlt(x,t){x.sms.alt={from:t.sms.from,body:t.sms.body,ts:t.sms.ts,key:t.sms.key};skip.push(t.sms.key)}
 function pairTelda(t){if(!t.sms)return false;
  for(const x of tx){if(!x.sms||x.sms.alt||Math.abs(x.sms.ts-t.sms.ts)>45*60e3)continue;
   if(viaApp(x)===viaApp(t))continue;
   /* same Telda movement, one from the Telda app and one by SMS */
-  if(x.acc==='telda'&&t.acc==='telda'&&x.type===t.type&&Math.abs(baseAmt(x)-baseAmt(t))<0.01){
+  if(x.acc===t.acc&&x.type===t.type&&Math.abs(baseAmt(x)-baseAmt(t))<0.01){
    if(viaApp(x)){const keep={...x.sms};x.sms={...t.sms,alt:{from:keep.from,body:keep.body,ts:keep.ts,key:keep.key}};skip.push(keep.key);if(t.ipFee&&!x.ipFee){x.ipFee=t.ipFee;x.amt=t.amt}}else joinAlt(x,t);
    if(x.review&&t.cat){x.cat=t.cat;x.review=false}if(!x.note&&t.note)x.note=t.note;return true}
   /* Telda top-up: bank SMS "to Telda" + Telda "money added" (2% load fee) */
-  if(t.type==='inc'&&t.acc==='telda'&&x.type==='xfer'&&x.to==='telda'&&teldaLoad(x,t.amt)){joinAlt(x,t);x.toAmt=t.amt;return true}
-  if(t.type==='xfer'&&t.to==='telda'&&x.type==='inc'&&x.acc==='telda'&&x.review&&teldaLoad(t,x.amt)){const got=x.amt,old={from:x.sms.from,body:x.sms.body,ts:x.sms.ts,key:x.sms.key};
+  if(t.type==='inc'&&x.type==='xfer'&&x.to===t.acc&&teldaLoad(x,t.amt)){joinAlt(x,t);x.toAmt=t.amt;return true}
+  if(t.type==='xfer'&&x.type==='inc'&&x.acc===t.to&&x.review&&teldaLoad(t,x.amt)){const got=x.amt,old={from:x.sms.from,body:x.sms.body,ts:x.sms.ts,key:x.sms.key};
    for(const k of Object.keys(x))if(k!=='id'&&k!=='created')delete x[k];Object.assign(x,clone(t),{id:x.id,toAmt:got});x.sms.alt=old;skip.push(t.sms.key,old.key);return true}}
  return false}
 function pair(t){if(pairTelda(t))return true;
@@ -2911,11 +3067,11 @@ function ingest0(list){const r={added:0,merged:0,known:0,failed:0};
   if(p.inst){applyInstSms(p,msg.ts,key);skip.push(key);r.merged++;continue}
   if(p.noAmt){const sb=subMatch(norm(msg.body));if(sb&&sb.price>0)Object.assign(p,{err:null,type:'exp',amt:sb.price,m:sb.n,est:true})}
   if(p.err){fails=fails.filter(f=>f.key!==key);fails.unshift({key,from:msg.from||'',body:msg.body,ts:msg.ts,err:p.err});fails=fails.slice(0,20);r.failed++;continue}
-  const t={id:uid(),type:p.type,acc:p.acc,amt:p.amt,date:iso(new Date(msg.ts)),note:p.m||'',created:msg.ts,sms:{key,from:msg.from||'',body:msg.body,ts:msg.ts,m:p.m,ip:p.ip}};if(msg.from===TELDA_SRC)t.sms.app=1;
+  const t={id:uid(),type:p.type,acc:p.acc,amt:p.amt,date:iso(new Date(msg.ts)),note:p.m||'',created:msg.ts,sms:{key,from:msg.from||'',body:msg.body,ts:msg.ts,m:p.m,ip:p.ip}};if(appBank(msg.from)){t.sms.app=1;t.sms.bank=appBank(msg.from)}
   if(p.type==='exp'||p.type==='inc'){const c=p.m&&(S.merch[p.type+':'+mkey(p.m)]||S.merch[p.type+':~'+simKey(p.m)]);
    if(c&&S[p.type].some(x=>x.id===c))t.cat=c;else if(p.type==='inc'&&p.acc==='credit')t.cat='refund';else if(p.acc!=='credit'&&IPRE.test(norm(msg.body)))t.cat=peopleCat(p.type,p.m);else{t.cat=null;t.review=true}}
   if(p.type==='xfer')t.to=p.to||'cash';if(p.bal!=null)t.sms.bal=p.bal;
-  if(p.type==='pay'){t.acc='debit';t.sms.guess=true}
+  if(p.type==='pay'){t.acc=defAcc();t.sms.guess=true}
   if(p.ipn){t.ipFee=ipFee(p.amt);t.amt=r2(p.amt+t.ipFee)}
   if(p.otp2){t.sms.otp2=true;t.note=(t.note||'Online purchase')+' (from the one-time password message)'}
   if(t.type==='exp'&&t.acc==='credit'&&/international limit/i.test(msg.body)&&!subMatch(norm(msg.body)+' '+(p.m||'').toLowerCase())){t.fxFee=FX(t.amt);t.amt=r2(t.amt+t.fxFee)}
@@ -2925,23 +3081,28 @@ function ingest0(list){const r={added:0,merged:0,known:0,failed:0};
   if(pair(t)){skip.push(key);r.merged++}else{tx.push(t);r.added++}}
  if(r.added){r.merged+=dedupe()}if(r.added||r.merged||r.failed)save();return r}
 function pushSmsConfig(){if(!HAS_SMS)return;
- const words=[...new Set([...SMS_ACC.flatMap(kwList),...IP_WORDS])];
- try{Android.smsConfig(JSON.stringify({on:!!S.sms.on,words}))}catch(e){}}
+ const words=[...new Set([...SMS_ACC.flatMap(kwList),...IP_WORDS])],senders=[...new Set(myBanks().flatMap(b=>b[3]).map(x=>x.toLowerCase().replace(/[^a-z0-9\u0600-\u06ff]/g,'')).filter(Boolean))];
+ try{Android.smsConfig(JSON.stringify({on:!!S.sms.on,words,senders}))}catch(e){}}
+const myBanks=()=>[...new Set(SMS_ACC.map(a=>S.acc[a]&&S.acc[a].bank).filter(Boolean))].map(bankOf).filter(Boolean);
+const appList=()=>myBanks().filter(b=>b[4].length&&b[0]!=='instapay');
 const HAS_NOTIF=!!(window.Android&&typeof Android.notifAccess==='function');
 const notifGranted=()=>{try{return HAS_NOTIF&&Android.notifAccess()==='granted'}catch(e){return false}};
-function pushNotifConfig(){if(HAS_NOTIF)try{Android.notifConfig(!!S.sms.notif)}catch(e){}}
+function pushNotifConfig(){if(HAS_NOTIF)try{Android.notifConfig(!!S.sms.notif);Android.notifApps&&Android.notifApps(JSON.stringify(appList().map(b=>({id:b[0],kw:b[4]}))))}catch(e){}}
 function renderNotif(){const box=$('notifState');if(!box)return;
- if(!HAS_NOTIF){box.innerHTML='<div class="msg">Reading Telda notifications works in the Android app. You can still paste one in <b>Test a message</b> below — start it with the word Telda.</div>';return}
+ const apps=appList().map(b=>bankName(b[0]));
+ if(!HAS_NOTIF){box.innerHTML=`<div class="msg">Reading bank app notifications works in the Android app${apps.length?` (here: ${esc(apps.join(', '))})`:''}. You can still paste a Telda notification in <b>Test a message</b> below — start it with the word Telda.</div>`;return}
+ if(!apps.length){box.innerHTML='<div class="msg">Add a bank or wallet account first (Settings → Accounts).</div>';return}
  const g=notifGranted();
- box.innerHTML=S.sms.notif&&g?'<div class="msg"><b>On.</b> New Telda notifications are added automatically.</div><div class="btns" style="margin-top:10px"><button class="btn ghost" data-sms="notifoff">Turn off</button></div>'
-  :`<div class="msg">${S.sms.notif?'Android notification access was turned off.':'Off.'}</div><div class="btns" style="margin-top:10px"><button class="btn" data-sms="notifon">Turn on Telda notifications</button></div>${S.sms.notif&&!g?notifHelp:''}`}
+ box.innerHTML=S.sms.notif&&g?`<div class="msg"><b>On.</b> New notifications from ${esc(apps.join(', '))} are added automatically.</div>`+'<div class="btns" style="margin-top:10px"><button class="btn ghost" data-sms="notifoff">Turn off</button></div>'
+  :`<div class="msg">${S.sms.notif?'Android notification access was turned off.':'Off.'}</div><div class="btns" style="margin-top:10px"><button class="btn" data-sms="notifon">Turn on app notifications</button></div>${S.sms.notif&&!g?notifHelp:''}`}
 const notifHelp='<div class="msg warn" style="margin-top:10px"><b>Allow notification access:</b><br>1. Tap <b>Turn on</b> — Android opens <b>Notification access</b> (Device &amp; app notifications).<br>2. Choose <b>Expenses</b> and switch it on.<br>3. If it is greyed out ("Restricted setting"): tap <b>Open app settings</b> → ⋮ (top right) → <b>Allow restricted settings</b>, then try step 2 again.<br>4. Come back here.<div class="btns" style="margin-top:10px"><button class="btn ghost" data-sms="appsettings">Open app settings</button></div></div>';
 function pollSms(){if(!HAS_SMS||!(S.sms.on||S.sms.notif))return;let l;try{l=JSON.parse(Android.smsTake()||'[]')}catch(e){return}
  if(!Array.isArray(l)||!l.length)return;const r=ingest(l);if(r.added||r.merged)toast(`Added ${r.added+r.merged} from SMS`,false)}
 function saveKw(){SMS_ACC.forEach(a=>S.sms.kw[a]=$('kw-'+a).value.trim());S.sms.ipAcc=$('ipAcc').value;save();pushSmsConfig()}
-function renderSms(){renderNotif();
+function renderLearn(){const L=S.learn||[];$('smsLearn').innerHTML=L.length?`<h2 style="margin-top:18px;font-size:16px">Message formats you taught (${L.length})</h2><ul class="list">${L.map(x=>`<li><span class="t" style="font-size:14px">${x.type==='ignore'?'Ignore':x.type==='inc'?'Money in':'Money out'}${x.type==='ignore'?'':' · '+esc(accName(x.acc))}<small>${esc(x.sk.split(' ').slice(0,8).join(' '))}…</small></span><button class="ib" data-forget="${x.id}">Forget</button></li>`).join('')}</ul>`:''}
+function renderSms(){renderNotif();renderLearn();
  $('kwRows').innerHTML=SMS_ACC.map(a=>`<div class="f"><label for="kw-${a}">${esc(accName(a))}</label><input id="kw-${a}" value="${esc(S.sms.kw[a]||'')}" placeholder="e.g. 1234, 100012345678" inputmode="text"></div>`).join('');
- $('ipAcc').innerHTML=accOpts(['debit','od','telda'],S.sms.ipAcc);
+ $('ipAcc').innerHTML=accOpts(bankAccs(),ACC.includes(S.sms.ipAcc)?S.sms.ipAcc:defAcc());
  let st;
  if(!HAS_SMS)st='<div class="msg">Reading SMS works in the Android app. You can still test a message below.</div>';
  else{const g=Android.smsPermission()==='granted';
@@ -2949,7 +3110,7 @@ function renderSms(){renderNotif();
   :`<div class="msg">${S.sms.on?'SMS permission was turned off in Android.':'Off.'}</div><div class="btns" style="margin-top:10px"><button class="btn" data-sms="on">Turn on SMS reading</button></div>`;
   $('smsScanBox').hidden=!(S.sms.on&&g)}
  $('smsState').innerHTML=st;
- $('smsFails').innerHTML=fails.length?`<h2 style="margin-top:18px;font-size:16px">Messages I couldn't read (${fails.length})</h2><p class="note" style="margin-top:-6px">They had one of your numbers but no clear amount. Add them by hand if they were payments, and send me a few so I can teach the app their wording.</p><ul class="list">${fails.map(f=>`<li><span class="t" style="white-space:pre-wrap;font-size:14px">${esc(f.body)}<small>${esc(f.from)} · ${f.ts?fmt(iso(new Date(f.ts))):''} · ${esc(f.err)}</small></span></li>`).join('')}</ul><button class="btn ghost" data-sms="clearfails" style="margin-top:8px">Clear this list</button>`:'';
+ $('smsFails').innerHTML=fails.length?`<h2 style="margin-top:18px;font-size:16px">Messages I couldn't read (${fails.length})</h2><p class="note" style="margin-top:-6px">Tap <b>Teach</b> on one: say if it is money in or out, which account, and which number is the amount. The app then reads every message like it.</p><ul class="list">${fails.map(f=>`<li style="flex-wrap:wrap"><span class="t" style="white-space:pre-wrap;font-size:14px">${esc(f.body)}<small>${esc(f.from)} · ${f.ts?fmt(iso(new Date(f.ts))):''} · ${esc(f.err)}</small></span><button class="ib" data-teach="${f.key}">🎓 Teach</button></li>`).join('')}</ul><button class="btn ghost" data-sms="clearfails" style="margin-top:8px">Clear this list</button>`:'';
 }
 const blockedHelp='<div class="msg warn"><b>Android blocked the SMS permission.</b> Apps installed from a file need one extra step:<br>1. Tap <b>Open app settings</b> below.<br>2. Tap the ⋮ menu (top right) → <b>Allow restricted settings</b> (if you see it).<br>3. Open <b>Permissions → SMS → Allow</b>.<br>4. Come back here and tap <b>Turn on SMS reading</b> again.<div class="btns" style="margin-top:10px"><button class="btn" data-sms="appsettings">Open app settings</button></div></div>';
 function scanSms(days){const box=()=>$('smsMsg');if(location.hash==='#settings')box().innerHTML='<div class="msg">Reading your messages…</div>';
@@ -2967,26 +3128,26 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-sms]');if(
  else if(a==='off'){S.sms.on=false;save();pushSmsConfig();toast('SMS reading turned off',false)}
  else if(a==='appsettings')Android.openAppSettings();
  else if(a==='scan')scanSms(+$('scanDays').value);
- else if(a==='test'){const v=$('smsTest').value.trim();if(!v)return;SMS_ACC.forEach(x=>S.sms.kw[x]=$('kw-'+x).value.trim());S.sms.ipAcc=$('ipAcc').value;const p=parseSms(v,/^\s*telda\b/i.test(v)?TELDA_SRC:'');$('smsTestOut').innerHTML=`<div class="msg${p.err?' warn':''}">${describe(p)}</div>`}
+ else if(a==='test'){const v=$('smsTest').value.trim();if(!v)return;SMS_ACC.forEach(x=>S.sms.kw[x]=$('kw-'+x).value.trim());S.sms.ipAcc=$('ipAcc').value;const p=parseSms(v,/^\s*telda\b/i.test(v)?TELDA_SRC:($('smsFrom')&&$('smsFrom').value.trim())||'');$('smsTestOut').innerHTML=`<div class="msg${p.err?' warn':''}">${describe(p)}</div>`}
  else if(a==='clearfails'){fails=[];save()}
- else if(a==='notifon'){S.sms.notif=true;save();pushNotifConfig();if(!notifGranted()){Android.notifOpen();renderNotif()}else toast('Telda notifications on',false)}
- else if(a==='notifoff'){S.sms.notif=false;save();pushNotifConfig();toast('Telda notifications turned off',false)}});
-window.onResumeApp=()=>{pollSms();if(location.hash==='#settings')renderNotif()};pushNotifConfig();setInterval(pollSms,20000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)pollSms()});
+ else if(a==='notifon'){S.sms.notif=true;save();pushNotifConfig();if(!notifGranted()){Android.notifOpen();renderNotif()}else toast('App notifications on',false)}
+ else if(a==='notifoff'){S.sms.notif=false;save();pushNotifConfig();toast('App notifications turned off',false)}});
+window.onResumeApp=()=>{pollSms();if(location.hash==='#settings')renderNotif()};setInterval(pollSms,20000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)pollSms()});
 
 /* ---------- swipe the screen left/right to move between tabs (same as Time Sheet) ---------- */
-{const STABS=['home','house','credit','cash','goals','gam','charity','subs','reports'];
+{const STABS0=['home','house','credit','cash','goals','gam','charity','subs','reports'];const STL=()=>STABS0.filter(t=>!(S.tabsOff||[]).includes(t));
  let sx=0,sy=0,mode=0,on=false,sec=null;
- const cur=()=>{const p=location.hash.slice(1).split('-');return p.length===1&&STABS.includes(p[0]||'home')?(p[0]||'home'):null};
+ const cur=()=>{const p=location.hash.slice(1).split('-');return p.length===1&&STL().includes(p[0]||'home')?(p[0]||'home'):null};
  const blocked=t=>!$('dlg').hidden||$('pk')||document.querySelector('.ddmenu')||t.closest('input,textarea,select,.dd,nav,header,.toast,.fab');
  const reset=()=>{if(sec){sec.style.transition='';sec.style.transform=''}};
  document.addEventListener('touchstart',ev=>{on=false;mode=0;const v=cur();if(ev.touches.length!==1||!v||blocked(ev.target))return;
   sec=$('v-'+v);sx=ev.touches[0].clientX;sy=ev.touches[0].clientY;on=true;sec.style.transition='none'},{passive:true});
  document.addEventListener('touchmove',ev=>{if(!on)return;const dx=ev.touches[0].clientX-sx,dy=ev.touches[0].clientY-sy;
   if(!mode){if(Math.abs(dx)>12&&Math.abs(dx)>Math.abs(dy)*1.4)mode=1;else if(Math.abs(dy)>12){on=false;reset();return}}
-  if(mode){const i=STABS.indexOf(cur()),edge=(dx>0&&i===0)||(dx<0&&i===STABS.length-1);sec.style.transform=`translateX(${dx*(edge?.12:.35)}px)`}},{passive:true});
+  if(mode){const i=STL().indexOf(cur()),edge=(dx>0&&i===0)||(dx<0&&i===STL().length-1);sec.style.transform=`translateX(${dx*(edge?.12:.35)}px)`}},{passive:true});
  document.addEventListener('touchend',ev=>{if(!on)return;on=false;if(!mode){reset();return}
-  const dx=ev.changedTouches[0].clientX-sx,i=STABS.indexOf(cur()),nxt=dx<0?i+1:i-1;
-  if(Math.abs(dx)>70&&nxt>=0&&nxt<STABS.length){reset();location.hash=STABS[nxt]}
+  const dx=ev.changedTouches[0].clientX-sx,i=STL().indexOf(cur()),nxt=dx<0?i+1:i-1;
+  if(Math.abs(dx)>70&&nxt>=0&&nxt<STL().length){reset();location.hash=STL()[nxt]}
   else{sec.style.transition='transform .22s ease';sec.style.transform='';setTimeout(()=>{if(sec)sec.style.transition=''},240)}},{passive:true});
  document.addEventListener('touchcancel',()=>{on=false;reset()},{passive:true});}
 
@@ -3008,7 +3169,7 @@ function route(){if(lastHash!==null&&lastHash!==location.hash)closeCards();lastH
 function renderAll(){const v=location.hash.slice(1);if(v==='add'||v==='plan')return;const y=window.scrollY;route();window.scrollTo(0,y)}
 window.addEventListener('hashchange',route);
 window.__app={get tx(){return tx},get S(){return S},get fails(){return fails},monthStats,ingest,widgetData,planNotes,calcMath,estMin};
-load();applyTheme();route();pushReminder();pushSmsConfig();pollSms();runRecurring();pushExtras();
+load();applyTheme();applyTabs();route();if(firstRun&&!tx.length&&!S.setupV)setupOpen();pushReminder();pushSmsConfig();pushNotifConfig();pollSms();runRecurring();pushExtras();
 if(HAS_SMS&&S.sms.on&&!S.sms.scanned&&Android.smsPermission()==='granted')scanSms(3650);
 if(!window.Android)$('status').textContent='Saved in this browser';
 }

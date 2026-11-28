@@ -37,7 +37,7 @@ public class SmsReceiver extends BroadcastReceiver {
         boolean any = false;
         for (Map.Entry<String, StringBuilder> e : bodies.entrySet()) {
             String body = e.getValue().toString();
-            if (!matches(c, body)) continue;
+            if (!matches(c, e.getKey(), body)) continue;
             add(c, e.getKey(), body, ts);
             any = true;
         }
@@ -53,6 +53,28 @@ public class SmsReceiver extends BroadcastReceiver {
             else b.append(ch);
         }
         return b.toString().toLowerCase(Locale.ROOT);
+    }
+
+    /** A bank's own sender name (CIB, NBE, BanqueMisr…), as the page chose them. */
+    static boolean fromBank(Context c, String from) {
+        if (from == null) return false;
+        String f = norm(from).replaceAll("[^a-z0-9\u0600-\u06ff]", "");
+        if (f.isEmpty()) return false;
+        try {
+            JSONArray w = new JSONArray(prefs(c).getString("senders", "[]"));
+            for (int k = 0; k < w.length(); k++) {
+                String x = w.getString(k);
+                if (x.length() == 0) continue;
+                if (x.length() <= 4 ? f.equals(x) : f.startsWith(x)) return true;
+            }
+        } catch (Exception ignored) { }
+        return false;
+    }
+
+    static boolean matches(Context c, String from, String body) {
+        if (body == null) return false;
+        if (fromBank(c, from) && body.matches("(?s).*[0-9\u0660-\u0669].*")) return true;
+        return matches(c, body);
     }
 
     static boolean matches(Context c, String body) {

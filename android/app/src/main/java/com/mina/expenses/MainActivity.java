@@ -51,6 +51,7 @@ public class MainActivity extends Activity {
     private static final int CAM = 7;
     private Uri camUri;
     private WebView web;
+    private WebView printView;
     private ValueCallback<Uri[]> fileCallback;
     private volatile String pendingAction = "";
     private static final int LOCK = 6;
@@ -482,7 +483,7 @@ public class MainActivity extends Activity {
                 if (Build.VERSION.SDK_INT >= 29) {
                     ContentValues cv = new ContentValues();
                     cv.put(MediaStore.Downloads.DISPLAY_NAME, name);
-                    cv.put(MediaStore.Downloads.MIME_TYPE, "application/json");
+                    cv.put(MediaStore.Downloads.MIME_TYPE, name.endsWith(".csv") ? "text/csv" : name.endsWith(".html") ? "text/html" : "application/json");
                     cv.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
                     Uri u = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, cv);
                     try (OutputStream o = getContentResolver().openOutputStream(u)) { o.write(bytes); }
@@ -495,6 +496,26 @@ public class MainActivity extends Activity {
             } catch (Exception e) {
                 return "";
             }
+        }
+
+        /** Opens Android's print screen for a report page, where "Save as PDF" makes the PDF. */
+        @JavascriptInterface
+        public void printHtml(final String title, final String html) {
+            runOnUiThread(() -> {
+                final WebView pw = new WebView(MainActivity.this);
+                printView = pw;
+                pw.setWebViewClient(new WebViewClient() {
+                    @Override
+                    public void onPageFinished(WebView v, String url) {
+                        try {
+                            android.print.PrintManager pm = (android.print.PrintManager) getSystemService(android.content.Context.PRINT_SERVICE);
+                            pm.print(title, v.createPrintDocumentAdapter(title),
+                                    new android.print.PrintAttributes.Builder().setMediaSize(android.print.PrintAttributes.MediaSize.ISO_A4).build());
+                        } catch (Exception ignored) { }
+                    }
+                });
+                pw.loadDataWithBaseURL(null, html, "text/html", "utf-8", null);
+            });
         }
 
         /** Invoice files (photos / PDFs), kept in the app's private storage. */

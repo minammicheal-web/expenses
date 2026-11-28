@@ -913,7 +913,7 @@ if(D.readyState==='loading')D.addEventListener('DOMContentLoaded',boot);else boo
 <body>
 <div class="wrap">
 <header><h1>Expenses<b>.</b></h1><div class="hright"><span class="status" id="status">Saved on this phone</span><a href="#settings" id="t-settings" class="gear" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6a.5.5 0 0 0 .1-.6l-2-3.5a.5.5 0 0 0-.6-.2l-2.5 1a7.4 7.4 0 0 0-1.7-1l-.4-2.6a.5.5 0 0 0-.5-.4h-4a.5.5 0 0 0-.5.4l-.4 2.6c-.6.3-1.2.6-1.7 1l-2.5-1a.5.5 0 0 0-.6.2l-2 3.5a.5.5 0 0 0 .1.6L4.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6a.5.5 0 0 0-.1.6l2 3.5c.1.2.4.3.6.2l2.5-1c.5.4 1.1.7 1.7 1l.4 2.6c0 .2.3.4.5.4h4c.2 0 .5-.2.5-.4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1c.2.1.5 0 .6-.2l2-3.5a.5.5 0 0 0-.1-.6L19.4 13zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"/></svg></a></div></header>
-<nav><a href="#home" id="t-home">Home</a><a href="#house" id="t-house">House</a><a href="#credit" id="t-credit">Credit</a><a href="#loans" id="t-loans">Loans</a><a href="#cash" id="t-cash">Cash</a><a href="#goals" id="t-goals">Goals</a><a href="#gam" id="t-gam">Gam3ya</a><a href="#charity" id="t-charity">Charity</a><a href="#subs" id="t-subs">Subs</a><a href="#reports" id="t-reports">Reports</a></nav>
+<nav><a href="#home" id="t-home">Home</a><a href="#house" id="t-house">House</a><a href="#credit" id="t-credit">Credit</a><a href="#loans" id="t-loans">Loans</a><a href="#wealth" id="t-wealth">Wealth</a><a href="#cash" id="t-cash">Cash</a><a href="#goals" id="t-goals">Goals</a><a href="#gam" id="t-gam">Gam3ya</a><a href="#charity" id="t-charity">Charity</a><a href="#subs" id="t-subs">Subs</a><a href="#reports" id="t-reports">Reports</a></nav>
 
 <!-- HOME -->
 <section id="v-home">
@@ -1057,7 +1057,7 @@ if(D.readyState==='loading')D.addEventListener('DOMContentLoaded',boot);else boo
  <div data-sub="lform" data-title="Loan">
  <div class="card">
   <h2 id="lfT">New loan</h2>
-  <div class="row"><div><label for="lnName">Name</label><input id="lnName" maxlength="40" placeholder="e.g. Car loan"></div><div><label for="lnBank">Bank</label><select id="lnBank"></select></div></div>
+  <div class="row"><div><label for="lnName">Name</label><input id="lnName" maxlength="40" placeholder="e.g. Car loan"></div><div><label for="lnBank">Bank or company</label><select id="lnBank"></select></div></div>
   <div class="row"><div><label for="lnP">Amount borrowed (EGP)</label><input id="lnP" type="number" inputmode="decimal" min="0"></div><div><label for="lnN">Months</label><input id="lnN" type="number" inputmode="numeric" min="1" max="360"></div></div>
   <div class="row"><div><label for="lnRate">Interest % a year</label><input id="lnRate" type="number" inputmode="decimal" min="0" step="0.01"></div><div><label for="lnFirst">First installment</label><input id="lnFirst" type="date"></div></div>
   <div class="row"><div><label for="lnAcc">Paid from</label><select id="lnAcc"></select></div><div><label for="lnEach">Monthly installment</label><input id="lnEach" type="number" inputmode="decimal" min="0" placeholder="Calculated"></div></div>
@@ -1082,6 +1082,19 @@ if(D.readyState==='loading')D.addEventListener('DOMContentLoaded',boot);else boo
   <div class="f"><label for="dbNote">Note</label><input id="dbNote" maxlength="80" placeholder="Optional"></div>
   <div class="btns"><button class="btn" id="dbSave">Save</button><button class="btn danger" id="dbDel" hidden>Delete</button></div>
  </div></div>
+</section>
+
+<!-- WEALTH -->
+<section id="v-wealth" hidden>
+ <div data-main>
+ <div class="card" style="text-align:center;padding:18px 14px"><div class="note">Net worth</div><div id="nwBig" style="font-size:32px;font-weight:800;margin:4px 0"></div><button class="ib" data-go="wealth-nw">What's in it</button></div>
+ <div id="wlMenu"></div>
+ </div>
+ <div data-sub="nw" data-title="Net worth"><div class="card"><div id="nwList"></div></div></div>
+ <div data-sub="certs" data-title="Certificates &amp; deposits"><div id="ctList"></div><button class="btn ghost" data-ctedit="new" style="width:100%;margin-bottom:14px">+ Add a certificate or deposit</button></div>
+ <div data-sub="gold" data-title="Gold"><div id="gdBox"></div></div>
+ <div data-sub="fx" data-title="Foreign currency"><div id="fxBox"></div></div>
+ <div data-sub="zakat" data-title="Zakat"><div id="zkBox"></div></div>
 </section>
 
 <!-- CHARITY -->
@@ -1131,6 +1144,7 @@ if(D.readyState==='loading')D.addEventListener('DOMContentLoaded',boot);else boo
   <div><label for="rMonth">Period</label><select id="rMonth"></select></div>
   <div><label for="rAcc">Account</label><select id="rAcc"></select></div>
  </div>
+ <button class="ib" id="rExp" style="margin:-4px 0 12px">⤓ Export Excel / PDF</button>
  <div class="tiles" id="rTiles"></div>
  <div class="card"><h2>Spending by category</h2><p class="note" style="margin-top:-6px">Tap a category to see its entries.</p><div id="rCats"></div><button class="btn ghost" data-go="reports-list" id="rAllBtn" style="margin-top:6px">See all spending</button></div>
  </div>
@@ -1245,6 +1259,12 @@ if(D.readyState==='loading')D.addEventListener('DOMContentLoaded',boot);else boo
   <h2 style="margin-top:18px;font-size:16px">📱 Home-screen widget</h2>
   <p class="note" style="margin-top:-6px">Shows what you spent this month and what is left (per day when a goal or budget sets a limit). To add it: long-press an empty spot on your home screen → <b>Widgets</b> → <b>Expenses</b> → drag it to the screen. It updates whenever the app saves.</p>
  </div>
+ <div class="card" data-sec="prof">
+  <h2>Profiles</h2>
+  <p class="note" style="margin-top:-6px">Each profile has its own accounts and entries — for example your wife's or a small business. Bank SMS, app notifications, reminders, the widget and the Google Drive backup work in “Me” only; other profiles are kept by hand and with the Backup file.</p>
+  <div id="profList"></div>
+  <button class="btn ghost" id="profAdd" style="width:100%;margin-top:8px">+ Add a profile</button>
+ </div>
  <div class="card" data-sec="backup">
   <h2>Backup file</h2>
   <p class="note" style="margin-top:-6px">Save everything in one file, or restore from one. Restoring adds and updates entries; it never deletes anything.</p>
@@ -1259,6 +1279,8 @@ if(D.readyState==='loading')D.addEventListener('DOMContentLoaded',boot);else boo
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px"><h2 id="addTitle" style="margin:0">New entry</h2><button class="ib" id="addClose">Close</button></div>
   <div class="seg" id="aType"><button data-type="exp">Expense</button><button data-type="inc">Income</button><button data-type="xfer">Transfer</button><button data-type="pay">Pay card</button></div>
   <div class="f"><input id="aAmt" class="amtIn" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" aria-label="Amount in EGP"></div>
+  <button type="button" class="ib" id="fcBtn" style="margin:-6px 0 10px">💱 Paid in another currency?</button>
+  <div class="row" id="fcRow" hidden><div><label for="fcCur">Currency</label><select id="fcCur"></select></div><div><label for="fcAmt">Amount</label><input id="fcAmt" type="number" inputmode="decimal" min="0" step="0.01"></div><div><label for="fcRate">1 = EGP</label><input id="fcRate" type="number" inputmode="decimal" min="0" step="0.0001"></div></div>
   <div class="f"><label for="aAccSel" id="accLbl">Paid with</label><select id="aAccSel"></select></div>
   <div class="f" id="toWrap"><label for="aToSel">To</label><select id="aToSel"></select></div>
   <div class="f" id="catWrap"><label for="aCatSel">Category</label><select id="aCatSel"></select>
@@ -1280,6 +1302,7 @@ if(D.readyState==='loading')D.addEventListener('DOMContentLoaded',boot);else boo
   <div id="aErr"></div>
   <div class="btns" style="margin-top:6px"><button class="btn" id="aSave">Save</button><button class="btn ghost" id="aPlan" hidden style="background:color-mix(in srgb,var(--credit) 14%,transparent)">Turn into installments</button><button class="btn danger" id="aDel" hidden>Delete</button></div>
   <button class="btn ghost" id="aDebt" hidden style="width:100%;margin-top:8px"></button>
+  <button class="btn ghost" id="aSplit" hidden style="width:100%;margin-top:8px">👥 Split this bill</button>
  </div>
 </section>
 
@@ -1322,7 +1345,8 @@ const BANKS=[
  ['ecash','e& cash (Etisalat)','wallet',['etisalat','e&cash','ecash'],['e& cash','etisalat cash','e& money']],['ocash','Orange Cash','wallet',['orangecash','orange'],['orange cash','orange money']],
  ['wepay','WE Pay','wallet',['wepay'],['we pay']],['instapay','InstaPay','wallet',['instapay'],['instapay']],['fawry','myfawry','wallet',['fawry'],['myfawry','fawry']],
  ['valu','valU','wallet',['valu'],['valu']],['khazna','Khazna','wallet',['khazna'],['khazna']],['other','Other bank / wallet','bank',[],[]]];
-const bankOf=id=>BANKS.find(b=>b[0]===id);
+const BNPL=[['souhoola','Souhoola','bnpl',[],[]],['contact','Contact','bnpl',[],[]],['aman','Aman','bnpl',[],[]],['forsa','Forsa','bnpl',[],[]],['sympl','Sympl','bnpl',[],[]],['halan','MNT-Halan','bnpl',[],[]],['person','A shop / dealer','bnpl',[],[]]];
+const bankOf=id=>BANKS.find(b=>b[0]===id)||BNPL.find(b=>b[0]===id);
 const bankName=id=>{const b=bankOf(id);if(!b)return '';const m=b[1].match(/\(([A-Z]{2,6})\)$/);return m?m[1]:b[1].replace(/ \(.*\)$/,'')};
 const BUILTIN={debit:{bank:'cib',kind:'debit'},credit:{bank:'cib',kind:'credit'},od:{bank:'cib',kind:'od'},telda:{bank:'telda',kind:'wallet',loadFee:2},cash:{kind:'cash'}};
 const KINDS={debit:'Bank account / debit card',credit:'Credit card',od:'Overdraft account',wallet:'Wallet / prepaid card',cash:'Cash'};
@@ -1333,10 +1357,10 @@ function syncAcc(){if(!S.acc.cash)S.acc.cash={n:'Cash',open:0,kind:'cash'};if(!S
 /* the account money usually comes from when nothing says otherwise: the first bank account */
 const defAcc=()=>NONCC.find(a=>a!=='cash'&&kindOf(a)!=='wallet')||NONCC.find(a=>a!=='cash')||'cash';
 const bankAccs=()=>NONCC.filter(a=>a!=='cash');
-const DEF_EXP=[['food','Food'],['groc','Groceries'],['phone','Phone bill'],['elec','Electricity charge card'],['gas','Gas charge card'],['deliv','Delivery'],['pharm','Pharmacy'],['trans','Transportation'],['apt','Building maintenance fees'],['water','Water'],['net','Internet'],['hphone','Home phone'],['sent','Sent to people'],['subs','Subscriptions'],['charity','Charity'],['gam3ya','Gam3ya payments'],['loan','Loan installments'],['repay','Paying back'],['lend','Lent to people'],['other','Other']];
+const DEF_EXP=[['food','Food'],['groc','Groceries'],['phone','Phone bill'],['elec','Electricity charge card'],['gas','Gas charge card'],['deliv','Delivery'],['pharm','Pharmacy'],['trans','Transportation'],['apt','Building maintenance fees'],['water','Water'],['net','Internet'],['hphone','Home phone'],['sent','Sent to people'],['subs','Subscriptions'],['charity','Charity'],['gam3ya','Gam3ya payments'],['loan','Loan installments'],['repay','Paying back'],['lend','Lent to people'],['zakat','Zakat'],['other','Other']];
 const DEF_INC=[['salary','Salary'],['gam3ya','Gam3ya payout'],['recv','Received from people'],['bonus','Bonus'],['gift','Gift'],['refund','Refund / cashback'],['loanin','Loan received'],['borrow','Borrowed money'],['repaid','Paid back to me'],['other','Other']];
 const DEF={acc:{credit:{n:'Credit card',limit:0,kind:'credit',hidden:true},cash:{n:'Cash',open:0,kind:'cash'}},tabsOff:[],learn:[],
- stmt:11,due:5,remind:3,sms:{on:false,kw:{},ipAcc:''},payDay:28,rates:{loan:23.5,loanFee:2,loanSrc:'CIB personal loan from 23.5% a year (reducing balance) + 2% admin fee — Banky, checked 26 Oct 2026',card:[[3,3.17],[6,3.08],[12,2.75]],cardFee:0,cardSrc:'CIB credit-card installment plan (IPP) terms: monthly reducing rate 3.17% (3–5 months), 3.08% (6–11), 2.75% (12–60)',checked:'2026-11-28'},rec:[],bud:{},nfy:{home:true,rec:true,sum:true,bud:true,days:2},goals:[],gam:[],loans:[],debts:[],charity:{pct:10,acc:'cash'},subs:[{id:'claude',n:'Claude',kw:'claude, anthropic',price:0,fx:true,acc:'credit',cycle:'m'},{id:'netflix',n:'Netflix',kw:'netflix',price:0,fx:true,acc:'credit',cycle:'m'},{id:'spotify',n:'Spotify',kw:'spotify',price:0,fx:true,acc:'credit',cycle:'m'},{id:'gone',n:'Google One',kw:'google one, google storage, google *one',price:0,fx:true,acc:'credit',cycle:'m'}],merch:{},exp:DEF_EXP.map(([id,n])=>({id,n})),inc:DEF_INC.map(([id,n])=>({id,n}))};
+ stmt:11,due:5,remind:3,sms:{on:false,kw:{},ipAcc:''},payDay:28,rates:{loan:23.5,loanFee:2,loanSrc:'CIB personal loan from 23.5% a year (reducing balance) + 2% admin fee — Banky, checked 26 Oct 2026',card:[[3,3.17],[6,3.08],[12,2.75]],cardFee:0,cardSrc:'CIB credit-card installment plan (IPP) terms: monthly reducing rate 3.17% (3–5 months), 3.08% (6–11), 2.75% (12–60)',checked:'2026-11-28'},rec:[],bud:{},nfy:{home:true,rec:true,sum:true,bud:true,days:2},goals:[],gam:[],loans:[],debts:[],certs:[],gold:{items:[],p24:0,at:''},fxh:[],fxr:{USD:0,EUR:0,GBP:0,SAR:0,AED:0,KWD:0},fxAt:'',charity:{pct:10,acc:'cash'},subs:[{id:'claude',n:'Claude',kw:'claude, anthropic',price:0,fx:true,acc:'credit',cycle:'m'},{id:'netflix',n:'Netflix',kw:'netflix',price:0,fx:true,acc:'credit',cycle:'m'},{id:'spotify',n:'Spotify',kw:'spotify',price:0,fx:true,acc:'credit',cycle:'m'},{id:'gone',n:'Google One',kw:'google one, google storage, google *one',price:0,fx:true,acc:'credit',cycle:'m'}],merch:{},exp:DEF_EXP.map(([id,n])=>({id,n})),inc:DEF_INC.map(([id,n])=>({id,n}))};
 const NOT_SPEND=new Set(['gam3ya','loan','repay','lend','loanin','borrow','repaid']);
 const FEE_CAT={id:'_fee',n:'Installment interest & fees'};
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -1465,7 +1489,7 @@ function sub(t,a){const bits=[];
  if(!a||t.type==='exp'||t.type==='inc')if(t.type!=='xfer'&&t.type!=='pay')bits.push(accName(t.acc));
  if(t.type==='xfer'&&t.acc==='credit')bits.push(`bill of ${fmtS(billOf(t))}`);
  if(t.type==='exp'&&t.acc==='credit')bits.push(t.plan?`${t.plan.months} × ${money(t.plan.each)} installments`:`bill of ${fmtS(billOf(t))}`);
- if(t.toAmt)bits.push(`${money(t.toAmt)} reaches ${esc(accName(t.to))} (${money(r2(t.amt-t.toAmt))} load fee)`);if(t.note)bits.push(esc(t.note));if(t.fxFee)bits.push(`incl. ${money(t.fxFee)} FX fee`);if(t.ipFee)bits.push(`incl. ${money(t.ipFee)} InstaPay fee`);if(t.sms)bits.push(t.sms.alt?'SMS + '+srcName(t.sms.app?t.sms:{app:1,from:t.sms.alt.from}):t.sms.app?srcName(t.sms):'SMS');if(t.stmtKey)bits.push('statement');if(t.payKey)bits.push('payslip');return bits.join(' · ')}
+ if(t.toAmt)bits.push(`${money(t.toAmt)} reaches ${esc(accName(t.to))} (${money(r2(t.amt-t.toAmt))} load fee)`);if(t.note)bits.push(esc(t.note));if(t.split)bits.push(`your share — ${money(t.split)} split with others`);if(t.fxFee)bits.push(`incl. ${money(t.fxFee)} FX fee`);if(t.ipFee)bits.push(`incl. ${money(t.ipFee)} InstaPay fee`);if(t.sms)bits.push(t.sms.alt?'SMS + '+srcName(t.sms.app?t.sms:{app:1,from:t.sms.alt.from}):t.sms.app?srcName(t.sms):'SMS');if(t.stmtKey)bits.push('statement');if(t.payKey)bits.push('payslip');return bits.join(' · ')}
 const ACOL0={debit:'var(--debit)',credit:'var(--credit)',od:'var(--od)',telda:'var(--telda)',cash:'var(--cash)'},APAL=['#0ea5e9','#d97706','#db2777','#6366f1','#059669','#e11d48','#7c3aed','#0891b2'];
 const accCol=a=>ACOL0[a]||APAL[Math.max(0,Object.keys(S.acc).filter(k=>!ACOL0[k]).indexOf(a))%APAL.length];
 const ACOL=new Proxy({},{get:(o,a)=>typeof a==='string'?accCol(a):undefined});
@@ -1476,7 +1500,11 @@ function grouped(list,a){let out='',last='';
 const byDate=(x,y)=>y.date.localeCompare(x.date)||(y.created||0)-(x.created||0);
 
 /* ---------- storage ---------- */
-function load(){try{const j=JSON.parse(localStorage.getItem('exp-data')||'{}');tx=Array.isArray(j.tx)?j.tx:[];skip=j.skip||[];fails=j.fails||[];S=merge(j.settings);firstRun=!j.settings}catch(e){tx=[];S=clone(DEF)}syncAcc();
+let PROF='';try{PROF=localStorage.getItem('exp-profile')||''}catch(e){}
+const DKEY=PROF?'exp-data:'+PROF:'exp-data';
+function profList(){let l=[];try{l=JSON.parse(localStorage.getItem('exp-profiles')||'[]')}catch(e){}if(!l.some(x=>x.id===''))l.unshift({id:'',name:'Me'});return l}
+const profName=id=>(profList().find(x=>x.id===id)||{name:'Me'}).name;
+function load(){try{const j=JSON.parse(localStorage.getItem(DKEY)||'{}');tx=Array.isArray(j.tx)?j.tx:[];skip=j.skip||[];fails=j.fails||[];S=merge(j.settings);firstRun=!j.settings}catch(e){tx=[];S=clone(DEF)}syncAcc();
  try{migrate()}catch(e){console.error(e)}}
 /* the same money seen twice: an SMS and a statement line, or a card payment and the debit-side transfer that paid it */
 function dedupe(){const drop=new Set(),near=(a,b,d)=>Math.abs(dayDiff(a.date,b.date))<=d;
@@ -1498,7 +1526,7 @@ function migrate(){tx.forEach(fixPlan);
  /* v32 home categories: the House tab shows every expense in a category marked home */
  for(const[id,n]of[['water','Water'],['net','Internet'],['hphone','Home phone']])if(!S.exp.some(c=>c.id===id))S.exp.push({id,n,home:true});
  if(!S.homeV){S.homeV=1;S.exp.forEach(c=>{if(HOME_DEF.has(c.id))c.home=true});const a=S.exp.find(c=>c.id==='apt');if(a&&a.n==='Apartment fees')a.n='Building maintenance fees'}
- for(const[k,id,n]of[['exp','loan','Loan installments'],['exp','repay','Paying back'],['exp','lend','Lent to people'],['inc','loanin','Loan received'],['inc','borrow','Borrowed money'],['inc','repaid','Paid back to me']])if(!S[k].some(c=>c.id===id))S[k].push({id,n});
+ for(const[k,id,n]of[['exp','zakat','Zakat'],['exp','loan','Loan installments'],['exp','repay','Paying back'],['exp','lend','Lent to people'],['inc','loanin','Loan received'],['inc','borrow','Borrowed money'],['inc','repaid','Paid back to me']])if(!S[k].some(c=>c.id===id))S[k].push({id,n});
  for(const[k,id,n]of[['exp','charity','Church (charity)'],['exp','gam3ya','Gam3ya payments'],['inc','gam3ya','Gam3ya payout']])if(!S[k].some(c=>c.id===id))S[k].push({id,n});
  {const g=S.subs.find(x=>x.id==='gone');if(g&&!/google google o/.test(g.kw))g.kw+=', google google o'}
  /* v2–v8 read statement notices and "installment" messages as payments, and code messages as extra purchases */
@@ -1537,7 +1565,7 @@ function merge(s){const o=clone(DEF);if(!s)return o;
  for(const k of ['stmt','due','remind'])if(s[k]!=null)o[k]=s[k];
  if(s.acc&&typeof s.acc==='object'){const old=!s.setupV;for(const[a,v]of Object.entries(s.acc)){if(!v||typeof v!=='object')continue;o.acc[a]={...(o.acc[a]||{}),...(old&&BUILTIN[a]?{...BUILTIN[a],hidden:false}:{}),...v};if(old&&BUILTIN[a])o.acc[a].hidden=false}}
  if(s.setupV)o.setupV=s.setupV;else if(s.acc)o.setupV=1;
- if(s.sms){const kw={...o.sms.kw};for(const[k,v]of Object.entries(s.sms.kw||{}))if(String(v||'').trim())kw[k]=v;o.sms={...o.sms,...s.sms,kw}}if(s.payDay)o.payDay=s.payDay;if(s.mig)o.mig=s.mig;if(s.balChecked)o.balChecked=s.balChecked;if(s.theme)o.theme=s.theme;if(Array.isArray(s.subs))o.subs=s.subs;if(Array.isArray(s.goals))o.goals=s.goals;if(Array.isArray(s.gam))o.gam=s.gam;if(Array.isArray(s.loans))o.loans=s.loans;if(Array.isArray(s.debts))o.debts=s.debts;if(s.charity)o.charity={...o.charity,...s.charity};if(s.merch&&typeof s.merch==='object')o.merch=s.merch;if(s.ccBase)o.ccBase=s.ccBase;
+ if(s.sms){const kw={...o.sms.kw};for(const[k,v]of Object.entries(s.sms.kw||{}))if(String(v||'').trim())kw[k]=v;o.sms={...o.sms,...s.sms,kw}}if(s.payDay)o.payDay=s.payDay;if(s.mig)o.mig=s.mig;if(s.balChecked)o.balChecked=s.balChecked;if(s.theme)o.theme=s.theme;if(Array.isArray(s.subs))o.subs=s.subs;if(Array.isArray(s.goals))o.goals=s.goals;if(Array.isArray(s.gam))o.gam=s.gam;if(Array.isArray(s.loans))o.loans=s.loans;if(Array.isArray(s.certs))o.certs=s.certs;if(s.gold&&typeof s.gold==='object')o.gold={...o.gold,...s.gold};if(Array.isArray(s.fxh))o.fxh=s.fxh;if(s.fxr&&typeof s.fxr==='object')o.fxr={...o.fxr,...s.fxr};if(s.fxAt)o.fxAt=s.fxAt;if(Array.isArray(s.debts))o.debts=s.debts;if(s.charity)o.charity={...o.charity,...s.charity};if(s.merch&&typeof s.merch==='object')o.merch=s.merch;if(s.ccBase)o.ccBase=s.ccBase;
  if(Array.isArray(s.exp))o.exp=s.exp;if(Array.isArray(s.inc))o.inc=s.inc;
  for(const k of ['homeV','invDrive','salAcc'])if(s[k]!=null)o[k]=s[k];if(Array.isArray(s.tabsOff))o.tabsOff=s.tabsOff;if(Array.isArray(s.learn))o.learn=s.learn;
  if(s.rates&&typeof s.rates==='object')o.rates={...o.rates,...s.rates};if(Array.isArray(s.rec))o.rec=s.rec;if(s.bud&&typeof s.bud==='object')o.bud=s.bud;if(s.nfy&&typeof s.nfy==='object')o.nfy={...o.nfy,...s.nfy};return o}
@@ -1545,8 +1573,8 @@ const backupJSON=()=>JSON.stringify({app:'expenses',version:1,exported:new Date(
 const loadFee=a=>+((S.acc[a]&&S.acc[a].loadFee)||0);
 function teldaLoads(){for(const t of tx){if(t.type!=='xfer'||!loadFee(t.to)||t.toAmt!=null)continue;const x=t.amt/(1+loadFee(t.to)/100);if(Math.abs(x-Math.round(x))<0.005&&t.amt>=50)t.toAmt=Math.round(x)}}
 function save(){syncAcc();teldaLoads();linkLoans();runDebts();
- let ok=true;try{localStorage.setItem('exp-data',JSON.stringify({tx,settings:S,skip,fails}))}catch(e){ok=false;toast('Could not save on this phone',false)}
- if(window.Android){try{Android.storeBackup&&Android.storeBackup(backupJSON())}catch(e){}pushReminder()}pushExtras();
+ let ok=true;try{localStorage.setItem(DKEY,JSON.stringify({tx,settings:S,skip,fails}))}catch(e){ok=false;toast('Could not save on this phone',false)}
+ if(window.Android&&!PROF){try{Android.storeBackup&&Android.storeBackup(backupJSON())}catch(e){}pushReminder()}if(!PROF)pushExtras();
  renderAll();return ok}
 function pushReminder(){if(!window.Android||!Android.setReminder)return;
  try{const c=credit();Android.setReminder(JSON.stringify(c.now?{due:c.now.due,amount:money(c.now.amt),days:+S.remind||0}:{due:'',amount:'',days:0}))}catch(e){}}
@@ -1577,7 +1605,7 @@ function renderHome(){renderBalCheck();
  const c=credit();$('dueBox').innerHTML=dueHTML(c,true);
  const rv=tx.filter(t=>t.review&&!isCheck(t)).sort(byDate);
  $('reviewTitle').textContent=rv.length?`${rv.length} need${rv.length===1?'s':''} a category`:'All sorted';$('reviewList').innerHTML=rv.length?rv.slice(0,200).map(t=>row(t,null)).join(''):'<li class="empty" style="display:block;border:0">Nothing waiting for a category.</li>';
- $('homeMenu').innerHTML=(rv.length?menuBtn('home-review','🏷️',`${rv.length} need${rv.length===1?'s':''} a category`,'Tap to sort them'):'')+loanOpen().map(({L,st})=>`<div class="setbtn" style="cursor:default"><span class="ic">🏦</span><span class="t"><b>${esc(L.name)} · ${money(loanCalc(L).each)}</b><small>${st.next<today?`was due ${fmtS(st.next)}`:st.next===today?'due today':`due ${dow(st.next)} ${fmtS(st.next)}`} · ${esc(accName(L.acc))}</small></span><button class="ib" data-lnpay="${L.id}">Paid</button></div>`).join('')+recOpen().map(({r,ym,due})=>`<div class="setbtn" style="cursor:default"><span class="ic">🔁</span><span class="t"><b>${esc(r.n)} · ${money(r.amt)}</b><small>${due<today?`was due ${fmtS(due)}`:due===today?'due today':`due ${dow(due)} ${fmtS(due)}`} · ${esc(accName(r.acc))}</small></span><button class="ib" data-recpaid="${r.id}|${ym}">Paid</button></div>`).join('');
+ $('homeMenu').innerHTML=(PROF?`<button class="ib" data-go="settings-prof" style="margin:0 0 10px">👤 ${esc(profName(PROF))} · switch</button>`:'')+(rv.length?menuBtn('home-review','🏷️',`${rv.length} need${rv.length===1?'s':''} a category`,'Tap to sort them'):'')+loanOpen().map(({L,st})=>`<div class="setbtn" style="cursor:default"><span class="ic">🏦</span><span class="t"><b>${esc(L.name)} · ${money(loanCalc(L).each)}</b><small>${st.next<today?`was due ${fmtS(st.next)}`:st.next===today?'due today':`due ${dow(st.next)} ${fmtS(st.next)}`} · ${esc(accName(L.acc))}</small></span><button class="ib" data-lnpay="${L.id}">Paid</button></div>`).join('')+recOpen().map(({r,ym,due})=>`<div class="setbtn" style="cursor:default"><span class="ic">🔁</span><span class="t"><b>${esc(r.n)} · ${money(r.amt)}</b><small>${due<today?`was due ${fmtS(due)}`:due===today?'due today':`due ${dow(due)} ${fmtS(due)}`} · ${esc(accName(r.acc))}</small></span><button class="ib" data-recpaid="${r.id}|${ym}">Paid</button></div>`).join('');
  /* accounts */
  const lim=+S.acc.credit.limit||0,owed=Math.max(0,c.used),total=r2(NONCC.reduce((s,a)=>s+bal(a),0));
  const accRows=ACC.map(a=>{
@@ -1768,10 +1796,10 @@ document.addEventListener('change',e=>{const r=e.target.dataset&&e.target.datase
 /* ---------- add / edit ---------- */
 let F=null,editId=null,backTo='home';
 const fresh=(type)=>({type,acc:type==='exp'?'cash':defAcc(),to:'cash',cat:null,mode:'full',inv:[]});
-function openAdd(type,acc,amt){editId=null;F=fresh(type||'exp');if(acc)F.acc=acc;
+function openAdd(type,acc,amt){editId=null;fcReset();F=fresh(type||'exp');if(acc)F.acc=acc;
  $('aAmt').value=amt||'';$('aNote').value='';$('aIpn').checked=false;$('aFx').checked=false;$('aDate').value=today;$('aErr').innerHTML='';
  $('addTitle').textContent='New entry';$('aDel').hidden=true;$('aSms').hidden=true;drawInv();go('add')}
-function openEdit(id){const t=tx.find(x=>x.id===id);if(!t)return;editId=id;
+function openEdit(id){const t=tx.find(x=>x.id===id);if(!t)return;editId=id;fcReset();
  F={type:t.type,acc:t.acc,to:t.to||'cash',cat:t.cat||null,mode:t.plan?'inst':'full',inv:(t.inv||[]).map(x=>({...x}))};drawInv();
  $('aAmt').value=r2(t.amt-(t.ipFee||0)-(t.fxFee||0));$('aIpn').checked=!!t.ipFee;$('aFx').checked=!!t.fxFee;
  $('aNote').value=t.note||'';$('aDate').value=t.date;$('aErr').innerHTML='';$('addTitle').textContent='Edit entry';$('aDel').hidden=false;$('aSms').hidden=!t.sms;$('aSms').textContent=t.sms?(t.sms.app?'From the '+srcName(t.sms):'From SMS'+(t.sms.from?' ('+t.sms.from+')':''))+':\n'+t.sms.body+(t.sms.alt?'\n\n'+(appBank(t.sms.alt.from)?'Also in the '+bankName(appBank(t.sms.alt.from))+' app':'Also by SMS'+(t.sms.alt.from?' ('+t.sms.alt.from+')':''))+':\n'+t.sms.alt.body:''):'';go('add')}
@@ -1797,6 +1825,7 @@ function renderAdd(){if(!F)F=fresh('exp');
  $('aPlan').hidden=!(ed&&cc&&ed.type==='exp'&&ed.acc==='credit');$('aPlan').textContent=ed&&ed.plan?'Edit installments':'Turn into installments';
  {const dOK=ed&&(ed.type==='exp'||ed.type==='inc')&&!ed.loan&&!ed.plan&&ed.acc!=='credit'&&!isCheck(ed);$('aDebt').hidden=!dOK;
   if(dOK)$('aDebt').textContent=ed.debt?'🤝 Open in Borrowed & lent':ed.type==='inc'?'🤝 This was borrowed money — track it':'🤝 This was a loan to someone — track it'}
+ $('aSplit').hidden=!(ed&&ed.type==='exp'&&!ed.plan&&!ed.loan&&!ed.debt&&!ed.splitOf&&!NOT_SPEND.has(ed.cat)&&!isCheck(ed)&&ed.amt>0);
  $('aSave').textContent=cc&&F.mode==='inst'&&!(ed&&ed.plan)?'Next: installment details':editId?'Save changes':'Save';info()}
 function info(){const el=$('aInfo'),amt0=r2($('aAmt').value),amt=r2((ipnOn()&&amt0>0?amt0+ipFee(amt0):amt0)+(fxOn()&&amt0>0?FX(amt0):0)),d=$('aDate').value||today;let h='';el.style.setProperty('--c',ACOL[F.type==='pay'?'credit':F.acc]);
  if(F.type==='exp'&&F.acc==='credit'){
@@ -2006,7 +2035,7 @@ async function exportJSON(){const o=JSON.parse(backupJSON()),inv={};
  for(const t of tx)for(const x of t.inv||[]){const b=await INV.get(x.id);if(b)inv[x.id]=b}
  if(Object.keys(inv).length)o.invoices=inv;return JSON.stringify(o)}
 /* files no entry uses any more (entry deleted, invoice removed, form cancelled) are cleaned up a while after opening */
-setTimeout(async()=>{try{const used=new Set(tx.flatMap(t=>(t.inv||[]).map(x=>x.id)));if(F&&F.inv)F.inv.forEach(x=>used.add(x.id));
+setTimeout(async()=>{try{const used=new Set(tx.flatMap(t=>(t.inv||[]).map(x=>x.id)));for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('exp-data')&&k!==DKEY){try{(JSON.parse(localStorage.getItem(k)).tx||[]).forEach(t=>(t.inv||[]).forEach(x=>used.add(x.id)))}catch(e){}}}if(F&&F.inv)F.inv.forEach(x=>used.add(x.id));
  for(const id of await INV.list())if(!used.has(id)&&location.hash!=='#add'&&!payPending.some(q=>q.img===id))await INV.del(id)}catch(e){}},20000);
 /* ---------- Google Drive (Android app only) ---------- */
 const HAS_DRIVE=!!(window.Android&&typeof Android.driveStatus==='function');
@@ -2529,7 +2558,7 @@ const catLabel=k=>k==='_none'?'Not sorted yet':catName({type:'exp',cat:k});
 
 /* ---------- goals ---------- */
 let goalEdit=null;
-const FIXED=new Set(['apt','phone','elec','gas','water','net','hphone','fees','pharm','charity','gam3ya','_none']);
+const FIXED=new Set(['apt','phone','elec','gas','water','net','hphone','fees','pharm','charity','zakat','gam3ya','_none']);
 function goalPlan(g){const st=monthStats(),months=Math.max(1,ymDiff(ymOf(today),ymOf(g.date))+(+g.date.slice(8)>=25?1:0)),need=r2(Math.max(0,g.target-(g.saved||0))),per=r2(need/months);
  const out=r2(st.spend+st.instMonthly+st.gamMonthly+st.loanMonthly+st.charity),freeNow=r2(st.inc-out);
  const flex=Object.entries(st.cats).filter(([k,v])=>!FIXED.has(k)&&v>0).sort((a,b)=>b[1]-a[1]);
@@ -2721,7 +2750,7 @@ let lnFormKey=null,dfDir='owe',dfKind='person';
 function renderLoans(){const Z=lnSummary(),act=Z.L.filter(x=>!x.st.done),dOpen=Z.D.filter(x=>x.l>0);
  $('lnTiles').innerHTML=`<div class="tile"><div class="k">You owe</div><div class="v" style="${Z.owe>0?'color:var(--out)':''}">${money(Z.owe)}</div></div><div class="tile"><div class="k">Owed to you</div><div class="v" style="${Z.owed>0?'color:var(--in)':''}">${money(Z.owed)}</div></div><div class="tile"><div class="k">Every month</div><div class="v">${money(Z.monthly)}</div></div>`;
  const nOwe=dOpen.filter(x=>x.d.dir==='owe').length,nLent=dOpen.length-nOwe;
- $('lnMenu').innerHTML=menuBtn('loans-loans','🏦','Loans',act.length?`${act.length} active · next ${fmtS(act.map(x=>x.st.next).sort()[0])}`:'Bank loans and their installments')+menuBtn('loans-debts','🤝','Borrowed & lent',dOpen.length?[nOwe?`you owe ${nOwe}`:'',nLent?`${nLent} owe${nLent===1?'s':''} you`:''].filter(Boolean).join(' · '):'Money from friends, family or a salary advance');
+ $('lnMenu').innerHTML=menuBtn('loans-loans','🏦','Loans',act.length?`${act.length} active · next ${fmtS(act.map(x=>x.st.next).sort()[0])}`:'Bank loans, valU and other installments')+menuBtn('loans-debts','🤝','Borrowed & lent',dOpen.length?[nOwe?`you owe ${nOwe}`:'',nLent?`${nLent} owe${nLent===1?'s':''} you`:''].filter(Boolean).join(' · '):'Money from friends, family or a salary advance');
  const lrow=({L,st,c})=>`<button class="setbtn" data-go="loans-loan-${L.id}"><span class="ic">🏦</span><span class="t"><b>${esc(L.name)}</b><small>${st.done?'Paid off':`${st.k} of ${L.months} paid · next ${fmtS(st.next)}`}</small><span class="bar" style="display:block"><i style="width:${st.done?100:st.k/L.months*100}%"></i></span></span><span class="amt">${st.done?'✓':money(c.each)+'<br><small class="note">/ month</small>'}</span><span class="go">›</span></button>`;
  const fin=Z.L.filter(x=>x.st.done);
  $('lnList').innerHTML=(act.length?act.map(lrow).join(''):'<div class="card empty">No loans. Add one with the amount, the months and the interest — the app works out the installment.</div>')+(fin.length?`<h2 style="font-size:15px;margin:16px 4px 8px;color:var(--muted)">Finished</h2>`+fin.map(lrow).join(''):'');
@@ -2752,7 +2781,7 @@ function lnInfo(){const L={p:r2($('lnP').value),months:+$('lnN').value,rate:+$('
 $('lnMoreB').addEventListener('click',()=>{const h=!$('lnMore').hidden;$('lnMore').hidden=h;$('lnMoreB').textContent=h?'More options ▾':'Fewer options ▴'});
 $('lnRecv').addEventListener('change',()=>{$('lnRecvAW').hidden=!$('lnRecv').checked});
 const setSel=(id,v)=>{$(id).value=v;if(typeof ddSync==='function')ddSync($(id))};
-function fillLoan(id){const L=(S.loans||[]).find(x=>x.id===id),nw=!L,banks=[...new Set([...bankAccs().map(a=>S.acc[a].bank).filter(Boolean),...BANKS.filter(b=>b[2]==='bank').map(b=>b[0])])];
+function fillLoan(id){const L=(S.loans||[]).find(x=>x.id===id),nw=!L,banks=[...new Set([...bankAccs().map(a=>S.acc[a].bank).filter(Boolean),...BANKS.filter(b=>b[2]==='bank'&&b[0]!=='other').map(b=>b[0]),'valu','khazna',...BNPL.map(b=>b[0]),'other'])];
  $('lnBank').innerHTML=banks.map(b=>`<option value="${b}">${esc(bankName(b))}</option>`).join('');$('lnAcc').innerHTML=accOpts(NONCC);$('lnRecvA').innerHTML=accOpts(NONCC);
  const v=L||{name:'',bank:(S.acc[defAcc()]||{}).bank||banks[0],p:'',months:36,rate:S.rates.loan,rt:'red',each:'',first:addMo(today,1),acc:defAcc(),fee:S.rates.loanFee,off:0,start:today};
  $('lfT').textContent=nw?'New loan':'Edit loan';$('lnName').value=v.name;setSel('lnBank',v.bank||banks[0]);$('lnP').value=v.p;$('lnN').value=v.months;$('lnRate').value=v.rate;setSel('lnRT',v.rt||'red');$('lnEach').value=v.each||'';
@@ -2782,7 +2811,8 @@ $('dbSave').addEventListener('click',()=>{const id=pageArg,old=(S.debts||[]).fin
  if(!d.salary)d.pays=(d.pays||[]).filter(p=>p.how!=='salary');
  lnFormKey=null;save();history.back();toast('Saved',false)});
 $('dbDel').addEventListener('click',()=>sure($('dbDel'),'Tap again to delete',()=>{const id=pageArg,d=S.debts.find(x=>x.id===id);S.debts=S.debts.filter(x=>x.id!==id);
- if(d&&!d.fromTx)tx=tx.filter(t=>!(t.debt===id&&t.debtOpen));tx.forEach(t=>{if(t.debt===id){if(t.debtOpen&&d&&d.fromTx)t.cat=t.type==='inc'?'recv':'sent';delete t.debt;delete t.debtOpen}});save();go('loans-debts')}));
+ {const ft=d&&d.fromTx&&tx.find(t=>t.id===d.fromTx);if(ft&&ft.splitOf){const o=tx.find(t=>t.id===ft.splitOf);if(o){o.amt=r2(o.amt+ft.amt);o.split=r2((o.split||0)-ft.amt);if(o.split<=0.004)delete o.split}tx=tx.filter(t=>t!==ft);d.fromTx=null;d._gone=1}}
+ if(d&&!d.fromTx&&!d._gone)tx=tx.filter(t=>!(t.debt===id&&t.debtOpen));tx.forEach(t=>{if(t.debt===id){if(t.debtOpen&&d&&d.fromTx)t.cat=t.type==='inc'?'recv':'sent';delete t.debt;delete t.debtOpen}});save();go('loans-debts')}));
 /* buttons on the loan / debt pages and on Home */
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-lnpay],[data-lnmore],[data-dbpay],[data-dbpays],[data-dbpdel],#aDebt');if(!b)return;
  if(b.id==='aDebt'){const t=editId&&tx.find(x=>x.id===editId);if(!t)return;if(t.debt){editId=null;go('loans-debt-'+t.debt);return}
@@ -2810,6 +2840,170 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-lnpa
  if(acc&&acc!=='salary')tx.push({id:uid(),type:owe?'exp':'inc',acc,amt:a,date:dt,cat:owe?'repay':'repaid',note:`${owe?'Paid back':'Got back from'} ${d.who}`,created:Date.now(),debt:d.id});
  else{d.pays=d.pays||[];d.pays.push({id:uid(),date:dt,amt:a,how:acc==='salary'?'salary':'none',sal:acc==='salary'?ymOf(dt):undefined})}
  save();toast(debtLeft(d)<=0?'All settled ✓':`${egp(debtLeft(d))} left`,false)});
+
+
+/* ---------- wealth: certificates, gold, foreign currency, zakat, net worth ---------- */
+const FXC=['USD','EUR','GBP','SAR','AED','KWD'];
+const PERM={m:1,q:3,h:6,y:12};
+function certInfo(c){const end=addMo(c.start,+c.months),per=PERM[c.pay]||0,yearInt=r2(c.amt*c.rate/100),each=per?r2(yearInt*per/12):r2(yearInt*c.months/12);
+ let next=null;if(per){for(let k=1;k*per<=c.months;k++){const d=addMo(c.start,k*per);if(d>=today){next=d;break}}}else if(end>=today)next=end;
+ return{end,each,yearInt,next,active:!c.closed&&end>today}}
+const goldVal=it=>r2((+it.g||0)*(+S.gold.p24||0)*(+it.k||24)/24);
+const fxVal=h=>r2((+h.amt||0)*(+S.fxr[h.cur]||0));
+function netWorth(){const A=[],L=[];
+ for(const a of NONCC){const b=bal(a);if(b>0)A.push([accName(a),b]);else if(b<0)L.push([accName(a)+(kindOf(a)==='od'?' (overdraft used)':' (below zero)'),r2(-b)])}
+ const c=credit();if(c.used>0)L.push([accName('credit'),r2(c.used)]);
+ const ct=r2((S.certs||[]).filter(x=>certInfo(x).active).reduce((a,x)=>a+x.amt,0));if(ct)A.push(['Certificates & deposits',ct]);
+ const gd=r2(S.gold.items.reduce((a,x)=>a+goldVal(x),0));if(gd)A.push(['Gold',gd]);
+ const fx=r2((S.fxh||[]).reduce((a,h)=>a+fxVal(h),0));if(fx)A.push(['Foreign currency',fx]);
+ const Z=lnSummary(),owed=Z.owed,lo=r2(Z.L.reduce((a,x)=>a+x.st.left,0)),dOwe=r2(Z.D.filter(x=>x.d.dir==='owe').reduce((a,x)=>a+x.l,0));
+ if(owed)A.push(['Owed to you',owed]);if(lo)L.push(['Loans (principal left)',lo]);if(dOwe)L.push(['Borrowed money',dOwe]);
+ const gm=r2(S.gam.filter(g=>gamGot(g)).reduce((a,g)=>a+gamLeft(g)*g.amt*(g.shares||1),0));if(gm)L.push(['Gam3ya after payout',gm]);
+ const ta=r2(A.reduce((a,x)=>a+x[1],0)),tl=r2(L.reduce((a,x)=>a+x[1],0));return{A,L,ta,tl,nw:r2(ta-tl),missing:{gold:S.gold.items.length&&!(S.gold.p24>0),fx:(S.fxh||[]).some(h=>!(S.fxr[h.cur]>0))}}}
+function zakatInfo(){const nisab=r2(85*(+S.gold.p24||0)),rows=[];
+ const cash=r2(NONCC.reduce((a,x)=>a+Math.max(0,bal(x)),0));rows.push(['Money in your accounts',cash]);
+ const ct=r2((S.certs||[]).filter(x=>certInfo(x).active).reduce((a,x)=>a+x.amt,0));if(ct)rows.push(['Certificates & deposits',ct]);
+ const gd=r2(S.gold.items.filter(x=>!x.worn).reduce((a,x)=>a+goldVal(x),0));if(gd)rows.push(['Gold (not worn jewellery)',gd]);
+ const fx=r2((S.fxh||[]).reduce((a,h)=>a+fxVal(h),0));if(fx)rows.push(['Foreign currency',fx]);
+ const Z=lnSummary(),owed=Z.owed;if(owed)rows.push(['Owed to you',owed]);
+ const dOwe=r2(Z.D.filter(x=>x.d.dir==='owe').reduce((a,x)=>a+x.l,0)),c=credit(),cc=r2(Math.max(0,c.used));
+ const ded=r2(dOwe+cc),base=r2(rows.reduce((a,x)=>a+x[1],0)-ded);return{nisab,rows,ded,dOwe,cc,base,due:nisab>0&&base>=nisab?r2(base*0.025):0}}
+let ctEditId=null;
+function renderWealth(){const N=netWorth();
+ $('nwBig').innerHTML=`<span style="color:${N.nw<0?'var(--out)':'var(--text)'}">${egp(N.nw)}</span>`;
+ const ac=(S.certs||[]).filter(x=>certInfo(x).active),gg=S.gold.items.reduce((a,x)=>a+(+x.g||0),0),zk=zakatInfo();
+ $('wlMenu').innerHTML=menuBtn('wealth-certs','🏛️','Certificates & deposits',ac.length?`${ac.length} active · ${money(ac.reduce((a,x)=>a+x.amt,0))}`:'Bank certificates and time deposits')
+  +menuBtn('wealth-gold','🪙','Gold',gg?`${r2(gg)} g${S.gold.p24>0?` · ${money(S.gold.items.reduce((a,x)=>a+goldVal(x),0))}`:' · add today’s price'}`:'Grams, karat and today’s price')
+  +menuBtn('wealth-fx','💱','Foreign currency',(S.fxh||[]).length?(S.fxh||[]).map(h=>`${h.cur} ${money(h.amt)}`).join(' · '):'Dollars, euros and other savings')
+  +menuBtn('wealth-zakat','🕌','Zakat',!(S.gold.p24>0)?'Add today’s gold price to work it out':zk.due?`About ${egp(zk.due)} due`:'Below the nisab — nothing due');
+ $('nwList').innerHTML=`<h2>You have</h2>${N.A.map(([k,v])=>`<div class="kv"><span>${esc(k)}</span><b>${egp(v)}</b></div>`).join('')||'<p class="note">Nothing yet.</p>'}<div class="kv tot"><span>Total</span><b>${egp(N.ta)}</b></div>
+  <h2 style="margin-top:16px">You owe</h2>${N.L.map(([k,v])=>`<div class="kv"><span>${esc(k)}</span><b>${egp(v)}</b></div>`).join('')||'<p class="note">Nothing.</p>'}<div class="kv tot"><span>Total</span><b>${egp(N.tl)}</b></div>
+  <div class="kv tot" style="margin-top:14px"><span>Net worth</span><b>${egp(N.nw)}</b></div>${N.missing.gold||N.missing.fx?'<p class="note">Add today’s gold price / exchange rates to count all of it.</p>':''}`;
+ /* certificates */
+ const crow=c=>{const i=certInfo(c);return `<button class="setbtn" data-ctedit="${c.id}"><span class="ic">🏛️</span><span class="t"><b>${esc(c.name)}</b><small>${i.active?`${c.rate}% · ${c.pay==='end'?'paid at the end':'pays '+money(i.each)+' '+{m:'monthly',q:'every 3 months',h:'every 6 months',y:'yearly'}[c.pay]}${i.next?' · next '+fmtS(i.next):''} · ends ${fmtS(i.end)}`:'Ended '+fmtS(i.end)}</small></span><span class="amt">${money(c.amt)}</span><span class="go">›</span></button>`};
+ const cs=S.certs||[];$('ctList').innerHTML=cs.length?cs.filter(c=>certInfo(c).active).map(crow).join('')+(cs.some(c=>!certInfo(c).active)?`<h2 style="font-size:15px;margin:16px 4px 8px;color:var(--muted)">Ended</h2>`+cs.filter(c=>!certInfo(c).active).map(crow).join(''):''):'<div class="card empty">No certificates yet. Add one to see its interest, payout dates and when it ends.</div>';
+ /* gold */
+ const gv=S.gold.items.reduce((a,x)=>a+goldVal(x),0),gc=S.gold.items.reduce((a,x)=>a+(+x.cost||0),0);
+ $('gdBox').innerHTML=`<div class="card"><div class="row" style="margin:0"><div><label for="gdP">Price of 1 g 24k today (EGP)</label><input id="gdP" type="number" inputmode="decimal" min="0" value="${S.gold.p24||''}"></div><div style="align-self:end"><button class="btn ghost" id="gdAsk" style="width:100%">Ask Claude</button></div></div>
+  <p class="note" style="margin:6px 0 0">${S.gold.at?'Updated '+fmtS(S.gold.at)+' · ':''}21k = ${money(r2((S.gold.p24||0)*21/24))} · 18k = ${money(r2((S.gold.p24||0)*18/24))}</p><div id="gdMsg"></div></div>
+  ${S.gold.items.length?`<div class="tiles"><div class="tile"><div class="k">Worth now</div><div class="v">${money(gv)}</div></div><div class="tile"><div class="k">You paid</div><div class="v">${money(gc)}</div></div><div class="tile"><div class="k">${gv-gc>=0?'Gain':'Loss'}</div><div class="v" style="color:${gv-gc>=0?'var(--in)':'var(--out)'}">${money(Math.abs(gv-gc))}</div></div></div>`:''}
+  ${S.gold.items.map(x=>`<button class="setbtn" data-gdedit="${x.id}"><span class="ic">🪙</span><span class="t"><b>${r2(x.g)} g · ${x.k}k</b><small>${[x.note,x.worn?'worn jewellery':'',x.cost?'paid '+money(x.cost):''].filter(Boolean).map(esc).join(' · ')||'—'}</small></span><span class="amt">${S.gold.p24>0?money(goldVal(x)):''}</span><span class="go">›</span></button>`).join('')}
+  <button class="btn ghost" data-gdedit="new" style="width:100%;margin-bottom:14px">+ Add gold</button>`;
+ /* foreign currency */
+ $('fxBox').innerHTML=`<div class="card"><h2>Exchange rates (EGP)</h2><div class="row" style="margin:0;flex-wrap:wrap">${FXC.map(c=>`<div><label for="fxr-${c}">1 ${c}</label><input id="fxr-${c}" data-fxr="${c}" type="number" inputmode="decimal" min="0" value="${S.fxr[c]||''}"></div>`).join('')}</div>
+  <div class="btns" style="margin-top:8px"><button class="btn ghost" id="fxAsk">Ask Claude for today’s rates</button></div><p class="note" style="margin:6px 0 0">${S.fxAt?'Updated '+fmtS(S.fxAt):'Used for your savings and for expenses in another currency.'}</p><div id="fxMsg"></div></div>
+  ${(S.fxh||[]).map(h=>`<button class="setbtn" data-fxedit="${h.id}"><span class="ic">💱</span><span class="t"><b>${h.cur} ${money(h.amt)}</b><small>${esc(h.note||'Savings')}</small></span><span class="amt">${S.fxr[h.cur]>0?money(fxVal(h)):''}</span><span class="go">›</span></button>`).join('')}
+  <button class="btn ghost" data-fxedit="new" style="width:100%;margin-bottom:14px">+ Add savings in another currency</button>`;
+ /* zakat */
+ const Zk=zakatInfo();
+ $('zkBox').innerHTML=!(S.gold.p24>0)?`<div class="card empty">Zakat depends on the gold price (nisab = 85 g of 24k gold). <button class="btn" data-go="wealth-gold" style="margin-top:10px">Add today’s gold price</button></div>`:
+  `<div class="card"><div class="kv tot"><span>${Zk.due?'Zakat (2.5%)':'Nothing due'}</span><b style="color:var(--acc)">${Zk.due?egp(Zk.due):'—'}</b></div>
+  <p class="note">Your zakatable money is ${egp(Zk.base)}; the nisab today is ${egp(Zk.nisab)}. ${Zk.due?'It is due once a full Hijri year has passed with your money at or above the nisab.':'You are below the nisab.'}</p>
+  <button class="ib" id="zkMore" style="margin-top:4px">How it’s worked out</button>
+  ${Zk.due?`<div class="btns" style="margin-top:12px"><button class="btn" id="zkPay">I paid zakat</button></div>`:''}</div><p class="note" style="margin:0 6px 14px">A guide only — ask a scholar you trust about your own case.</p>`}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-ctedit],[data-gdedit],[data-fxedit],#gdAsk,#fxAsk,#zkMore,#zkPay');if(!b)return;
+ if(b.id==='zkMore'){const Z=zakatInfo();await ask('How zakat is worked out',`${Z.rows.map(([k,v])=>`<div class="kv"><span>${esc(k)}</span><b>${egp(v)}</b></div>`).join('')}${Z.dOwe?`<div class="kv"><span>− Money you owe people</span><b>${egp(Z.dOwe)}</b></div>`:''}${Z.cc?`<div class="kv"><span>− Credit card balance</span><b>${egp(Z.cc)}</b></div>`:''}<div class="kv tot"><span>Zakatable</span><b>${egp(Z.base)}</b></div><div class="kv"><span>Nisab (85 g × 24k)</span><b>${egp(Z.nisab)}</b></div><p class="note">Worn jewellery is left out. Long-term loans are not deducted, only what you owe now.</p>`,[{label:'Close',value:0}]);return}
+ if(b.id==='zkPay'){const Z=zakatInfo(),body=`<div class="f"><label for="zpAmt">Amount (EGP)</label><input id="zpAmt" type="number" inputmode="decimal" value="${Z.due}"></div><div class="f"><label for="zpAcc">Paid from</label><select id="zpAcc">${accOpts(NONCC,defAcc())}</select></div>`;
+  if(!await ask('I paid zakat',body,[{label:'Save',value:1},{label:'Cancel',value:0,ghost:true}]))return;const a=r2($('zpAmt').value);if(!(a>0))return;
+  tx.push({id:uid(),type:'exp',acc:$('zpAcc').value,amt:a,date:today,cat:'zakat',note:'Zakat',created:Date.now()});save();toast('Zakat recorded',false);return}
+ if(b.id==='gdAsk'||b.id==='fxAsk'){askPrices(b.id==='gdAsk'?'gold':'fx');return}
+ if(b.dataset.ctedit){const id=b.dataset.ctedit,c=(S.certs||[]).find(x=>x.id===id)||{name:'',bank:(S.acc[defAcc()]||{}).bank||'nbe',amt:'',rate:'',start:today,months:36,pay:'m',acc:defAcc()};
+  const banks=BANKS.filter(x=>x[2]==='bank').map(x=>x[0]);
+  const body=`<div class="row"><div><label for="ctName">Name</label><input id="ctName" maxlength="40" value="${esc(c.name)}" placeholder="e.g. 3-year certificate"></div><div><label for="ctBank">Bank</label><select id="ctBank">${banks.map(x=>`<option value="${x}"${x===c.bank?' selected':''}>${esc(bankName(x))}</option>`).join('')}</select></div></div>
+   <div class="row"><div><label for="ctAmt">Amount (EGP)</label><input id="ctAmt" type="number" inputmode="decimal" value="${c.amt}"></div><div><label for="ctRate">Interest % a year</label><input id="ctRate" type="number" inputmode="decimal" step="0.01" value="${c.rate}"></div></div>
+   <div class="row"><div><label for="ctStart">Start date</label><input id="ctStart" type="date" value="${c.start}"></div><div><label for="ctMonths">Months</label><input id="ctMonths" type="number" inputmode="numeric" value="${c.months}"></div></div>
+   <div class="row"><div><label for="ctPay">Interest paid</label><select id="ctPay">${[['m','Monthly'],['q','Every 3 months'],['h','Every 6 months'],['y','Yearly'],['end','At the end']].map(([v,n])=>`<option value="${v}"${v===c.pay?' selected':''}>${n}</option>`).join('')}</select></div><div><label for="ctAcc">Into account</label><select id="ctAcc">${accOpts(NONCC,c.acc)}</select></div></div>
+   ${c.id?`<label class="check"><input type="checkbox" id="ctClosed"${c.closed?' checked':''}> <span>Ended / withdrawn early</span></label>`:''}`;
+  const v=await ask(c.id?'Edit certificate':'New certificate',body,[{label:'Save',value:1},...(c.id?[{label:'Delete',value:'del',ghost:true}]:[]),{label:'Cancel',value:0,ghost:true}]);
+  if(v==='del'){S.certs=S.certs.filter(x=>x.id!==c.id);save();return}if(!v)return;
+  const n={name:$('ctName').value.trim()||bankName($('ctBank').value)+' certificate',bank:$('ctBank').value,amt:r2($('ctAmt').value),rate:+$('ctRate').value||0,start:$('ctStart').value||today,months:+$('ctMonths').value||12,pay:$('ctPay').value,acc:$('ctAcc').value,closed:!!($('ctClosed')&&$('ctClosed').checked)};
+  if(!(n.amt>0)){toast('Enter the amount',false);return}S.certs=S.certs||[];if(c.id)Object.assign(c,n);else S.certs.push({id:'c'+uid(),...n});save();return}
+ if(b.dataset.gdedit){const id=b.dataset.gdedit,x=S.gold.items.find(i=>i.id===id)||{g:'',k:21,cost:'',note:'',worn:false};
+  const body=`<div class="row"><div><label for="gdG">Grams</label><input id="gdG" type="number" inputmode="decimal" step="0.01" value="${x.g}"></div><div><label for="gdK">Karat</label><select id="gdK">${[24,21,18].map(k=>`<option value="${k}"${+x.k===k?' selected':''}>${k}k</option>`).join('')}</select></div></div>
+   <div class="row"><div><label for="gdC">You paid (EGP, optional)</label><input id="gdC" type="number" inputmode="decimal" value="${x.cost||''}"></div><div><label for="gdN">Note</label><input id="gdN" maxlength="40" value="${esc(x.note||'')}" placeholder="e.g. Bar, ring"></div></div>
+   <label class="check"><input type="checkbox" id="gdW"${x.worn?' checked':''}> <span>Worn jewellery (no zakat)</span></label>`;
+  const v=await ask(x.id?'Edit gold':'Add gold',body,[{label:'Save',value:1},...(x.id?[{label:'Delete',value:'del',ghost:true}]:[]),{label:'Cancel',value:0,ghost:true}]);
+  if(v==='del'){S.gold.items=S.gold.items.filter(i=>i.id!==x.id);save();return}if(!v)return;const n={g:r2($('gdG').value),k:+$('gdK').value,cost:r2($('gdC').value)||0,note:$('gdN').value.trim(),worn:$('gdW').checked};
+  if(!(n.g>0)){toast('Enter the grams',false);return}if(x.id)Object.assign(x,n);else S.gold.items.push({id:'g'+uid(),...n});save();return}
+ if(b.dataset.fxedit){const id=b.dataset.fxedit,h=(S.fxh||[]).find(i=>i.id===id)||{cur:'USD',amt:'',note:''};
+  const body=`<div class="row"><div><label for="fhC">Currency</label><select id="fhC">${FXC.map(c=>`<option${c===h.cur?' selected':''}>${c}</option>`).join('')}</select></div><div><label for="fhA">Amount</label><input id="fhA" type="number" inputmode="decimal" value="${h.amt}"></div></div><div class="f"><label for="fhN">Note</label><input id="fhN" maxlength="40" value="${esc(h.note||'')}" placeholder="e.g. Cash at home, USD account"></div>`;
+  const v=await ask(h.id?'Edit':'Savings in another currency',body,[{label:'Save',value:1},...(h.id?[{label:'Delete',value:'del',ghost:true}]:[]),{label:'Cancel',value:0,ghost:true}]);
+  if(v==='del'){S.fxh=S.fxh.filter(i=>i.id!==h.id);save();return}if(!v)return;const n={cur:$('fhC').value,amt:r2($('fhA').value),note:$('fhN').value.trim()};
+  if(!(n.amt>0)){toast('Enter the amount',false);return}S.fxh=S.fxh||[];if(h.id)Object.assign(h,n);else S.fxh.push({id:'f'+uid(),...n});save()}});
+document.addEventListener('change',e=>{if(e.target.id==='gdP'){S.gold.p24=r2(e.target.value)||0;S.gold.at=today;save()}else if(e.target.dataset&&e.target.dataset.fxr){S.fxr[e.target.dataset.fxr]=r2(e.target.value)||0;S.fxAt=today;save()}});
+async function askPrices(kind){const box=$(kind==='gold'?'gdMsg':'fxMsg');let key='';try{key=localStorage.getItem('exp-ai-key')||''}catch(e){}
+ if(!key){box.innerHTML='<div class="msg warn">Add your Anthropic API key first (Goals tab → Claude key), or type the price yourself.</div>';return}
+ box.innerHTML=`<div class="msg">Claude is checking today’s ${kind==='gold'?'gold price':'exchange rates'} in Egypt…</div>`;
+ const prompt=kind==='gold'?`Search the web for today's gold price in Egypt (${today}). Reply with ONLY one JSON object: {"p24":number (EGP per gram of 24 karat, selling price),"src":"short source"}`:`Search the web for today's official exchange rates in Egypt (${today}) at the Central Bank of Egypt or a major bank, buy rate in EGP. Reply with ONLY one JSON object: {"USD":number,"EUR":number,"GBP":number,"SAR":number,"AED":number,"KWD":number,"src":"short source"}`;
+ try{const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+   body:JSON.stringify({model:'claude-sonnet-5-5',max_tokens:1200,tools:[{type:'web_search_20250305',name:'web_search',max_uses:4}],messages:[{role:'user',content:prompt}]})});
+  const j=await r.json();if(!r.ok)throw new Error(j&&j.error&&j.error.message||('error '+r.status));
+  const m=(j.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('\n').match(/\{[\s\S]*\}/);if(!m)throw new Error('no figures in the answer');const o=JSON.parse(m[0]);
+  if(kind==='gold'){if(!(o.p24>100&&o.p24<1e6))throw new Error('the price looks wrong');S.gold.p24=r2(o.p24);S.gold.at=today}
+  else{let n=0;for(const c of FXC)if(o[c]>0.5&&o[c]<10000){S.fxr[c]=r2(o[c]);n++}if(!n)throw new Error('no rates found');S.fxAt=today}
+  save();const b2=$(kind==='gold'?'gdMsg':'fxMsg');if(b2)b2.innerHTML=`<div class="msg">Updated${o.src?' — '+esc(o.src):''}.</div>`}
+ catch(e){const b2=$(kind==='gold'?'gdMsg':'fxMsg');if(b2)b2.innerHTML=`<div class="msg warn">Couldn’t update: ${esc(e.message||'no internet?')}</div>`}}
+
+
+/* ---------- paid in another currency: converts into EGP with your saved rate ---------- */
+function fcReset(){if(!$('fcRow'))return;$('fcRow').hidden=true;$('fcBtn').hidden=false;$('fcAmt').value=''}
+function fcCalc(){const c=$('fcCur').value,r=+$('fcRate').value,a=+$('fcAmt').value;if(r>0&&S.fxr[c]!==r){S.fxr[c]=r;S.fxAt=today}
+ if(a>0&&r>0){$('aAmt').value=r2(a*r);$('aAmt').dispatchEvent(new Event('input',{bubbles:true}));const n=$('aNote');if(!n.value||/^[A-Z]{3} [\d.,]+ @ /.test(n.value))n.value=`${c} ${money(a)} @ ${r}`}}
+$('fcBtn').addEventListener('click',()=>{$('fcCur').innerHTML=FXC.map(c=>`<option>${c}</option>`).join('');$('fcCur').value='USD';$('fcRate').value=S.fxr.USD||'';$('fcRow').hidden=false;$('fcBtn').hidden=true;$('fcAmt').focus()});
+$('fcCur').addEventListener('change',()=>{$('fcRate').value=S.fxr[$('fcCur').value]||'';fcCalc()});
+['fcAmt','fcRate'].forEach(id=>$(id).addEventListener('input',fcCalc));
+
+
+/* ---------- split a bill: your share stays the expense, the rest is "lent" to each person ---------- */
+document.addEventListener('click',async e=>{if(!e.target.closest('#aSplit'))return;const t=editId&&tx.find(x=>x.id===editId);if(!t)return;
+ const body=`<p class="note" style="margin-top:0">You paid ${egp(t.amt)}${t.note?' at '+esc(t.note):''}. Who shares it?</p><div class="f"><label for="spWho">Names, separated by commas</label><input id="spWho" placeholder="e.g. Ahmed, Sara"></div>
+  <label class="check"><input type="checkbox" id="spMe" checked> <span>Split equally, including me</span></label><div class="info" id="spInfo" style="--c:var(--acc)">Enter the names.</div>`;
+ const pr=ask('Split this bill',body,[{label:'Split',value:1},{label:'Cancel',value:0,ghost:true}]);
+ const calc=()=>{if(!$('spWho'))return{n:[],each:0};const n=$('spWho').value.split(/[,،\n]/).map(x=>x.trim()).filter(Boolean),k=n.length+($('spMe').checked?1:0),each=k?r2(t.amt/k):0;
+  $('spInfo').innerHTML=n.length?`Each pays <b>${egp(each)}</b>${$('spMe').checked?` · your share ${egp(r2(t.amt-each*n.length))}`:' · you paid for them'}.`:'Enter the names.';return{n,each}};
+ $('spWho').addEventListener('input',calc);$('spMe').addEventListener('change',calc);let st=calc();$('dlgB').addEventListener('input',()=>{st=calc()});$('dlgB').addEventListener('change',()=>{st=calc()});
+ if(!await pr)return;st={n:$('spWho').value.split(/[,،\n]/).map(x=>x.trim()).filter(Boolean),me:$('spMe').checked};
+ if(!st.n.length){toast('Enter at least one name',false);return}const k=st.n.length+(st.me?1:0),each=r2(t.amt/k),others=r2(each*st.n.length);
+ if(others>t.amt-0.001&&st.me){toast('Check the names',false);return}
+ S.debts=S.debts||[];t.amt=r2(t.amt-others);t.split=r2((t.split||0)+others);
+ for(const who of st.n){const lt={id:uid(),type:'exp',acc:t.acc,amt:each,date:t.date,cat:'lend',note:`Split${t.note?' · '+t.note:''} · ${who}`,created:Date.now(),splitOf:t.id,debtOpen:1},d={id:'d'+uid(),dir:'lent',kind:'person',who,amt:each,date:t.date,due:'',acc:t.acc,salary:false,each:0,note:t.note?'Split: '+t.note:'Split bill',pays:[],fromTx:lt.id};
+  lt.debt=d.id;tx.push(lt);S.debts.push(d)}
+ editId=null;save();go('loans-debts');toast(`Split: ${st.n.length} owe you ${egp(each)} each`,false)});
+
+
+/* ---------- export the Reports period: CSV for Excel, or a printable report (Save as PDF) ---------- */
+function repData(){const p=$('rMonth').value||today.slice(0,7),ca=$('rAcc').value||'all',acc=ca==='all'?null:ca,list=tx.filter(t=>t.date.startsWith(p)&&(!acc||t.acc===acc||t.to===acc)&&!voided(t)).sort((a,b)=>a.date.localeCompare(b.date));
+ const ex=list.filter(t=>t.type==='exp'&&!NOT_SPEND.has(t.cat)),sp=r2(ex.reduce((s,t)=>s+cost(t),0)),inc=r2(list.filter(t=>t.type==='inc'&&!NOT_SPEND.has(t.cat)).reduce((s,t)=>s+t.amt,0)),m=new Map();
+ ex.forEach(t=>m.set(t.cat,r2((m.get(t.cat)||0)+t.amt)));return{p,label:p.length===4?'All of '+p:monthLbl(p),acc,list,sp,inc,cats:[...m].sort((a,b)=>b[1]-a[1])}}
+const TYPEN={exp:'Expense',inc:'Income',xfer:'Transfer',pay:'Card payment'};
+function saveOut(name,text,mime){if(window.Android&&Android.saveFile){const r=Android.saveFile(name,text);toast(r?`Saved to ${r}: ${name}`:'Could not save the file',false);return}
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:mime}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
+function exportCSV(){const D=repData(),q=v=>{v=String(v??'');return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};
+ const rows=[['Date','Type','Account','To','Category','Note','Amount (EGP)','Interest / fees']].concat(D.list.map(t=>[t.date,TYPEN[t.type]||t.type,accName(t.acc),t.to?accName(t.to):'',catName(t),t.note||'',t.amt,fee(t)||'']));
+ saveOut(`expenses-${D.p}${D.acc?'-'+D.acc:''}.csv`,'﻿'+rows.map(r=>r.map(q).join(',')).join('\r\n'),'text/csv')}
+function reportHTML(){const D=repData(),e=esc;return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Expenses — ${e(D.label)}</title><style>body{font:12px system-ui,sans-serif;color:#0f172a;margin:24px}h1{font-size:20px;margin:0 0 4px}h2{font-size:14px;margin:18px 0 6px}.n{color:#5b6b80}table{width:100%;border-collapse:collapse}td,th{padding:5px 6px;border-bottom:1px solid #e5eaf0;text-align:left}th{background:#f3f6f8}.r{text-align:right;white-space:nowrap}.t{display:flex;gap:10px}.t div{flex:1;border:1px solid #e5eaf0;border-radius:10px;padding:8px}.t b{display:block;font-size:16px}</style></head><body>
+ <h1>Expenses — ${e(D.label)}</h1><div class="n">${D.acc?e(accName(D.acc))+' · ':''}made ${fmt(today)}</div>
+ <h2>Summary</h2><div class="t"><div>Spent<b>${money(D.sp)}</b></div><div>Income<b>${money(D.inc)}</b></div><div>Net<b>${money(D.inc-D.sp)}</b></div></div>
+ <h2>Spending by category</h2><table>${D.cats.map(([k,v])=>`<tr><td>${e(catName({type:'exp',cat:k}))}</td><td class="r">${money(v)}</td><td class="r n">${D.sp?Math.round(v/D.sp*100):0}%</td></tr>`).join('')||'<tr><td>No spending.</td></tr>'}</table>
+ <h2>All entries (${D.list.length})</h2><table><tr><th>Date</th><th>Type</th><th>Account</th><th>Category / note</th><th class="r">EGP</th></tr>${D.list.map(t=>`<tr><td>${fmtS(t.date)}</td><td>${TYPEN[t.type]||''}</td><td>${e(accName(t.acc))}${t.to?' → '+e(accName(t.to)):''}</td><td>${e(catName(t))}${t.note?' · '+e(t.note):''}</td><td class="r">${t.type==='inc'?'+':t.type==='exp'?'−':''}${money(t.amt)}</td></tr>`).join('')}</table></body></html>`}
+function exportPDF(){const D=repData(),h=reportHTML();if(window.Android&&Android.printHtml){Android.printHtml('Expenses '+D.label,h);toast('Choose “Save as PDF” as the printer',false);return}
+ const f=document.createElement('iframe');f.style.cssText='position:fixed;width:0;height:0;border:0';document.body.appendChild(f);f.contentDocument.open();f.contentDocument.write(h);f.contentDocument.close();setTimeout(()=>{try{f.contentWindow.print()}catch(e){}setTimeout(()=>f.remove(),1000)},300)}
+$('rExp').addEventListener('click',async()=>{const D=repData();const v=await ask('Export '+D.label,`<p class="note" style="margin-top:0">${D.list.length} entries${D.acc?' · '+esc(accName(D.acc)):''}. Change the period or account above to export something else.</p>`,[{label:'Excel (CSV file)',value:'csv'},{label:'PDF report',value:'pdf'},{label:'Cancel',value:0,ghost:true}]);
+ if(v==='csv')exportCSV();else if(v==='pdf')exportPDF()});
+
+
+/* ---------- profiles ---------- */
+function renderProf(){const L=profList();$('profList').innerHTML=L.map(x=>`<button class="setbtn" data-profmenu="${x.id}"><span class="ic">${x.id===PROF?'✅':'👤'}</span><span class="t"><b>${esc(x.name)}</b><small>${x.id===PROF?'Open now':x.id===''?'Your own — bank SMS and backup':'Kept by hand'}</small></span><span class="go">›</span></button>`).join('')}
+const profSave=l=>{try{localStorage.setItem('exp-profiles',JSON.stringify(l))}catch(e){}};
+document.addEventListener('click',async e=>{let b=e.target.closest('#profAdd,[data-profmenu]');if(!b)return;const L=profList();
+ if(b.dataset.profmenu!=null){const id=b.dataset.profmenu,x=L.find(p=>p.id===id);if(!x)return;const v=await ask(x.name,'',[...(id===PROF?[]:[{label:'Open',value:'go'}]),{label:'Rename',value:'ren'},...(id&&id!==PROF?[{label:'Delete',value:'del',ghost:true}]:[]),{label:'Close',value:0,ghost:true}]);
+  if(!v)return;b={dataset:v==='go'?{profgo:id}:v==='ren'?{profren:id}:{profdel:id}}}
+ if(b.id==='profAdd'||b.dataset.profren!=null){const id=b.dataset.profren,cur=id!=null?L.find(x=>x.id===id):null;
+  const v=await ask(cur?'Rename profile':'New profile',`<div class="f"><label for="prName">Name</label><input id="prName" maxlength="30" value="${cur?esc(cur.name):''}" placeholder="e.g. Sara, Shop"></div>`,[{label:cur?'Save':'Add',value:1},{label:'Cancel',value:0,ghost:true}]);
+  const n=v&&$('prName').value.trim();if(!n)return;if(cur)cur.name=n;else L.push({id:'p'+uid().slice(-6),name:n});profSave(L);renderProf();if(!cur)toast(`${n} added — tap Open to switch`,false);return}
+ if(b.dataset.profgo!=null){save();try{localStorage.setItem('exp-profile',b.dataset.profgo)}catch(e){}location.hash='home';location.reload();return}
+ if(b.dataset.profdel){const id=b.dataset.profdel,x=L.find(p=>p.id===id);if(!x)return;
+  if(await ask(`Delete ${x.name}?`,'<p class="note" style="margin-top:0">All of this profile’s accounts and entries are deleted from the phone. Export a backup first if you may need them.</p>',[{label:'Delete',value:1},{label:'Cancel',value:0,ghost:true}])){try{localStorage.removeItem('exp-data:'+id)}catch(e){}profSave(L.filter(p=>p.id!==id));renderProf();toast('Profile deleted',false)}}});
 
 /* ---------- charity: a share of salary every month ---------- */
 function charityMonths(){const pct=+S.charity.pct||0,sal=tx.filter(t=>t.type==='inc'&&t.cat==='salary'),cur=ymOf(today);
@@ -2905,6 +3099,7 @@ function planNotes(){const N=[],ym=ymOf(today),db=+S.nfy.days||0,minus=(d,k)=>is
    N.push({id:`loan-${L.id}-${st.k}-${db}`,date:minus(d,db),title:`🏦 ${L.name} — ${db&&d>today?`due ${fmtS(d)}`:'due today'}`,text:`Installment ${st.k+1} of ${L.months}: EGP ${money(loanCalc(L).each)} from ${accName(L.acc)}.`})}
   for(const d of S.debts||[]){const l=debtLeft(d);if(!d.due||l<=0)continue;
    N.push({id:`debt-${d.id}-${d.due}-${db}`,date:minus(d.due,db),title:d.dir==='owe'?`🤝 Pay back ${d.who}`:`🤝 ${d.who} should pay you back`,text:`EGP ${money(l)} ${d.dir==='owe'?'still to pay':'still owed to you'} — due ${fmtS(d.due)}.`})}}
+ if(S.nfy.rec)for(const c of S.certs||[]){const i=certInfo(c);if(!i.active||daysTo(i.end)>40)continue;N.push({id:`cert-${c.id}-${db}`,date:minus(i.end,Math.max(db,3)),title:`🏛️ ${c.name} ends ${fmtS(i.end)}`,text:`EGP ${money(c.amt)} at ${bankName(c.bank)}. Decide whether to renew it or move the money.`})}
  if(S.nfy.sum){const nx=addYm(ym,1);N.push({id:'sum-'+ym,date:nx+'-01',title:`📊 ${MONTHS[+ym.slice(5)-1]} in short`,text:monthSummary(ym),ch:'summary',chName:'Monthly summary'})}
  return N}
 function widgetData(){const ym=ymOf(today),sp=r2(tx.filter(t=>spentIn(t,ym)&&!NOT_SPEND.has(t.cat)&&!isCheck(t)).reduce((a,t)=>a+cost(t),0)),d=dim(+ym.slice(0,4),+ym.slice(5)-1),left=Math.max(1,d-+today.slice(8)+1);
@@ -2928,7 +3123,7 @@ document.addEventListener('change',e=>{const id=e.target.id,m={nfyHome:'home',nf
 
 
 /* ---------- which tabs show ---------- */
-const TABN={house:'🏠 House — home bills',credit:'💳 Credit — credit card bills & installments',loans:'🏦 Loans — bank loans, borrowed & lent',cash:'💵 Cash — pocket money',goals:'🎯 Goals — saving targets',gam:'🤝 Gam3ya',charity:'🙏 Charity — a share of salary',subs:'🔁 Subs — subscriptions',reports:'📊 Reports'};
+const TABN={house:'🏠 House — home bills',credit:'💳 Credit — credit card bills & installments',loans:'🏦 Loans — bank loans, installments, borrowed & lent',wealth:'💎 Wealth — net worth, certificates, gold, zakat',cash:'💵 Cash — pocket money',goals:'🎯 Goals — saving targets',gam:'🤝 Gam3ya',charity:'🙏 Charity — a share of salary',subs:'🔁 Subs — subscriptions',reports:'📊 Reports'};
 function applyTabs(){const off=S.tabsOff||[];document.querySelectorAll('nav a').forEach(a=>{const k=a.id.slice(2),h=off.includes(k);if(a.hidden!==h)a.hidden=h})}
 function renderTabChk(){const box=$('tabChk');if(!box)return;box.innerHTML=Object.entries(TABN).map(([k,n])=>`<label class="check"><input type="checkbox" data-tabchk="${k}"${(S.tabsOff||[]).includes(k)?'':' checked'}> <span>${n}</span></label>`).join('')}
 document.addEventListener('change',e=>{const k=e.target.dataset&&e.target.dataset.tabchk;if(!k)return;const off=new Set(S.tabsOff||[]);if(e.target.checked)off.delete(k);else off.add(k);S.tabsOff=[...off];save();applyTabs()});
@@ -2977,15 +3172,15 @@ if(window.MK){const ob2=MK.back;MK.back=function(){if(W&&W.step>0){setupReadAccs
 const SECS=[['sec','🔒','Lock & appearance','Fingerprint lock, light or dark'],['acc','🏦','Accounts & credit card','Balances, limit, bill and due days'],['cats','🏷️','Categories','Add, rename or remove'],
  ['stm','📄','Bank statements','Import CIB PDF statements'],['pay','💵','Payslips','Add your salary from payslips'],['sms','✉️','Bank SMS & apps','Card numbers, messages, bank app notifications'],
  ['rec','🔁','Recurring payments','Monthly bills: reminder or added for you'],['bud','🎯','Category budgets','A monthly limit per category, alert at 80%'],['nfy','🔔','Reminders & widget','Home bills, monthly summary, home-screen widget'],
- ['drive','☁️','Google Drive backup','Daily backup to your Drive'],['backup','💾','Backup file','Export or restore everything']];
+ ['drive','☁️','Google Drive backup','Daily backup to your Drive'],['backup','💾','Backup file','Export or restore everything'],['prof','👥','Profiles','Separate money for someone else on this phone']];
 let setSub=null;
 function showSettingsPage(){
- const avail=SECS.filter(([id])=>id!=='drive'||HAS_DRIVE);
+ const avail=SECS.filter(([id])=>id!=='drive'||(HAS_DRIVE&&!PROF));
  $('setMenu').hidden=!!setSub;$('setHead').hidden=!setSub;
  if(!setSub)$('setMenu').innerHTML=avail.map(([id,ic,t,d])=>`<button class="setbtn" data-setgo="${id}"><span class="ic">${ic}</span><span class="t"><b>${t}</b><small>${d}</small></span><span class="go">›</span></button>`).join('')+'<button class="setbtn" data-m3fb><span class="ic">🎧</span><span class="t"><b>Customer support</b><small>Report a problem or suggest an idea</small></span><span class="go">›</span></button>';
  else $('setTitle').textContent=(SECS.find(x=>x[0]===setSub)||[])[2]||'';
  document.querySelectorAll('#v-settings [data-sec]').forEach(el=>{el.hidden=(el.dataset.sec!==setSub&&!window.__showAll)||(el.dataset.sec==='drive'&&!HAS_DRIVE)});
- if(setSub==='sec')renderSecurity()}
+ if(setSub==='sec')renderSecurity();if(setSub==='prof')renderProf()}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-setgo]');if(b)location.hash='settings-'+b.dataset.setgo});
 $('setBack').addEventListener('click',()=>{if(history.length>1)history.back();else go('settings')});
 
@@ -3134,7 +3329,7 @@ async function teach(key){const f=fails.find(x=>x.key===key);if(!f)return;const 
   <div id="tcAmtW"><label style="display:block;font-weight:700;font-size:13px;margin-bottom:6px">Which number is the amount?</label><div class="wchips" style="margin-top:0">${nums.map((n,i)=>`<button type="button" class="chip${i===def?' on':''}" data-tcamt="${i}">${money(n)}</button>`).join('')||'<p class="note">No numbers in this message.</p>'}</div></div>`;
  const pr=ask('Teach the app',body,[{label:'Save',value:1},{label:'Cancel',value:0,ghost:true}]);
  const sync=()=>{const ig=$('tcWhat').value==='ignore';$('tcAccW').hidden=ig;$('tcAmtW').hidden=ig};$('tcWhat').addEventListener('change',sync);
- let st={};const grab=()=>{const r=document.querySelector('[data-tcamt].on');st={what:$('tcWhat').value,acc:$('tcAcc').value,ai:r?+r.dataset.tcamt:-1}};
+ let st={};const grab=()=>{if(!$('tcWhat'))return;const r=document.querySelector('[data-tcamt].on');st={what:$('tcWhat').value,acc:$('tcAcc').value,ai:r?+r.dataset.tcamt:-1}};
  $('dlgB').addEventListener('change',grab);$('dlgB').addEventListener('click',e=>{const c=e.target.closest('[data-tcamt]');if(!c)return;document.querySelectorAll('[data-tcamt].on').forEach(x=>x.classList.remove('on'));c.classList.add('on');grab()});grab();
  if(!await pr)return;
  if(st.what!=='ignore'&&!(st.ai>=0)){toast('Choose the amount',false);return}
@@ -3287,14 +3482,14 @@ function ingest0(list){const r={added:0,merged:0,known:0,failed:0};
   if(st){st.sms=t.sms;skip.push(key);r.merged++;continue}
   if(pair(t)){skip.push(key);r.merged++}else{tx.push(t);r.added++}}
  if(r.added){r.merged+=dedupe()}if(r.added||r.merged||r.failed)save();return r}
-function pushSmsConfig(){if(!HAS_SMS)return;
+function pushSmsConfig(){if(!HAS_SMS||PROF)return;
  const words=[...new Set([...SMS_ACC.flatMap(kwList),...IP_WORDS])],senders=[...new Set(myBanks().flatMap(b=>b[3]).map(x=>x.toLowerCase().replace(/[^a-z0-9\u0600-\u06ff]/g,'')).filter(Boolean))];
  try{Android.smsConfig(JSON.stringify({on:!!S.sms.on,words,senders}))}catch(e){}}
 const myBanks=()=>[...new Set(SMS_ACC.map(a=>S.acc[a]&&S.acc[a].bank).filter(Boolean))].map(bankOf).filter(Boolean);
 const appList=()=>myBanks().filter(b=>b[4].length&&b[0]!=='instapay');
 const HAS_NOTIF=!!(window.Android&&typeof Android.notifAccess==='function');
 const notifGranted=()=>{try{return HAS_NOTIF&&Android.notifAccess()==='granted'}catch(e){return false}};
-function pushNotifConfig(){if(HAS_NOTIF)try{Android.notifConfig(!!S.sms.notif);Android.notifApps&&Android.notifApps(JSON.stringify(appList().map(b=>({id:b[0],kw:b[4]}))))}catch(e){}}
+function pushNotifConfig(){if(HAS_NOTIF&&!PROF)try{Android.notifConfig(!!S.sms.notif);Android.notifApps&&Android.notifApps(JSON.stringify(appList().map(b=>({id:b[0],kw:b[4]}))))}catch(e){}}
 function renderNotif(){const box=$('notifState');if(!box)return;
  const apps=appList().map(b=>bankName(b[0]));
  if(!HAS_NOTIF){box.innerHTML=`<div class="msg">Reading bank app notifications works in the Android app${apps.length?` (here: ${esc(apps.join(', '))})`:''}. You can still paste a Telda notification in <b>Test a message</b> below — start it with the word Telda.</div>`;return}
@@ -3303,7 +3498,7 @@ function renderNotif(){const box=$('notifState');if(!box)return;
  box.innerHTML=S.sms.notif&&g?`<div class="msg"><b>On.</b> New notifications from ${esc(apps.join(', '))} are added automatically.</div>`+'<div class="btns" style="margin-top:10px"><button class="btn ghost" data-sms="notifoff">Turn off</button></div>'
   :`<div class="msg">${S.sms.notif?'Android notification access was turned off.':'Off.'}</div><div class="btns" style="margin-top:10px"><button class="btn" data-sms="notifon">Turn on app notifications</button></div>${S.sms.notif&&!g?notifHelp:''}`}
 const notifHelp='<div class="msg warn" style="margin-top:10px"><b>Allow notification access:</b><br>1. Tap <b>Turn on</b> — Android opens <b>Notification access</b> (Device &amp; app notifications).<br>2. Choose <b>Expenses</b> and switch it on.<br>3. If it is greyed out ("Restricted setting"): tap <b>Open app settings</b> → ⋮ (top right) → <b>Allow restricted settings</b>, then try step 2 again.<br>4. Come back here.<div class="btns" style="margin-top:10px"><button class="btn ghost" data-sms="appsettings">Open app settings</button></div></div>';
-function pollSms(){if(!HAS_SMS||!(S.sms.on||S.sms.notif))return;let l;try{l=JSON.parse(Android.smsTake()||'[]')}catch(e){return}
+function pollSms(){if(PROF||!HAS_SMS||!(S.sms.on||S.sms.notif))return;let l;try{l=JSON.parse(Android.smsTake()||'[]')}catch(e){return}
  if(!Array.isArray(l)||!l.length)return;const r=ingest(l);if(r.added||r.merged)toast(`Added ${r.added+r.merged} from SMS`,false)}
 function saveKw(){SMS_ACC.forEach(a=>S.sms.kw[a]=$('kw-'+a).value.trim());S.sms.ipAcc=$('ipAcc').value;save();pushSmsConfig()}
 function renderLearn(){const L=S.learn||[];$('smsLearn').innerHTML=L.length?`<h2 style="margin-top:18px;font-size:16px">Message formats you taught (${L.length})</h2><ul class="list">${L.map(x=>`<li><span class="t" style="font-size:14px">${x.type==='ignore'?'Ignore':x.type==='inc'?'Money in':'Money out'}${x.type==='ignore'?'':' · '+esc(accName(x.acc))}<small>${esc(x.sk.split(' ').slice(0,8).join(' '))}…</small></span><button class="ib" data-forget="${x.id}">Forget</button></li>`).join('')}</ul>`:''}
@@ -3342,7 +3537,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-sms]');if(
 window.onResumeApp=()=>{pollSms();if(location.hash==='#settings')renderNotif()};setInterval(pollSms,20000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)pollSms()});
 
 /* ---------- swipe the screen left/right to move between tabs (same as Time Sheet) ---------- */
-{const STABS0=['home','house','credit','loans','cash','goals','gam','charity','subs','reports'];const STL=()=>STABS0.filter(t=>!(S.tabsOff||[]).includes(t));
+{const STABS0=['home','house','credit','loans','wealth','cash','goals','gam','charity','subs','reports'];const STL=()=>STABS0.filter(t=>!(S.tabsOff||[]).includes(t));
  let sx=0,sy=0,mode=0,on=false,sec=null;
  const cur=()=>{const p=location.hash.slice(1).split('-');return p.length===1&&STL().includes(p[0]||'home')?(p[0]||'home'):null};
  const blocked=t=>!$('dlg').hidden||$('pk')||document.querySelector('.ddmenu')||t.closest('input,textarea,select,.dd,nav,header,.toast,.fab');
@@ -3359,15 +3554,15 @@ window.onResumeApp=()=>{pollSms();if(location.hash==='#settings')renderNotif()};
  document.addEventListener('touchcancel',()=>{on=false;reset()},{passive:true});}
 
 /* ---------- routing ---------- */
-const V=['home','house','credit','loans','cash','goals','gam','charity','subs','reports','settings','add','plan'];
+const V=['home','house','credit','loans','wealth','cash','goals','gam','charity','subs','reports','settings','add','plan'];
 function go(v){if(location.hash!=='#'+v)location.hash=v;else route()}
-const TABS=['home','house','credit','loans','cash','goals','gam','charity','subs','reports','settings'];let lastView=null,lastDepth=0;
+const TABS=['home','house','credit','loans','wealth','cash','goals','gam','charity','subs','reports','settings'];let lastView=null,lastDepth=0;
 function animate(el,cls){if(!el)return;el.classList.remove('anim-r','anim-l','anim-u');void el.offsetWidth;el.classList.add(cls)}
 function route(){if(lastHash!==null&&lastHash!==location.hash)closeCards();lastHash=location.hash;const h0=location.hash.slice(1),parts=h0.split('-'),h=parts[0],v=V.includes(h)?h:'home';setSub=v==='settings'?parts[1]||null:null;pageSub=v==='settings'?null:parts[1]||null;pageArg=parts.slice(2).join('-')||null;
  if(v!=='add'&&v!=='plan')backTo=v;else if(v==='add'&&!F)F=fresh('exp');
  V.forEach(k=>{$('v-'+k).hidden=k!==v;const t=$('t-'+k);if(t)t.classList.toggle('on',k===v)});
- $('fab').hidden=['add','plan','settings','goals','gam','charity','loans'].includes(v);document.querySelector('nav').hidden=v==='add'||v==='plan';
- if(v==='home')renderHome();else if(v==='house')renderHouse();else if(v==='credit')renderCredit();else if(v==='cash')renderCash();else if(v==='reports')renderReports();else if(v==='subs')renderSubs();else if(v==='goals')renderGoals();else if(v==='gam')renderGam();else if(v==='loans')renderLoans();else if(v==='charity')renderCharity();else if(v==='settings')renderSettings();else if(v==='plan')renderPlan();else renderAdd();
+ $('fab').hidden=['add','plan','settings','goals','gam','charity','loans','wealth'].includes(v);document.querySelector('nav').hidden=v==='add'||v==='plan';
+ if(v==='home')renderHome();else if(v==='house')renderHouse();else if(v==='credit')renderCredit();else if(v==='cash')renderCash();else if(v==='reports')renderReports();else if(v==='subs')renderSubs();else if(v==='goals')renderGoals();else if(v==='gam')renderGam();else if(v==='loans')renderLoans();else if(v==='wealth')renderWealth();else if(v==='charity')renderCharity();else if(v==='settings')renderSettings();else if(v==='plan')renderPlan();else renderAdd();
  applySub(v);
  {const depth=h0.split('-').length>1?1:0,sec=$('v-'+v),i=TABS.indexOf(v),j=TABS.indexOf(lastView);let cls;
   if(v==='add'||v==='plan')cls='anim-u';else if(lastView===v)cls=depth>lastDepth?'anim-r':depth<lastDepth?'anim-l':null;else cls=i<0||j<0?'anim-u':i>j?'anim-r':'anim-l';
@@ -3375,7 +3570,7 @@ function route(){if(lastHash!==null&&lastHash!==location.hash)closeCards();lastH
  window.scrollTo(0,0);const on=$('t-'+v);if(on)on.scrollIntoView({inline:'center',block:'nearest'})}
 function renderAll(){const v=location.hash.slice(1);if(v==='add'||v==='plan')return;const y=window.scrollY;route();window.scrollTo(0,y)}
 window.addEventListener('hashchange',route);
-window.__app={get tx(){return tx},get S(){return S},get fails(){return fails},save:()=>save(),openEdit:id=>openEdit(id),monthStats,loanCalc,loanState,debtLeft,lnSummary,goalPlan,ingest,widgetData,planNotes,calcMath,estMin};
+window.__app={get tx(){return tx},get S(){return S},get fails(){return fails},save:()=>save(),openEdit:id=>openEdit(id),monthStats,reportHTML,repData,loanCalc,loanState,debtLeft,lnSummary,goalPlan,netWorth,zakatInfo,certInfo,ingest,widgetData,planNotes,calcMath,estMin};
 load();applyTheme();applyTabs();route();if(firstRun&&!tx.length&&!S.setupV)setupOpen();pushReminder();pushSmsConfig();pushNotifConfig();pollSms();runRecurring();pushExtras();
 if(HAS_SMS&&S.sms.on&&!S.sms.scanned&&Android.smsPermission()==='granted')scanSms(3650);
 if(!window.Android)$('status').textContent='Saved in this browser';

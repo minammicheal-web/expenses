@@ -54,12 +54,12 @@ jobs:
         run: gradle assembleRelease --no-daemon --stacktrace
 
       - name: Name the APK
-        run: cp android/app/build/outputs/apk/release/app-release.apk Expenses.apk
+        run: cp android/app/build/outputs/apk/release/app-release.apk CheckBook.apk
 
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ github.run_number }}
-          name: Expenses ${{ github.run_number }}
-          body: Download Expenses.apk below and open it on your phone to install or update. Your data is kept when updating.
-          files: Expenses.apk
+          name: CheckBook ${{ github.run_number }}
+          body: Download CheckBook.apk below and open it on your phone to install or update. Your data is kept when updating.
+          files: CheckBook.apk
           make_latest: true

@@ -42,7 +42,7 @@ public class SmsReceiver extends BroadcastReceiver {
             any = true;
         }
         if (any) ReminderWorker.notify(c, 2, "bank-sms", "Bank messages", "Bank SMS recorded",
-                "Open Expenses to see it and pick a category.");
+                "Open CheckBook to see it and pick a category.");
     }
 
     static String norm(String s) {

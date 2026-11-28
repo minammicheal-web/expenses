@@ -197,17 +197,17 @@ public class MainActivity extends Activity {
         LinearLayout v = new LinearLayout(this);
         v.setOrientation(LinearLayout.VERTICAL);
         v.setGravity(Gravity.CENTER);
-        v.setBackgroundColor(Color.rgb(11, 18, 32));
+        v.setBackgroundColor(Color.rgb(7, 18, 38));
         v.setClickable(true);
         TextView t = new TextView(this);
-        t.setText("Expenses is locked");
+        t.setText("CheckBook is locked");
         t.setTextColor(Color.WHITE);
         t.setTextSize(24);
         t.setGravity(Gravity.CENTER);
         v.addView(t);
         lockMsg = new TextView(this);
         lockMsg.setText("Use your fingerprint or screen lock to open it.");
-        lockMsg.setTextColor(Color.rgb(159, 176, 198));
+        lockMsg.setTextColor(Color.rgb(155, 171, 196));
         lockMsg.setTextSize(15);
         lockMsg.setGravity(Gravity.CENTER);
         lockMsg.setPadding(48, 24, 48, 40);
@@ -217,9 +217,9 @@ public class MainActivity extends Activity {
         b.setAllCaps(false);
         b.setTextSize(17);
         b.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        b.setTextColor(Color.rgb(4, 32, 28));
+        b.setTextColor(Color.rgb(4, 18, 43));
         GradientDrawable bg = new GradientDrawable();
-        bg.setColor(Color.rgb(45, 212, 191));
+        bg.setColor(Color.rgb(141, 184, 255));
         bg.setCornerRadius(dp(28));
         b.setBackground(bg);
         b.setStateListAnimator(null);
@@ -243,7 +243,7 @@ public class MainActivity extends Activity {
             return;
         }
         authing = true;
-        String title = "unlock".equals(purpose) ? "Unlock Expenses" : "enable".equals(purpose) ? "Turn on the lock" : "Turn off the lock";
+        String title = "unlock".equals(purpose) ? "Unlock CheckBook" : "enable".equals(purpose) ? "Turn on the lock" : "Turn off the lock";
         try {
             if (Build.VERSION.SDK_INT >= 28) {
                 BiometricPrompt.Builder b = new BiometricPrompt.Builder(this).setTitle(title)
@@ -319,7 +319,7 @@ public class MainActivity extends Activity {
 
     private void applyBars(boolean dark) {
         darkUi = dark;
-        int c = dark ? Color.rgb(11, 18, 32) : Color.rgb(243, 246, 248);
+        int c = dark ? Color.rgb(7, 18, 38) : Color.rgb(241, 244, 249);
         getWindow().setStatusBarColor(c);
         getWindow().setNavigationBarColor(c);
         if (Build.VERSION.SDK_INT >= 23) {

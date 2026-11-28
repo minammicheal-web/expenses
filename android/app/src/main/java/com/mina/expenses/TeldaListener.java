@@ -78,7 +78,7 @@ public class TeldaListener extends NotificationListenerService {
         if (body.isEmpty() || !body.matches("(?s).*[0-9٠-٩].*")) return false;
         SmsReceiver.add(c, "app:" + bank, body, s.getPostTime());
         if (alert) ReminderWorker.notify(c, 2, "bank-sms", "Bank messages", "Payment recorded from a bank app",
-                "Open Expenses to see it and pick a category.");
+                "Open CheckBook to see it and pick a category.");
         return true;
     }
 

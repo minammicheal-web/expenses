@@ -29,14 +29,15 @@ public class ReminderWorker extends Worker {
     static SharedPreferences prefs(Context c) { return c.getSharedPreferences("reminder", Context.MODE_PRIVATE); }
 
     static void schedule(Context c) {
-        PeriodicWorkRequest w = new PeriodicWorkRequest.Builder(ReminderWorker.class, 6, TimeUnit.HOURS).build();
-        WorkManager.getInstance(c).enqueueUniquePeriodicWork("bill-reminder", ExistingPeriodicWorkPolicy.KEEP, w);
+        PeriodicWorkRequest w = new PeriodicWorkRequest.Builder(ReminderWorker.class, 3, TimeUnit.HOURS).build();
+        WorkManager.getInstance(c).enqueueUniquePeriodicWork("bill-reminder", ExistingPeriodicWorkPolicy.UPDATE, w);
     }
 
     @NonNull
     @Override
     public Result doWork() {
         try { check(getApplicationContext()); } catch (Exception ignored) { }
+        try { notes(getApplicationContext()); } catch (Exception ignored) { }
         return Result.success();
     }
 
@@ -64,6 +65,38 @@ public class ReminderWorker extends Worker {
         p.edit().putString("shown", today).apply();
     }
 
+    /** Reminders the page plans ahead (recurring entries, home bills, monthly summary): [{id, date, title, text}].
+     *  Each one is shown once, on or after its date (up to 5 days late). */
+    static void notes(Context c) throws Exception {
+        SharedPreferences p = prefs(c);
+        org.json.JSONArray a = new org.json.JSONArray(p.getString("notes", "[]"));
+        org.json.JSONArray shown = new org.json.JSONArray(p.getString("notesShown", "[]"));
+        java.util.HashSet<String> seen = new java.util.HashSet<>();
+        for (int i = 0; i < shown.length(); i++) seen.add(shown.getString(i));
+        SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+        String today = f.format(new Date());
+        String late = f.format(new Date(System.currentTimeMillis() - 5L * 86400000L));
+        boolean changed = false;
+        int n = 0;
+        for (int i = 0; i < a.length(); i++) {
+            org.json.JSONObject o = a.getJSONObject(i);
+            String id = o.optString("id"), date = o.optString("date");
+            if (id.isEmpty() || seen.contains(id) || date.compareTo(today) > 0) continue;
+            seen.add(id);
+            shown.put(id);
+            changed = true;
+            if (date.compareTo(late) < 0) continue;
+            notify(c, 100 + (Math.abs(id.hashCode()) % 800), o.optString("ch", "notes"), o.optString("chName", "Reminders"),
+                    o.optString("title"), o.optString("text"));
+            if (++n >= 6) break;
+        }
+        if (changed) {
+            org.json.JSONArray keep = new org.json.JSONArray();
+            for (int i = Math.max(0, shown.length() - 400); i < shown.length(); i++) keep.put(shown.get(i));
+            p.edit().putString("notesShown", keep.toString()).apply();
+        }
+    }
+
     static void notify(Context c, int id, String channel, String channelName, String title, String text) {
         NotificationManager m = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
         if (m == null) return;
@@ -79,6 +112,7 @@ public class ReminderWorker extends Worker {
         n.setSmallIcon(android.R.drawable.ic_popup_reminder)
                 .setContentTitle(title)
                 .setContentText(text)
+                .setStyle(new Notification.BigTextStyle().bigText(text))
                 .setContentIntent(pi)
                 .setAutoCancel(true);
         try { m.notify(id, n.build()); } catch (SecurityException ignored) { }

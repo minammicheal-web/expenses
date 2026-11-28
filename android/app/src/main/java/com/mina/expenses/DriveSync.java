@@ -101,7 +101,10 @@ final class DriveSync {
         return r.getJSONObject("user").optString("emailAddress", "");
     }
 
-    static String folderId(String token) throws Exception {
+    static String folderId(String token) throws Exception { return folderId(token, FOLDER); }
+
+    static String folderId(String token, String name) throws Exception {
+        String FOLDER = name;
         String query = "name='" + FOLDER + "' and mimeType='application/vnd.google-apps.folder' and trashed=false";
         JSONArray f = new JSONObject(http("GET", API + "?spaces=drive&fields=files(id)&q=" + q(query), token, null, null)).getJSONArray("files");
         if (f.length() > 0) return f.getJSONObject(0).getString("id");
@@ -136,6 +139,89 @@ final class DriveSync {
             try { http("DELETE", API + "/" + all.getJSONObject(i).getString("id"), token, null, null); } catch (IOException ignored) { }
         }
         prefs(c).edit().putLong("last", System.currentTimeMillis()).putString("error", "").apply();
+        try { uploadInvoices(c, token); }
+        catch (Exception e) { prefs(c).edit().putString("error", "Backup saved, but some invoices were not uploaded: " + e.getMessage()).apply(); }
+    }
+
+    /* ---- invoice photos / PDFs: one Drive file per invoice, in its own folder, uploaded once ---- */
+    static final String INV_FOLDER = "Expenses Invoices";
+
+    static File invDir(Context c) { return new File(c.getFilesDir(), "invoices"); }
+
+    static void uploadInvoices(Context c, String token) throws Exception {
+        if (!prefs(c).getBoolean("inv", false)) return;
+        File[] fs = invDir(c).listFiles();
+        if (fs == null || fs.length == 0) return;
+        String folder = folderId(token, INV_FOLDER);
+        java.util.HashSet<String> there = new java.util.HashSet<>();
+        String page = null;
+        do {
+            String query = "'" + folder + "' in parents and trashed=false";
+            JSONObject r = new JSONObject(http("GET", API + "?spaces=drive&pageSize=1000&fields=nextPageToken,files(name)&q=" + q(query)
+                    + (page != null ? "&pageToken=" + q(page) : ""), token, null, null));
+            JSONArray a = r.getJSONArray("files");
+            for (int i = 0; i < a.length(); i++) there.add(a.getJSONObject(i).getString("name"));
+            page = r.optString("nextPageToken", null);
+            if (page != null && page.isEmpty()) page = null;
+        } while (page != null);
+        int n = 0;
+        for (File f : fs) {
+            if (there.contains(f.getName())) continue;
+            String b = "inv" + System.currentTimeMillis();
+            JSONObject meta = new JSONObject().put("name", f.getName()).put("parents", new JSONArray().put(folder));
+            ByteArrayOutputStream body = new ByteArrayOutputStream();
+            body.write(("--" + b + "\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n" + meta
+                    + "\r\n--" + b + "\r\nContent-Type: application/octet-stream\r\n\r\n").getBytes(StandardCharsets.UTF_8));
+            body.write(readFile(f));
+            body.write(("\r\n--" + b + "--\r\n").getBytes(StandardCharsets.UTF_8));
+            http("POST", "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id", token,
+                    "multipart/related; boundary=" + b, body.toByteArray());
+            if (++n >= 60) break;
+        }
+    }
+
+    static byte[] download(String url, String token) throws IOException {
+        HttpURLConnection h = (HttpURLConnection) new URL(url).openConnection();
+        h.setConnectTimeout(20000);
+        h.setReadTimeout(60000);
+        h.setRequestProperty("Authorization", "Bearer " + token);
+        int code = h.getResponseCode();
+        if (code >= 400) { h.disconnect(); throw new IOException("Google Drive error " + code); }
+        byte[] b = readAll(h.getInputStream());
+        h.disconnect();
+        return b;
+    }
+
+    /** After a restore: bring back the invoice files that are not on this phone. Returns how many. */
+    static int restoreInvoices(Context c, String token) {
+        int n = 0;
+        try {
+            String query = "name='" + INV_FOLDER + "' and mimeType='application/vnd.google-apps.folder' and trashed=false";
+            JSONArray f = new JSONObject(http("GET", API + "?spaces=drive&fields=files(id)&q=" + q(query), token, null, null)).getJSONArray("files");
+            if (f.length() == 0) return 0;
+            String folder = f.getJSONObject(0).getString("id");
+            File dir = invDir(c);
+            dir.mkdirs();
+            String page = null;
+            do {
+                String qq = "'" + folder + "' in parents and trashed=false";
+                JSONObject r = new JSONObject(http("GET", API + "?spaces=drive&pageSize=1000&fields=nextPageToken,files(id,name)&q=" + q(qq)
+                        + (page != null ? "&pageToken=" + q(page) : ""), token, null, null));
+                JSONArray a = r.getJSONArray("files");
+                for (int i = 0; i < a.length(); i++) {
+                    String name = a.getJSONObject(i).getString("name");
+                    if (!name.matches("[A-Za-z0-9_-]{1,64}")) continue;
+                    File out = new File(dir, name);
+                    if (out.exists()) continue;
+                    byte[] data = download(API + "/" + a.getJSONObject(i).getString("id") + "?alt=media", token);
+                    try (FileOutputStream o = new FileOutputStream(out)) { o.write(data); }
+                    n++;
+                }
+                page = r.optString("nextPageToken", null);
+                if (page != null && page.isEmpty()) page = null;
+            } while (page != null);
+        } catch (Exception ignored) { }
+        return n;
     }
 
     static String latest(String token) throws Exception {

@@ -62,7 +62,9 @@ button:focus-visible,nav a:focus-visible,.gear:focus-visible{outline:2px solid v
 .chip.add{border-style:dashed;background:transparent}
 /* segmented switch = small pill bar */
 .seg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;background:var(--soft);border:1px solid var(--line);padding:4px;border-radius:24px;margin-bottom:16px}
-.seg.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.seg.two{grid-template-columns:repeat(2,minmax(0,1fr))}.seg.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.sched{width:100%;border-collapse:collapse;font-size:13px}.sched th,.sched td{padding:6px 4px;text-align:right;border-bottom:1px solid var(--line)}.sched th:first-child,.sched td:first-child{text-align:left}.sched th{color:var(--muted);font-weight:600}
+.big{font:800 30px/1.15 system-ui,sans-serif;margin:2px 0 6px}
 .seg button{position:relative;overflow:hidden;border:0;background:transparent;color:var(--mute);border-radius:20px;min-height:42px;font:700 14px system-ui,sans-serif;cursor:pointer;padding:4px 6px;transition:background-color .25s,color .25s,box-shadow .25s,transform .2s}
 .seg button:active{transform:scale(.96)}
 .seg button.on{background:var(--ink);color:var(--bg);box-shadow:var(--pill-on-shadow)}
@@ -113,6 +115,10 @@ input[type=checkbox]:focus-visible{outline:2px solid var(--acc);outline-offset:3
 .empty{color:var(--mute);text-align:center;padding:22px 8px}
 .fab{position:fixed;right:max(18px,calc(50vw - 292px));bottom:calc(18px + env(safe-area-inset-bottom));z-index:4;border:0;border-radius:999px;background:var(--acc);color:var(--on);font:800 17px system-ui,sans-serif;padding:0 24px;min-height:58px;box-shadow:0 10px 22px rgba(15,23,42,.28),0 3px 7px rgba(15,23,42,.18);cursor:pointer;overflow:hidden}
 .fab:active{transform:scale(.96)}
+li.tx.sel{background:var(--soft);border-radius:14px}li.tx.sel .dot{background:var(--acc)!important;box-shadow:0 0 0 4px color-mix(in srgb,var(--acc) 25%,transparent)}
+body.selmode .fab{opacity:0;pointer-events:none}
+#selBar{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translate(-50%,calc(100% + 60px));visibility:hidden;z-index:6;display:flex;gap:6px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 6px 6px 16px;box-shadow:0 12px 28px rgba(15,23,42,.28),0 3px 8px rgba(15,23,42,.14);transition:transform .28s cubic-bezier(.2,.8,.2,1),visibility 0s .28s;max-width:calc(100vw - 24px)}
+#selBar.show{transform:translate(-50%,0);visibility:visible;transition:transform .28s cubic-bezier(.2,.8,.2,1)}#selBar b{white-space:nowrap;margin-right:4px}#selBar .ib{white-space:nowrap}
 .toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--toast-bg);color:var(--toast-fg);padding:10px 12px 10px 16px;border-radius:12px;display:none;align-items:center;gap:12px;z-index:60;max-width:92vw;font-size:14px;box-shadow:0 6px 18px rgba(0,0,0,.25)}
 .toast.show{display:flex}.toast button{background:var(--acc);color:var(--on);border:0;border-radius:999px;min-height:36px;padding:0 14px;font-weight:700;cursor:pointer}
 .alt{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:var(--soft);margin-bottom:8px;flex-wrap:wrap}.alt .t{flex:1 1 170px}.alt .t b{display:block;font-size:19px;margin:2px 0}.alt .t small{display:block;color:var(--mute);font-size:13px}.alt .btn{width:auto;flex:0 0 auto;padding:10px 18px;min-height:44px;border-radius:999px}
@@ -132,7 +138,7 @@ input[type=checkbox]:focus-visible{outline:2px solid var(--acc);outline-offset:3
 [hidden]{display:none!important}
 /* ---- Home: compact cards that open and close ---- */
 .xc{padding:0;overflow:hidden}
-#fcOut .xc{box-shadow:none;border:1px solid var(--line);margin:10px 0;background:var(--soft)}#fcOut .xc .list li:last-child{border-bottom:0}
+#fcOut .xc,#calcOut .xc{box-shadow:none;border:1px solid var(--line);margin:10px 0;background:var(--soft)}#fcOut .xc .list li:last-child{border-bottom:0}
 .sched{display:flex;flex-wrap:wrap;gap:6px}.sched span{font-size:12px;padding:4px 8px;border-radius:999px;background:var(--soft);color:var(--mute);border:1px solid var(--line)}.sched span.done{color:var(--in)}.sched span.cur{background:var(--tint);color:var(--acc);border-color:var(--acc);font-weight:700}
 #dlg .card{max-height:85vh;overflow:auto}
 .invs{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 10px}
@@ -957,6 +963,17 @@ if(D.readyState==='loading')D.addEventListener('DOMContentLoaded',boot);else boo
  <div data-sub="owe" data-title="What will I owe?">
  <div class="card"><h2>What will I owe?</h2><div class="row" style="margin-bottom:6px"><div><label for="fcDate">Due date</label><input id="fcDate" type="date"></div><div></div></div><div id="fcOut"></div></div>
  </div>
+ <div data-sub="calc" data-title="Installment calculator">
+ <div class="card"><h2>Installment calculator</h2>
+  <div class="seg three" id="calcSeg"><button data-calc="loan" class="on">CIB loan</button><button data-calc="card">Card installments</button><button data-calc="zero">0% offer</button></div>
+  <div class="row"><div><label for="calcAmt">Amount (EGP)</label><input id="calcAmt" type="number" inputmode="decimal" min="0" placeholder="e.g. 50000"></div><div><label for="calcN">Months</label><select id="calcN"><option>3</option><option>6</option><option>9</option><option selected>12</option><option>18</option><option>24</option><option>36</option><option>48</option><option>60</option><option>72</option><option>84</option><option>96</option></select></div></div>
+  <div class="row"><div id="calcRateBox"><label for="calcRate" id="calcRateLbl">Interest a year (%)</label><input id="calcRate" type="number" inputmode="decimal" min="0" step="0.01"></div><div><label for="calcFee">Admin fee (%)</label><input id="calcFee" type="number" inputmode="decimal" min="0" step="0.1"></div></div>
+  <p class="note" id="calcSrc" style="margin:2px 0 10px"></p>
+  <div id="calcOut"></div>
+ </div>
+ <div class="card"><h2 style="font-size:16px">Bank rates</h2><p class="note" style="margin-top:-6px" id="calcRatesNote"></p>
+  <div class="btns"><button class="btn ghost" id="calcSaveRate">Save these rates as default</button><button class="btn ghost" id="calcAsk">🔎 Check today's CIB rates with Claude</button></div><div id="calcAskOut"></div></div>
+ </div>
  <div data-sub="counted" data-title="What's counted">
  <div class="card"><h2>What's counted</h2><p class="note" style="margin-top:-6px">Every payment and purchase the app is counting since your last statement. Something wrong? Tap it to fix or delete it.</p>
   <div class="seg two" id="cntSeg"><button data-cnt="pay" class="on">Payments &amp; refunds</button><button data-cnt="buy">Purchases on the next bill</button></div>
@@ -1126,6 +1143,9 @@ if(D.readyState==='loading')D.addEventListener('DOMContentLoaded',boot);else boo
   <div id="smsState" style="margin-top:14px"></div>
   <div id="smsScanBox" hidden style="margin-top:14px"><div class="row" style="margin-bottom:8px"><div><label for="scanDays">Add messages already on the phone from</label><select id="scanDays"><option value="7">the last 7 days</option><option value="30" selected>the last 30 days</option><option value="90">the last 3 months</option><option value="365">the last year</option><option value="3650">all messages</option></select></div><div style="align-self:end"><button class="btn ghost" data-sms="scan">Add old messages</button></div></div></div>
   <div id="smsMsg"></div>
+  <h2 style="margin-top:18px;font-size:16px">🔔 Telda app notifications</h2>
+  <p class="note" style="margin-top:-6px">Telda card purchases send no SMS, only a notification in the Telda app. Turn this on and the app reads <b>only Telda's</b> notifications and records them on your Telda account. When the same money also comes by SMS, the two are joined into one entry.</p>
+  <div id="notifState"></div>
   <h2 style="margin-top:18px;font-size:16px">Test a message</h2>
   <div class="f"><textarea id="smsTest" rows="4" placeholder="Paste a bank SMS here to see what the app would record" style="width:100%;font:15px system-ui,sans-serif;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--soft);color:var(--ink)"></textarea></div>
   <button class="btn ghost" data-sms="test">Test</button>
@@ -1138,11 +1158,42 @@ if(D.readyState==='loading')D.addEventListener('DOMContentLoaded',boot);else boo
   <div id="driveState"></div>
   <div class="btns" id="driveBtns" style="margin-top:12px"></div>
   <div id="driveMsg"></div>
+  <label class="check" style="margin-top:12px"><input type="checkbox" id="invDrive"> <span>📎 Also back up invoice photos &amp; PDFs (each one is uploaded once, to an "Expenses Invoices" folder; restoring brings them back)</span></label>
+ </div>
+ <div class="card" data-sec="rec">
+  <h2>Recurring payments</h2>
+  <p class="note" style="margin-top:-6px">Bills you pay every month (building fees, internet, a loan…). On the day, Home shows them with a <b>Paid</b> button and you get a reminder. A payment in the same category that month (e.g. from SMS) counts as paid.</p>
+  <ul class="list" id="recList"></ul>
+  <button class="btn" id="recNew" style="margin-top:10px">+ Add a recurring payment</button>
+  <div id="recForm" hidden style="margin-top:14px">
+   <div class="row"><div><label for="recName">Name</label><input id="recName" maxlength="40" placeholder="e.g. Building fees"></div><div><label for="recAmt">Amount (EGP)</label><input id="recAmt" type="number" inputmode="decimal" min="0" step="0.01"></div></div>
+   <div class="row"><div><label for="recCat">Category</label><select id="recCat"></select></div><div><label for="recAcc">Paid with</label><select id="recAcc"></select></div></div>
+   <div class="row"><div><label for="recDay">Day of the month</label><select id="recDay"></select></div><div><label for="recMode">When the day comes</label><select id="recMode"><option value="remind">Remind me</option><option value="auto">Add it for me</option></select></div></div>
+   <p class="note" style="margin:0 0 10px">"Add it for me" is for payments that never come by SMS (cash, for example), so they aren’t counted twice.</p>
+   <div class="btns"><button class="btn" id="recSave">Save</button><button class="btn ghost" id="recCancel">Cancel</button><button class="btn ghost" id="recDel" hidden style="color:var(--danger)">Delete</button></div>
+  </div>
+ </div>
+ <div class="card" data-sec="bud">
+  <h2>Category budgets</h2>
+  <p class="note" style="margin-top:-6px">A monthly limit for any expense category. Home → this month shows how much is left, and you get an alert at 80% and when you go over. Leave empty for no limit. The grey number is your average of the last 3 months.</p>
+  <div id="budRows"></div>
+  <button class="btn" id="budSave" style="margin-top:6px">Save budgets</button>
+ </div>
+ <div class="card" data-sec="nfy">
+  <h2>Reminders</h2>
+  <label class="check"><input type="checkbox" id="nfyHome"> <span>🏠 Home bills — remind me before the usual day (electricity, gas, water, internet…) if not paid yet</span></label>
+  <label class="check"><input type="checkbox" id="nfyRec"> <span>🔁 Recurring payments — remind me before they are due</span></label>
+  <label class="check"><input type="checkbox" id="nfySum"> <span>📊 Monthly summary on the 1st — spent, income, top category, vs the month before</span></label>
+  <label class="check"><input type="checkbox" id="nfyBud"> <span>🎯 Budget alerts at 80% and when over</span></label>
+  <div class="row" style="margin-top:10px"><div><label for="nfyDays">Remind me</label><select id="nfyDays"><option value="0">on the day</option><option value="1">1 day before</option><option value="2">2 days before</option><option value="3">3 days before</option><option value="5">5 days before</option></select></div><div></div></div>
+  <div id="nfyNext"></div>
+  <h2 style="margin-top:18px;font-size:16px">📱 Home-screen widget</h2>
+  <p class="note" style="margin-top:-6px">Shows what you spent this month and what is left (per day when a goal or budget sets a limit). To add it: long-press an empty spot on your home screen → <b>Widgets</b> → <b>Expenses</b> → drag it to the screen. It updates whenever the app saves.</p>
  </div>
  <div class="card" data-sec="backup">
   <h2>Backup file</h2>
   <p class="note" style="margin-top:-6px">Save everything in one file, or restore from one. Restoring adds and updates entries; it never deletes anything.</p>
-  <p class="note" style="margin-top:0">The backup file includes your invoice photos and PDFs. The Google Drive backup doesn't, to keep it small.</p><div class="btns"><button class="btn" id="bkExport">Export backup</button><div class="upbox"><span class="btn ghost" style="display:flex;align-items:center;justify-content:center" aria-hidden="true">Restore from file</span><input type="file" id="bkFile" aria-label="Restore from backup file"></div></div>
+  <p class="note" style="margin-top:0">The backup file includes your invoice photos and PDFs. The Google Drive backup includes them only when you switch that on in Google Drive backup.</p><div class="btns"><button class="btn" id="bkExport">Export backup</button><div class="upbox"><span class="btn ghost" style="display:flex;align-items:center;justify-content:center" aria-hidden="true">Restore from file</span><input type="file" id="bkFile" aria-label="Restore from backup file"></div></div>
   <div id="bkMsg"></div>
  </div>
 </section>
@@ -1194,6 +1245,7 @@ if(D.readyState==='loading')D.addEventListener('DOMContentLoaded',boot);else boo
 <button class="fab" id="fab">+ Add</button>
 <div id="invV" hidden><div class="ivh"><b id="invVT"></b><button id="invVX">Close</button></div><div class="ivb" id="invVB"></div></div>
 <div id="dlg" hidden><div class="card" role="dialog"><h2 id="dlgT"></h2><div id="dlgB" class="note" style="font-size:15px;color:var(--ink);margin-bottom:14px"></div><div id="dlgBtns" style="display:grid;gap:8px"></div></div></div>
+<div id="selBar" role="toolbar" aria-label="Selected entries"><b id="selN">0 selected</b><button class="ib" id="selAll">All</button><button class="ib" id="selCat">Category</button><button class="ib" id="selDel" style="color:var(--danger)">Delete</button><button class="ib" id="selX" aria-label="Stop selecting">✕</button></div>
 <div class="toast" id="toast"><span id="toastT"></span><button id="toastB">Undo</button></div>
 
 <script>
@@ -1203,7 +1255,7 @@ const ACC=['debit','credit','od','telda','cash'],NONCC=ACC.filter(a=>a!=='credit
 const DEF_EXP=[['food','Food'],['groc','Groceries'],['phone','Phone bill'],['elec','Electricity charge card'],['gas','Gas charge card'],['deliv','Delivery'],['pharm','Pharmacy'],['trans','Transportation'],['apt','Building maintenance fees'],['water','Water'],['net','Internet'],['hphone','Home phone'],['sent','Sent to people'],['subs','Subscriptions'],['charity','Church (charity)'],['gam3ya','Gam3ya payments'],['other','Other']];
 const DEF_INC=[['salary','Salary'],['gam3ya','Gam3ya payout'],['recv','Received from people'],['bonus','Bonus'],['gift','Gift'],['refund','Refund / cashback'],['other','Other']];
 const DEF={acc:{debit:{n:'CIB Debit',open:0},credit:{n:'CIB Credit',limit:0},od:{n:'CIB Overdraft',open:0,limit:0},telda:{n:'Telda',open:0},cash:{n:'Cash',open:0}},
- stmt:11,due:5,remind:3,sms:{on:false,kw:{debit:'6396, 8659, 100044358659',credit:'3577',od:'5669, 100044925669',telda:'2501'},ipAcc:'debit'},payDay:28,goals:[],gam:[],charity:{pct:10,acc:'debit'},subs:[{id:'claude',n:'Claude',kw:'claude, anthropic',price:0,fx:true,acc:'credit',cycle:'m'},{id:'netflix',n:'Netflix',kw:'netflix',price:0,fx:true,acc:'credit',cycle:'m'},{id:'spotify',n:'Spotify',kw:'spotify',price:0,fx:true,acc:'credit',cycle:'m'},{id:'gone',n:'Google One',kw:'google one, google storage, google *one',price:0,fx:true,acc:'credit',cycle:'m'}],merch:{},exp:DEF_EXP.map(([id,n])=>({id,n})),inc:DEF_INC.map(([id,n])=>({id,n}))};
+ stmt:11,due:5,remind:3,sms:{on:false,kw:{debit:'6396, 8659, 100044358659',credit:'3577',od:'5669, 100044925669',telda:'2501'},ipAcc:'debit'},payDay:28,rates:{loan:23.5,loanFee:2,loanSrc:'CIB personal loan from 23.5% a year (reducing balance) + 2% admin fee — Banky, checked 26 Oct 2026',card:[[3,3.17],[6,3.08],[12,2.75]],cardFee:0,cardSrc:'CIB credit-card installment plan (IPP) terms: monthly reducing rate 3.17% (3–5 months), 3.08% (6–11), 2.75% (12–60)',checked:'2026-11-28'},rec:[],bud:{},nfy:{home:true,rec:true,sum:true,bud:true,days:2},goals:[],gam:[],charity:{pct:10,acc:'debit'},subs:[{id:'claude',n:'Claude',kw:'claude, anthropic',price:0,fx:true,acc:'credit',cycle:'m'},{id:'netflix',n:'Netflix',kw:'netflix',price:0,fx:true,acc:'credit',cycle:'m'},{id:'spotify',n:'Spotify',kw:'spotify',price:0,fx:true,acc:'credit',cycle:'m'},{id:'gone',n:'Google One',kw:'google one, google storage, google *one',price:0,fx:true,acc:'credit',cycle:'m'}],merch:{},exp:DEF_EXP.map(([id,n])=>({id,n})),inc:DEF_INC.map(([id,n])=>({id,n}))};
 const FEE_CAT={id:'_fee',n:'Installment interest & fees'};
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -1331,7 +1383,7 @@ function sub(t,a){const bits=[];
  if(!a||t.type==='exp'||t.type==='inc')if(t.type!=='xfer'&&t.type!=='pay')bits.push(accName(t.acc));
  if(t.type==='xfer'&&t.acc==='credit')bits.push(`bill of ${fmtS(billOf(t))}`);
  if(t.type==='exp'&&t.acc==='credit')bits.push(t.plan?`${t.plan.months} × ${money(t.plan.each)} installments`:`bill of ${fmtS(billOf(t))}`);
- if(t.toAmt)bits.push(`${money(t.toAmt)} reaches Telda (${money(r2(t.amt-t.toAmt))} load fee)`);if(t.note)bits.push(esc(t.note));if(t.fxFee)bits.push(`incl. ${money(t.fxFee)} FX fee`);if(t.ipFee)bits.push(`incl. ${money(t.ipFee)} InstaPay fee`);if(t.sms)bits.push('SMS');if(t.stmtKey)bits.push('statement');if(t.payKey)bits.push('payslip');return bits.join(' · ')}
+ if(t.toAmt)bits.push(`${money(t.toAmt)} reaches Telda (${money(r2(t.amt-t.toAmt))} load fee)`);if(t.note)bits.push(esc(t.note));if(t.fxFee)bits.push(`incl. ${money(t.fxFee)} FX fee`);if(t.ipFee)bits.push(`incl. ${money(t.ipFee)} InstaPay fee`);if(t.sms)bits.push(t.sms.alt?'SMS + Telda notification':t.sms.app?'Telda notification':'SMS');if(t.stmtKey)bits.push('statement');if(t.payKey)bits.push('payslip');return bits.join(' · ')}
 const ACOL={debit:'var(--debit)',credit:'var(--credit)',od:'var(--od)',telda:'var(--telda)',cash:'var(--cash)'};
 function row(t,a){const d=delta(t,a),cls=d<0?'o':d>0?'i':'n',sign=d<0?'−':d>0?'+':'';
  return `<li class="tx" data-tx="${t.id}" style="--c:${ACOL[t.type==='pay'?'credit':t.acc]}"><span class="dot"></span><span class="t">${esc(title(t))}${t.inv&&t.inv.length?' 📎':''}<small>${sub(t,a)}</small></span><span class="amt ${cls}">${sign}${money(t.amt)}</span></li>`}
@@ -1368,7 +1420,7 @@ function migrate(){tx.forEach(fixPlan);
  const drop=new Set(),insts=[];
  for(const t of tx){if(!t.sms||!t.sms.body)continue;const b=norm(t.sms.body);
   if(NOTICE.test(b)&&!/charged|خصم|debited/.test(b)&&t.type==='pay'){drop.add(t);skip.push(t.sms.key);continue}
-  const m=b.match(INSTRE);if(m&&!t.plan){drop.add(t);skip.push(t.sms.key);insts.push({p:parseSms(t.sms.body),ts:t.sms.ts,key:t.sms.key});continue}
+  const m=b.match(INSTRE);if(m&&!t.plan){drop.add(t);skip.push(t.sms.key);insts.push({p:parseSms(t.sms.body,t.sms.from),ts:t.sms.ts,key:t.sms.key});continue}
   if(OTPBUY.test(b)&&!t.sms.otp2){t.sms.otp2=true}}
  tx=tx.filter(t=>!drop.has(t));
  for(const t of tx){if(!t.sms||!t.sms.otp2||t.stmtKey)continue;
@@ -1378,7 +1430,7 @@ function migrate(){tx.forEach(fixPlan);
  for(const q of insts)if(q.p&&q.p.inst)applyInstSms(q.p,q.ts,q.key);
  /* re-read bank SMS with the v11 rules: incoming InstaPay, ATM withdrawals, declined, Telda top-ups, balances */
  const gone=new Set();
- for(const t of tx){if(!t.sms||!t.sms.body||t.stmtKey||t.plan)continue;const p=parseSms(t.sms.body);
+ for(const t of tx){if(!t.sms||!t.sms.body||t.stmtKey||t.plan)continue;const p=parseSms(t.sms.body,t.sms.from);
   if(p.ignore&&p.err==='Declined transaction'){gone.add(t);skip.push(t.sms.key);continue}
   if(p.err||p.inst)continue;
   if(p.bal!=null)t.sms.bal=p.bal;
@@ -1386,7 +1438,7 @@ function migrate(){tx.forEach(fixPlan);
   if(p.type==='inc'&&t.type==='exp'&&t.acc!=='credit'){t.type='inc';t.amt=p.amt;delete t.ipFee;t.note=p.m||t.note;t.cat=peopleCat('inc',p.m);t.review=false}
   else if(p.type==='xfer'&&t.type==='exp'){t.type='xfer';t.to=p.to;delete t.cat;t.review=false}}
  tx=tx.filter(t=>!gone.has(t));teldaLoads();
- for(const t of tx){if(t.sms&&t.sms.body&&!t.stmtKey){const p=parseSms(t.sms.body);if(p.err==='Advert'){gone.add(t);skip.push(t.sms.key)}}}
+ for(const t of tx){if(t.sms&&t.sms.body&&!t.stmtKey){const p=parseSms(t.sms.body,t.sms.from);if(p.err==='Advert'){gone.add(t);skip.push(t.sms.key)}}}
  /* v1–v22 read CIB's "لقد تم رد" refund messages as purchases */
  for(const t of tx){if(t.type==='exp'&&t.acc==='credit'&&t.sms&&t.sms.body&&/تم رد/.test(t.sms.body)&&!t.stmtKey){t.type='inc';t.cat='refund';t.review=false;delete t.plan;t.note=(t.note||'').replace(/>\s*$/,'')}}
  tx=tx.filter(t=>!gone.has(t));dedupe();
@@ -1400,12 +1452,14 @@ function merge(s){const o=clone(DEF);if(!s)return o;
  for(const k of ['stmt','due','remind'])if(s[k]!=null)o[k]=s[k];
  if(s.acc)for(const a of ACC)o.acc[a]={...o.acc[a],...(s.acc[a]||{})};
  if(s.sms){const kw={...o.sms.kw};for(const[k,v]of Object.entries(s.sms.kw||{}))if(String(v||'').trim())kw[k]=v;o.sms={...o.sms,...s.sms,kw}}if(s.payDay)o.payDay=s.payDay;if(s.mig)o.mig=s.mig;if(s.balChecked)o.balChecked=s.balChecked;if(s.theme)o.theme=s.theme;if(Array.isArray(s.subs))o.subs=s.subs;if(Array.isArray(s.goals))o.goals=s.goals;if(Array.isArray(s.gam))o.gam=s.gam;if(s.charity)o.charity={...o.charity,...s.charity};if(s.merch&&typeof s.merch==='object')o.merch=s.merch;if(s.ccBase)o.ccBase=s.ccBase;
- if(Array.isArray(s.exp))o.exp=s.exp;if(Array.isArray(s.inc))o.inc=s.inc;return o}
+ if(Array.isArray(s.exp))o.exp=s.exp;if(Array.isArray(s.inc))o.inc=s.inc;
+ for(const k of ['homeV','invDrive'])if(s[k]!=null)o[k]=s[k];
+ if(s.rates&&typeof s.rates==='object')o.rates={...o.rates,...s.rates};if(Array.isArray(s.rec))o.rec=s.rec;if(s.bud&&typeof s.bud==='object')o.bud=s.bud;if(s.nfy&&typeof s.nfy==='object')o.nfy={...o.nfy,...s.nfy};return o}
 const backupJSON=()=>JSON.stringify({app:'expenses',version:1,exported:new Date().toISOString(),settings:S,tx,skip},null,1);
 function teldaLoads(){for(const t of tx){if(t.type!=='xfer'||t.to!=='telda'||t.toAmt!=null)continue;const x=t.amt/1.02;if(Math.abs(x-Math.round(x))<0.005&&t.amt>=50)t.toAmt=Math.round(x)}}
 function save(){teldaLoads();
  let ok=true;try{localStorage.setItem('exp-data',JSON.stringify({tx,settings:S,skip,fails}))}catch(e){ok=false;toast('Could not save on this phone',false)}
- if(window.Android){try{Android.storeBackup&&Android.storeBackup(backupJSON())}catch(e){}pushReminder()}
+ if(window.Android){try{Android.storeBackup&&Android.storeBackup(backupJSON())}catch(e){}pushReminder()}pushExtras();
  renderAll();return ok}
 function pushReminder(){if(!window.Android||!Android.setReminder)return;
  try{const c=credit();Android.setReminder(JSON.stringify(c.now?{due:c.now.due,amount:money(c.now.amt),days:+S.remind||0}:{due:'',amount:'',days:0}))}catch(e){}}
@@ -1436,7 +1490,7 @@ function renderHome(){renderBalCheck();
  const c=credit();$('dueBox').innerHTML=dueHTML(c,true);
  const rv=tx.filter(t=>t.review&&!isCheck(t)).sort(byDate);
  $('reviewTitle').textContent=rv.length?`${rv.length} need${rv.length===1?'s':''} a category`:'All sorted';$('reviewList').innerHTML=rv.length?rv.slice(0,200).map(t=>row(t,null)).join(''):'<li class="empty" style="display:block;border:0">Nothing waiting for a category.</li>';
- $('homeMenu').innerHTML=(rv.length?menuBtn('home-review','🏷️',`${rv.length} need${rv.length===1?'s':''} a category`,'Tap to sort them'):'');
+ $('homeMenu').innerHTML=(rv.length?menuBtn('home-review','🏷️',`${rv.length} need${rv.length===1?'s':''} a category`,'Tap to sort them'):'')+recOpen().map(({r,ym,due})=>`<div class="setbtn" style="cursor:default"><span class="ic">🔁</span><span class="t"><b>${esc(r.n)} · ${money(r.amt)}</b><small>${due<today?`was due ${fmtS(due)}`:due===today?'due today':`due ${dow(due)} ${fmtS(due)}`} · ${esc(accName(r.acc))}</small></span><button class="ib" data-recpaid="${r.id}|${ym}">Paid</button></div>`).join('');
  /* accounts */
  const lim=+S.acc.credit.limit||0,owed=Math.max(0,c.used),total=r2(NONCC.reduce((s,a)=>s+bal(a),0));
  const accRows=ACC.map(a=>{
@@ -1451,7 +1505,7 @@ function renderHome(){renderBalCheck();
  const budRows=buds.map(({g,B})=>`<button type="button" class="hr" data-go="goals-detail-${g.id}"><span class="t">${esc(g.name)} · spending limit<small>${egp(B.used)} of ${egp(B.limit)}${B.left<0?'':` · about ${money(B.perDay)} a day`}</small><span class="bar" style="display:block"><i style="width:${Math.min(100,B.used/(B.limit||1)*100)}%;background:${bcol(B)}"></i></span></span><span class="v" style="color:${bcol(B)}">${B.left<0?'over '+money(-B.left):money(B.left)+' left'}</span></button>`).join('');
  const B0=buds[0]&&buds[0].B;
  const monthSub=B0?(B0.left<0?`Over the spending limit by ${money(-B0.left)}`:`${money(B0.left)} left to spend · about ${money(B0.perDay)} a day`):`Income ${money(inc)} · net ${money(inc-sp)}`;
- const monthBody=`<div class="kv"><span>Spent</span><b style="color:var(--out)">${money(sp)}</b></div><div class="kv"><span>Income</span><b style="color:var(--in)">${money(inc)}</b></div><div class="kv"><span>Net</span><b>${money(inc-sp)}</b></div>${budRows}<div class="xmore"><button type="button" class="ib" data-go="reports">Reports ›</button></div>`;
+ const monthBody=`<div class="kv"><span>Spent</span><b style="color:var(--out)">${money(sp)}</b></div><div class="kv"><span>Income</span><b style="color:var(--in)">${money(inc)}</b></div><div class="kv"><span>Net</span><b>${money(inc-sp)}</b></div>${budRows}${budRowsHTML()}<div class="xmore"><button type="button" class="ib" data-go="reports">Reports ›</button></div>`;
  /* latest entries */
  const all=tx.filter(t=>!isCheck(t)).sort(byDate),nToday=all.filter(t=>t.date===today).length;
  const latestBody=all.length?`<ul class="list">${grouped(all.slice(0,6),null)}</ul><div class="xmore"><button type="button" class="ib" data-go="home-all">See all ›</button></div>`:'<p class="empty" style="margin:0">Nothing here yet. Tap <b>+ Add</b> to record your first expense.</p>';
@@ -1475,6 +1529,7 @@ function renderCredit(){
   $('creditMenu').innerHTML=menuBtn('credit-inst','🗓️','Installments',`${act.length} active · ${money(mon)} on the next bill · ${money(left)} left in total`)
    +menuBtn('credit-bill','🧾',`Next bill · ${fmtS(c.open.stmt)}`,`Still open · due ${fmtS(c.open.due)}`,money(c.open.rem))
    +menuBtn('credit-owe','🔮','What will I owe?','Pick any due date')
+   +menuBtn('credit-calc','🧮','Installment calculator','CIB loan or card installments · what would I pay?')
    +menuBtn('credit-counted','✅',"What's counted",'Payments and purchases since your statement')
    +menuBtn('credit-buys','🛍️','Card purchases',`${cp} purchases · turn one into installments`)
    +menuBtn('credit-bills','📚','Bill history',`${nb} past bill${nb===1?'':'s'}`)}
@@ -1486,7 +1541,7 @@ function renderCredit(){
  const cp=tx.filter(t=>t.type==='exp'&&t.acc==='credit'&&!t.plan).sort(byDate);
  $('ccList').innerHTML=cp.length?cp.slice(0,ccN).map(t=>`<li><span class="dot" style="--c:var(--credit)"></span><span class="t" data-tx="${t.id}" style="cursor:pointer">${esc(title(t))}<small>${fmt(t.date)}${t.note?' · '+esc(t.note):''} · bill of ${fmtS(billOf(t))}</small></span><span class="amt">${money(t.amt)}</span><button class="ib" data-plan="${t.id}">Installments</button></li>`).join(''):'<li class="empty" style="display:block;border:0">No card purchases yet.</li>';
  $('ccMore').hidden=cp.length<=ccN;
- if(!$('fcDate').value)$('fcDate').value=(c.now?c.now.due:c.open.due);renderForecast();
+ if(!$('fcDate').value)$('fcDate').value=(c.now?c.now.due:c.open.due);renderForecast();renderCalc(!calcInit);calcInit=true;
  const fut=c.bills.filter(b=>b.status==='future'&&b.billed>0),show=[...fut.slice(0,2).reverse(),...c.bills.filter(b=>b.status!=='future'&&(b.billed>0||b.status==='open')).reverse()];
  const part=(n,w,a)=>n?`${n} ${w}${n===1?'':'s'} ${money(a)}`:'';
  const lbl={open:'Open',future:'Upcoming',paid:'Paid',over:'Overdue',part:'Partly paid',due:'To pay'};
@@ -1570,7 +1625,7 @@ function renderSettings(){
  $('accSet').innerHTML=ACC.map(a=>`<div class="row"><div><label for="n-${a}">Name</label><input id="n-${a}" value="${esc(accName(a))}" maxlength="30"></div>${a==='credit'?'<div></div>':`<div><label for="o-${a}">Balance now</label><input id="o-${a}" type="number" inputmode="decimal" step="0.01" value="${bal(a)}"></div>`}</div>${a==='od'?`<div class="row"><div><label for="l-od">Overdraft limit</label><input id="l-od" type="number" inputmode="decimal" min="0" value="${+S.acc.od.limit||''}"></div><div></div></div>`:''}`).join('');
  $('sLimit').value=+S.acc.credit.limit||'';$('sRemind').value=S.remind;$('sStmt').value=S.stmt;$('sDue').value=S.due;
  renderCatEdit();
- driveRender();renderSms();showSettingsPage();
+ driveRender();renderSms();renderRec();renderBud();renderNfy();showSettingsPage();
 }
 $('sSave').addEventListener('click',()=>{
  const st=parseInt($('sStmt').value),du=parseInt($('sDue').value),rm=parseInt($('sRemind').value);
@@ -1606,7 +1661,7 @@ function openAdd(type,acc,amt){editId=null;F=fresh(type||'exp');if(acc)F.acc=acc
 function openEdit(id){const t=tx.find(x=>x.id===id);if(!t)return;editId=id;
  F={type:t.type,acc:t.acc,to:t.to||'cash',cat:t.cat||null,mode:t.plan?'inst':'full',inv:(t.inv||[]).map(x=>({...x}))};drawInv();
  $('aAmt').value=r2(t.amt-(t.ipFee||0)-(t.fxFee||0));$('aIpn').checked=!!t.ipFee;$('aFx').checked=!!t.fxFee;
- $('aNote').value=t.note||'';$('aDate').value=t.date;$('aErr').innerHTML='';$('addTitle').textContent='Edit entry';$('aDel').hidden=false;$('aSms').hidden=!t.sms;$('aSms').textContent=t.sms?'From SMS'+(t.sms.from?' ('+t.sms.from+')':'')+':\n'+t.sms.body:'';go('add')}
+ $('aNote').value=t.note||'';$('aDate').value=t.date;$('aErr').innerHTML='';$('addTitle').textContent='Edit entry';$('aDel').hidden=false;$('aSms').hidden=!t.sms;$('aSms').textContent=t.sms?(t.sms.app?'From the Telda app':'From SMS'+(t.sms.from?' ('+t.sms.from+')':''))+':\n'+t.sms.body+(t.sms.alt?'\n\n'+(t.sms.alt.from==='Telda app'?'Also in the Telda app':'Also by SMS'+(t.sms.alt.from?' ('+t.sms.alt.from+')':''))+':\n'+t.sms.alt.body:''):'';go('add')}
 function accChoices(){return F.type==='pay'?NONCC:ACC}
 function renderAdd(){if(!F)F=fresh('exp');
  document.querySelectorAll('#aType button').forEach(b=>b.classList.toggle('on',b.dataset.type===F.type));
@@ -1739,8 +1794,40 @@ $('cashOut').addEventListener('click',()=>openAdd('exp','cash'));
 $('cashMonth').addEventListener('change',renderCash);
 ['rMonth','rAcc'].forEach(id=>$(id).addEventListener('change',()=>{rCat=null;renderReports()}));
 $('rAllBtn').addEventListener('click',()=>{rCat=null});
-$('toastB').addEventListener('click',()=>{if(undo){tx.push(undo);if(undo.sms)skip=skip.filter(k=>k!==undo.sms.key);undo=null;save();toast('Restored',false)}});
+$('toastB').addEventListener('click',()=>{if(undo){for(const u of [].concat(undo)){tx.push(u);if(u.sms)skip=skip.filter(k=>k!==u.sms.key)}undo=null;save();toast('Restored',false)}});
 let tt;function toast(t,u){$('toastT').textContent=t;$('toastB').hidden=!u;$('toast').classList.add('show');clearTimeout(tt);tt=setTimeout(()=>$('toast').classList.remove('show'),5000)}
+
+
+/* ---------- long-press an entry to select several (change category or delete together) ---------- */
+const SEL=new Set();let selOn=false,lpT=null,lpX=0,lpY=0,lpEat=false;
+function selPaint(){document.querySelectorAll('li.tx[data-tx]').forEach(li=>{const on=SEL.has(li.dataset.tx);if(li.classList.contains('sel')!==on)li.classList.toggle('sel',on)});
+ $('selN').textContent=`${SEL.size} selected`;$('selCat').disabled=![...SEL].some(id=>{const t=tx.find(x=>x.id===id);return t&&(t.type==='exp'||t.type==='inc')})}
+function selStart(id){if(!selOn){selOn=true;document.body.classList.add('selmode');$('selBar').classList.add('show')}SEL.add(id);selPaint()}
+function selEnd(){if(!selOn)return;selOn=false;SEL.clear();document.body.classList.remove('selmode');$('selBar').classList.remove('show');selPaint()}
+const lpCancel=()=>{clearTimeout(lpT);lpT=null};
+const lpArm=(li,x,y)=>{lpX=x;lpY=y;lpCancel();lpT=setTimeout(()=>{lpT=null;lpEat=true;try{navigator.vibrate&&navigator.vibrate(18)}catch(e){}if(!(selOn&&SEL.has(li.dataset.tx)))selStart(li.dataset.tx)},500)};
+document.addEventListener('touchstart',e=>{const li=e.target.closest('li.tx[data-tx]');if(!li||e.touches.length!==1)return;lpArm(li,e.touches[0].clientX,e.touches[0].clientY)},{passive:true});
+document.addEventListener('touchmove',e=>{if(lpT&&(Math.abs(e.touches[0].clientX-lpX)>10||Math.abs(e.touches[0].clientY-lpY)>10))lpCancel()},{passive:true});
+document.addEventListener('touchend',lpCancel,{passive:true});document.addEventListener('touchcancel',lpCancel,{passive:true});
+document.addEventListener('contextmenu',e=>{if(e.target.closest('li.tx[data-tx]'))e.preventDefault()});
+document.addEventListener('mousedown',e=>{if(e.button)return;const li=e.target.closest('li.tx[data-tx]');if(li)lpArm(li,e.clientX,e.clientY)});
+document.addEventListener('mouseup',lpCancel);
+/* capture phase: while selecting, a tap toggles the entry instead of opening it */
+document.addEventListener('click',e=>{const li=e.target.closest('li.tx[data-tx]');
+ if(lpEat){lpEat=false;if(li){e.stopPropagation();e.preventDefault();return}}
+ if(!selOn||!li)return;e.stopPropagation();e.preventDefault();const id=li.dataset.tx;if(SEL.has(id))SEL.delete(id);else SEL.add(id);if(!SEL.size)selEnd();else selPaint()},true);
+window.addEventListener('hashchange',selEnd);
+if(window.MK){const ob=MK.back;MK.back=function(){if(selOn){selEnd();return true}return ob?ob.apply(this,arguments):false}}
+$('selX').addEventListener('click',selEnd);
+$('selAll').addEventListener('click',()=>{document.querySelectorAll('li.tx[data-tx]').forEach(li=>{if(li.offsetParent)SEL.add(li.dataset.tx)});selPaint()});
+$('selDel').addEventListener('click',async()=>{const n=SEL.size;if(!n)return;
+ const v=await ask(`Delete ${n} entr${n===1?'y':'ies'}?`,'<p class="note">You can undo right after.</p>',[{label:'Delete',value:1},{label:'Cancel',value:0,ghost:true}]);if(!v)return;
+ const gone=tx.filter(t=>SEL.has(t.id));tx=tx.filter(t=>!SEL.has(t.id));gone.forEach(t=>{if(t.sms)skip.push(t.sms.key)});selEnd();save();undo=gone;toast(`${gone.length} deleted`,true)});
+$('selCat').addEventListener('click',async()=>{const list=tx.filter(t=>SEL.has(t.id)&&(t.type==='exp'||t.type==='inc'));if(!list.length)return;
+ const k=list.filter(t=>t.type==='exp').length>=list.length/2?'exp':'inc',use=list.filter(t=>t.type===k);let pick=null;
+ const p=ask(`Category for ${use.length} ${k==='exp'?'expense':'income'}${use.length===1?'':'s'}`,`<div class="f" style="margin:0"><label for="selCatSel">Category</label><select id="selCatSel">${byName(catList(k)).map(c=>`<option value="${c.id}">${esc(c.n)}${c.home?' 🏠':''}</option>`).join('')}</select></div>${use.length<list.length?`<p class="note">${list.length-use.length} ${k==='exp'?'income':'expense'} entr${list.length-use.length===1?'y':'ies'} left as ${list.length-use.length===1?'it is':'they are'}.</p>`:''}`,[{label:'Apply',value:1},{label:'Cancel',value:0,ghost:true}]);
+ const sel=$('selCatSel');sel.addEventListener('change',()=>pick=sel.value);pick=sel.value;
+ if(!await p)return;const cat=pick;if(!cat)return;use.forEach(t=>{t.cat=cat;t.review=false});selEnd();save();toast(`${use.length} moved to ${catName({type:k,cat})}`,false)});
 
 /* ---------- backup ---------- */
 let pending=null;
@@ -1817,7 +1904,7 @@ window.onDrive=ev=>{
  if(ev.type==='status'){driveRender(ev);$('driveMsg').innerHTML=ev.message?`<div class="msg">${esc(ev.message)}</div>`:'';
   if(ev.justConnected){if(!tx.length){$('driveMsg').innerHTML='<div class="msg">Connected. Looking for an earlier backup…</div>';Android.driveRestore()}else $('driveMsg').innerHTML='<div class="msg">Connected — your first backup is done.</div>'}}
  else if(ev.type==='error'){driveRender();$('driveMsg').innerHTML=`<div class="msg warn">${esc(ev.message)}</div>`}
- else if(ev.type==='restore'){try{offerRestore(JSON.parse(ev.data),$('driveMsg'))}catch(e){$('driveMsg').innerHTML='<div class="msg warn">The Drive backup could not be read.</div>'}}};
+ else if(ev.type==='restore'){try{offerRestore(JSON.parse(ev.data),$('driveMsg'));if(ev.invoices>0)toast(`${ev.invoices} invoice file${ev.invoices===1?'':'s'} brought back from Drive`,false)}catch(e){$('driveMsg').innerHTML='<div class="msg warn">The Drive backup could not be read.</div>'}}};
 document.addEventListener('click',e=>{const b=e.target.closest('[data-drive]');if(!b||!HAS_DRIVE)return;const a=b.dataset.drive;$('driveMsg').innerHTML='<div class="msg">Working…</div>';
  if(a==='connect')Android.driveConnect();else if(a==='backup')Android.driveBackupNow();else if(a==='restore')Android.driveRestore();else if(a==='off')Android.driveDisconnect()});
 
@@ -1880,6 +1967,13 @@ function renderCounted(c){document.querySelectorAll('#cntSeg button').forEach(b=
 function forecast(date){const c=credit();let s=addM(stmtOf(date),-2);for(let k=0;k<5&&dueOf(s)<date;k++)s=addM(s,1);
  const b=c.bills.find(x=>x.stmt===s)||{stmt:s,due:dueOf(s),full:[],inst:[],billed:0,covered:0,rem:0,base:0};
  const older=c.bills.filter(x=>x.stmt<s&&x.stmt<today&&x.rem>0);return{b,older}}
+/* the minimum due of a bill: from the statement when we have it, otherwise installments + a share of the rest */
+function estMin(b,is){if(!(b.rem>0))return null;const B=base();
+ if(B&&B.min!=null&&B.stmt===b.stmt)return{v:r2(Math.max(0,B.min-paidSince())),real:true};
+ let pct=5,cal=false;
+ if(B&&B.min>0&&B.closing>0){const c=credit(),b0=c.bills.find(x=>x.stmt===B.stmt),i0=b0?r2(b0.inst.reduce((a,x)=>a+x.amt,0)):0,rest=B.closing-i0;
+  if(rest>0){const q=Math.round((B.min-i0)/rest*1000)/10;if(q>=2&&q<=20){pct=q;cal=true}}}
+ const rest=Math.max(0,b.rem-is);return{v:r2(Math.min(b.rem,is+(rest>0?Math.max(100,rest*pct/100):0))),pct,cal}}
 /* one installment plan row, as on the Installments page; x = this bill's installment (What will I owe?) */
 function instRow(t,x){const sc=schedule(t),n=t.plan.months,off=!!t.plan.stop,done=sc.filter(p=>p.stmt<today),leftAmt=r2(sc.filter(p=>p.stmt>=today).reduce((s,p)=>s+p.amt,0)),fin=!off&&done.length===sc.length,why=t.plan.gone==='refund'?'refunded':t.plan.gone==='stmt'?'not on your statement':'you cancelled it';
   return `<li class="tx" ${x?`data-fp="${t.id}" data-fi="${x.i}"`:`data-plan="${t.id}"`} style="--c:var(--credit)${off?';opacity:.75':''}"><span class="t"><b>${esc(t.note||catName(t))}</b> <span class="pill${fin?' paid':''}"${off?' style="background:var(--soft);color:var(--out)"':''}>${off?'Cancelled':fin?'Finished':`${done.length} of ${n} billed`}</span><small>${money(t.plan.each)} × ${n} = ${money(cost(t))} · bought ${fmt(t.date)} · ${off?`${sc.length} billed, then cancelled (${why})`:`last due ${fmtS(dueOf(sc.at(-1).stmt))}`}</small><span class="bar" style="display:block;--c:var(--credit)"><i style="width:${(off?sc.length:done.length)/n*100}%"></i></span></span><span class="amt">${x?money(x.amt)+`<br><small class="note">${x.i} of ${n}</small>`:fin||off?'':money(leftAmt)+'<br><small class="note">left</small>'}</span></li>`}
@@ -1887,6 +1981,7 @@ function renderForecast(){const d=$('fcDate').value;if(!d){$('fcOut').innerHTML=
  const{b,older}=forecast(d),fs=r2(b.full.reduce((a,x)=>a+x.amt,0)),is=r2(b.inst.reduce((a,x)=>a+x.amt,0)),open=b.stmt>=today;
  $('fcOut').innerHTML=`<div class="due" style="margin:6px 0 10px;border-left-color:var(--credit);background:var(--soft)"><div class="t"><small>Due ${dow(b.due)} ${fmt(b.due)}${b.due!==d?` (first due date on or after ${fmtS(d)})`:''}</small><span class="big">${egp(b.rem)}</span><small>Bill of ${fmt(b.stmt)}${open?' · still open, purchases until then will be added':''}</small></div></div>
   ${b.base?`<div class="kv"><span>Total due on your bank statement</span><b>${egp(b.base)}</b></div>`:''}
+  ${(()=>{const m=estMin(b,is);return m?`<div class="kv"><span>Minimum due ${m.real?'(from your statement)':'— estimate'}</span><b>${egp(m.v)}</b></div>${m.real?'':`<p class="note" style="margin:-2px 0 8px">This month’s installments + ${m.pct}% of the rest (min. EGP 100)${m.cal?', the share your last statement used':''}. Paying only the minimum adds card interest on the rest.</p>`}`:''})()}
   ${xcard('fcFull','🛍️',`Purchases to pay in full`,`${b.full.length} purchase${b.full.length===1?'':'s'}${b.full.length?' · tap one for details':''}`,money(fs),'',b.full.length?`<ul class="list" style="margin:0">${b.full.slice().sort((p,q)=>q.t.date.localeCompare(p.t.date)).map(x=>`<li class="tx" data-fv="${x.t.id}" style="--c:var(--credit)"><span class="dot"></span><span class="t">${esc(title(x.t))}<small>${dow(x.t.date)} ${fmtS(x.t.date)}${x.t.fxFee?` · incl. ${money(x.t.fxFee)} FX fee`:''}</small></span><span class="amt">${money(x.amt)}</span></li>`).join('')}</ul>`:'<p class="note" style="margin:10px 0 0">No purchases on this bill yet.</p>')}
   ${xcard('fcInst','🧾',`Installments`,`${b.inst.length} this bill${b.inst.length?' · tap one for details':''}`,money(is),'',b.inst.length?`<ul class="list" style="margin:0">${b.inst.map(x=>instRow(x.t,x)).join('')}</ul>`:'<p class="note" style="margin:10px 0 0">No installments on this bill.</p>')}
   ${b.covered?`<div class="kv"><span>Already paid</span><b>− ${egp(b.covered)}</b></div>`:''}
@@ -1901,6 +1996,73 @@ $('fcOut').addEventListener('click',e=>{const v=e.target.closest('[data-fv]'),pl
  ask(t.note||catName(t),kvs([['This installment',`${i} of ${n} · ${egp(sc.find(p=>p.i===i)?.amt??t.plan.each)}`],['Price',egp(t.amt)],['Monthly installment',egp(t.plan.each)],['Months',n],['Total of all installments',egp(tot)],extra>0.5?['Interest / fees',egp(extra)]:null,['Bought',`${dow(t.date)} ${fmt(t.date)}`],['First due',fmt(dueOf(stmtOf(t.plan.first)))],sc.length?['Last due',fmt(dueOf(sc.at(-1).stmt))]:null,['Already billed',`${done.length} of ${n}`],['Still to pay',`${egp(r2(left.reduce((a,p)=>a+p.amt,0)))} · ${left.length} month${left.length===1?'':'s'}`],t.plan.stop?['Status','Cancelled']:null])
   +`<div class="sched" style="margin-top:10px">${sc.map(p=>`<span class="${p.stmt<today?'done':''}${p.i===i?' cur':''}">${p.i}. ${fmtS(dueOf(p.stmt))}</span>`).join('')}</div>`,[{label:'Close',value:0}])},true);
 
+
+
+/* ---------- installment calculator (CIB personal loan · card installment plan · 0% offers) ---------- */
+let calcKind='loan',calcExtra=null,calcInit=false;
+const cardRate=n=>{let r=S.rates.card[0][1];for(const[from,v]of S.rates.card)if(n>=from)r=v;return r};
+function calcMath(P,n,kind,rate,feePct){
+ const r=kind==='zero'?0:kind==='card'?rate/100:rate/1200;
+ const each=r>0?P*r/(1-Math.pow(1+r,-n)):P/n,rows=[];let left=P;
+ for(let i=1;i<=n;i++){const int=left*r,prin=Math.min(left,each-int);left=Math.max(0,left-prin);rows.push({i,each:r2(each),int:r2(int),prin:r2(prin),left:r2(left)})}
+ const total=r2(each*n),interest=r2(total-P),fee=r2(P*(feePct||0)/100);
+ return{each:r2(each),total,interest,fee,cost:r2(interest+fee),rows,apr:r2(kind==='card'?rate*12:kind==='loan'?rate:0)}}
+function calcDefaults(){const n=+$('calcN').value||12;
+ if(calcKind==='loan'){$('calcRate').value=S.rates.loan;$('calcFee').value=S.rates.loanFee}
+ else if(calcKind==='card'){$('calcRate').value=cardRate(n);$('calcFee').value=S.rates.cardFee}
+ else{$('calcRate').value=0;$('calcFee').value=0}}
+function renderCalc(first){if(!$('calcSeg'))return;
+ document.querySelectorAll('#calcSeg button').forEach(b=>b.classList.toggle('on',b.dataset.calc===calcKind));
+ if(first||$('calcRate').value==='')calcDefaults();
+ $('calcRateBox').hidden=calcKind==='zero';
+ $('calcRateLbl').textContent=calcKind==='card'?'Interest a month (%)':'Interest a year (%)';
+ $('calcSrc').textContent=calcKind==='loan'?'Reducing balance, like CIB personal loans. Change the rate if the bank offers you another.':calcKind==='card'?'Monthly reducing rate of CIB’s card installment plan for this many months. Shop offers at 0% are under "0% offer".':'Shop / Amazon / Fawry offers with 0% interest: the price split into equal parts.';
+ $('calcRatesNote').innerHTML=`${esc(S.rates.loanSrc)}.<br>${esc(S.rates.cardSrc)}.<br>Rates change — the bank’s offer to you decides. Last checked ${fmt(S.rates.checked)}.`;
+ renderCalcOut()}
+function renderCalcOut(){const out=$('calcOut');if(!out)return;const P=r2($('calcAmt').value),n=+$('calcN').value||12,rate=+$('calcRate').value||0,feeP=+$('calcFee').value||0;
+ if(!(P>0)){out.innerHTML='<div class="msg">Type the amount you want to pay in installments.</div>';return}
+ const R=calcMath(P,n,calcKind,rate,feeP),st=monthStats(),sal=st.sal||st.inc;
+ const now=r2(st.instMonthly+st.gamMonthly),tot=r2(now+R.each),pct=sal>0?Math.round(tot/sal*100):null,col=pct==null?'':pct<=30?'var(--ok)':pct<=50?'var(--warn)':'var(--danger)';
+ const left=r2(st.inc-st.spend-st.charity-now),after=r2(left-R.each);
+ /* goals: still on track if this installment is added? */
+ const goals=(S.goals||[]).filter(g=>g.target>0&&g.date>=today).map(g=>{const a=goalPlan(g);calcExtra={each:R.each,n};let b;try{b=goalPlan(g)}finally{calcExtra=null}
+  const v=b.ok?'✅ still reachable':b.reachable?'⚠️ reachable only with spending cuts':'❌ not reachable by '+fmtS(g.date);return `<div class="kv"><span>${esc(g.name)}${a.ok&&!b.ok?' <small class="note">(reachable without it)</small>':''}</span><b>${v}</b></div>`}).join('');
+ const sched=R.rows.map(x=>`<tr><td>${x.i} · ${MONTHS[+addYm(ymOf(today),x.i).slice(5)-1].slice(0,3)} ${addYm(ymOf(today),x.i).slice(2,4)}</td><td>${money(x.each)}</td><td>${money(x.int)}</td><td>${money(x.left)}</td></tr>`).join('');
+ out.innerHTML=`<div class="note">Monthly installment</div><div class="big">${egp(R.each)}</div>
+  <div class="kv"><span>Interest over ${n} months</span><b>${egp(R.interest)}</b></div>
+  ${R.fee?`<div class="kv"><span>Admin fee (${feeP}%) — paid once</span><b>${egp(R.fee)}</b></div>`:''}
+  <div class="kv tot"><span>You pay in total</span><b>${egp(r2(R.total+R.fee))}</b></div>
+  <div class="kv"><span>Extra over the price</span><b>${egp(R.cost)} (${P?Math.round(R.cost/P*1000)/10:0}%)</b></div>
+  ${calcKind==='card'?`<p class="note" style="margin:6px 0 0">${rate}% a month ≈ ${R.apr}% a year. Cancelling early costs 5% of what is left, per CIB’s terms.</p>`:''}
+  <h2 style="font-size:16px;margin-top:16px">Can I afford it?</h2>
+  ${sal>0?`<div class="kv"><span>Average ${st.sal?'salary':'income'} (last 3 months)</span><b>${egp(sal)}</b></div>`:'<div class="msg">No salary recorded in the last 3 months, so I can’t compare yet.</div>'}
+  ${now?`<div class="kv"><span>Installments &amp; gam3ya you already pay a month</span><b>${egp(now)}</b></div>`:''}
+  ${pct!=null?`<div class="kv tot"><span>All monthly installments with this one</span><b style="color:${col}">${egp(tot)} · ${pct}% of ${st.sal?'salary':'income'}</b></div><div class="bar" style="--c:${col}"><i style="width:${Math.min(100,pct)}%"></i></div><p class="note" style="margin:6px 0 0">Banks usually allow installments up to about 50% of income. Under 30% is comfortable.</p>`:''}
+  ${sal>0?`<div class="kv"><span>Left over a month now (average)</span><b>${egp(left)}</b></div><div class="kv"><span>Left over with this installment</span><b class="${after<0?'neg':''}">${egp(after)}</b></div>`:''}
+  ${goals?`<h2 style="font-size:16px;margin-top:16px">Your goals with this installment</h2>${goals}`:''}
+  <div style="margin-top:14px">${xcard('calcSch','📅','Month by month','Installment, interest and what is left',null,'',`<table class="sched"><tr><th>Month</th><th>Pay</th><th>Interest</th><th>Left</th></tr>${sched}</table>`)}</div>`}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-calc]');if(!b)return;calcKind=b.dataset.calc;calcDefaults();renderCalc()});
+document.addEventListener('input',e=>{if(e.target.id==='calcAmt'||e.target.id==='calcRate'||e.target.id==='calcFee')renderCalcOut()});
+document.addEventListener('change',e=>{if(e.target.id==='calcN'){if(calcKind==='card')$('calcRate').value=cardRate(+e.target.value);renderCalcOut()}});
+document.addEventListener('click',e=>{if(e.target.id==='calcSaveRate'){const v=+$('calcRate').value,f=+$('calcFee').value;
+  if(calcKind==='loan'){S.rates.loan=v;S.rates.loanFee=f;S.rates.loanSrc='CIB personal loan '+v+'% a year + '+f+'% admin fee (your own figure)'}
+  else if(calcKind==='card'){const n=+$('calcN').value;S.rates.card=S.rates.card.map(([from,x])=>[from,from===S.rates.card.filter(([fr])=>n>=fr).at(-1)[0]?v:x]);S.rates.cardFee=f;S.rates.cardSrc='CIB card installments: '+S.rates.card.map(([fr,x])=>x+'% from '+fr+' months').join(', ')+' (your own figures)'}
+  else return;S.rates.checked=today;save();toast('Rates saved',false)}
+ else if(e.target.id==='calcAsk')askRates()});
+async function askRates(){const box=$('calcAskOut');let key='';try{key=localStorage.getItem('exp-ai-key')||''}catch(e){}
+ if(!key){box.innerHTML='<div class="msg warn">Add your Anthropic API key first (Goals tab → Claude key).</div>';return}
+ box.innerHTML='<div class="msg">Claude is checking the web for CIB’s current rates…</div>';
+ const prompt=`Search the web for the CURRENT interest rates in Egypt of Commercial International Bank (CIB): (1) the unsecured personal loan for salaried employees (annual reducing-balance rate, lowest typical) and its admin fee %, (2) the credit-card installment payment plan (IPP) monthly rates by tenor. Today is ${today}. Reply with ONLY one JSON object, no other text: {"loan":number,"loanFee":number,"loanSrc":"short source + date","card":[[fromMonths,monthlyRatePercent],...],"cardSrc":"short source + date"}. Use null for anything you could not confirm.`;
+ try{const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+   body:JSON.stringify({model:'claude-sonnet-5-5',max_tokens:1500,tools:[{type:'web_search_20250305',name:'web_search',max_uses:5}],messages:[{role:'user',content:prompt}]})});
+  const j=await r.json();if(!r.ok)throw new Error(j&&j.error&&j.error.message||('error '+r.status));
+  const text=(j.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('\n'),m=text.match(/\{[\s\S]*\}/);if(!m)throw new Error('no figures in the answer');
+  const o=JSON.parse(m[0]),ch=[];
+  if(o.loan>0&&o.loan<80){S.rates.loan=+o.loan;ch.push(`loan ${o.loan}% a year`);if(o.loanFee>=0&&o.loanFee!=null&&o.loanFee<10){S.rates.loanFee=+o.loanFee}if(o.loanSrc)S.rates.loanSrc='CIB personal loan: '+o.loanSrc}
+  if(Array.isArray(o.card)){const c=o.card.filter(x=>Array.isArray(x)&&x[0]>=1&&x[1]>0&&x[1]<10).map(x=>[+x[0],+x[1]]).sort((a,b)=>a[0]-b[0]);if(c.length){S.rates.card=c;ch.push('card installments '+c.map(x=>x[1]+'%').join(' / ')+' a month');if(o.cardSrc)S.rates.cardSrc='CIB card installments: '+o.cardSrc}}
+  if(!ch.length)throw new Error('Claude could not confirm the rates');
+  S.rates.checked=today;save();calcDefaults();renderCalc();box.innerHTML=`<div class="msg">Updated: ${esc(ch.join(' · '))}.</div>`}
+ catch(e){box.innerHTML=`<div class="msg warn">Couldn’t update the rates: ${esc(e.message||'no internet?')}</div>`}}
 
 /* ---------- bank statement PDFs ---------- */
 let pdfReady=null;
@@ -2238,7 +2400,7 @@ function goalPlan(g){const st=monthStats(),months=Math.max(1,ymDiff(ymOf(today),
 function goalSim(g,P,pct,maxMonths=120){const st=P.st,cur=ymOf(today),cut=r2(P.flex.reduce((a,[k,v])=>a+v*pct,0));
  const inst={};tx.filter(t=>t.plan).forEach(t=>schedule(t).forEach(x=>{const ym=ymOf(dueOf(x.stmt));inst[ym]=r2((inst[ym]||0)+x.amt)}));
  const base=r2(st.inc-st.spend-st.charity+cut),out=[];let cum=0;
- for(let k=1;k<=maxMonths;k++){const ym=addYm(cur,k-1);let f=base-(inst[ym]||0);
+ for(let k=1;k<=maxMonths;k++){const ym=addYm(cur,k-1);let f=base-(inst[ym]||0)-(calcExtra&&k>=2&&k<2+calcExtra.n?calcExtra.each:0);
   for(const m of S.gam){const i=ymDiff(m.start,ym),each=m.amt*(m.shares||1);if(i>=0&&i<m.months&&gamPays(m).length<=i)f-=each;if(i===m.turn-1&&!gamGot(m))f+=gamPayout(m)}
   cum=r2(cum+Math.max(0,f));out.push({ym,save:r2(Math.max(0,f)),cum})}
  return out}
@@ -2400,9 +2562,98 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-chpay]');i
  const acc=$('chFrom-'+ym).value;tx.push({id:uid(),type:'exp',acc,amt:r.left,date:today,cat:'charity',note:`Church · ${monthLbl(ym)}`,created:Date.now(),charYm:ym});S.charity.acc=acc;save();toast(`${egp(r.left)} given from ${accName(acc)}`,false)});
 
 
+
+/* ---------- recurring payments ---------- */
+let recEdit=null;
+const recDue=(r,ym)=>{const[y,m]=ym.split('-').map(Number);return mk(y,m-1,r.day||1)};
+const spentIn=(t,ym)=>t.type==='exp'&&!voided(t)&&ymOf(t.date)===ym;
+/* paid that month: an entry made from it, or an expense in the same category near the amount (SMS, statement, by hand) */
+function recPaid(r,ym){const own=tx.find(t=>t.rec===r.id&&ymOf(t.date)===ym);if(own)return own;
+ return tx.find(t=>spentIn(t,ym)&&!t.rec&&r.cat&&t.cat===r.cat&&(!(r.amt>0)||Math.abs(t.amt-r.amt)<=Math.max(5,r.amt*0.25)))||null}
+function recOpen(){const ym=ymOf(today),out=[];
+ for(const r of S.rec||[]){for(const k of [-1,0]){const m=addYm(ym,k);if(r.start&&m<r.start)continue;const d=recDue(r,m);if(d>today&&daysTo(d)>(+S.nfy.days||0))continue;if(k<0&&d<addYm(ym,-1)+'-01')continue;if(!recPaid(r,m))out.push({r,ym:m,due:d})}}
+ return out.sort((a,b)=>a.due.localeCompare(b.due))}
+function recAdd(r,date){const t={id:uid(),type:'exp',amt:r2(r.amt),acc:r.acc||'cash',date,cat:r.cat||null,note:r.n,rec:r.id,created:Date.now()};if(!t.cat)t.review=true;tx.push(t);return t}
+/* "Add it for me": add the ones whose day has come (this month and last month only) */
+function runRecurring(){let n=0;const ym=ymOf(today);
+ for(const r of S.rec||[]){if(r.mode!=='auto'||!(r.amt>0))continue;for(const k of [-1,0]){const m=addYm(ym,k);if(r.start&&m<r.start)continue;const d=recDue(r,m);if(d>today||recPaid(r,m))continue;recAdd(r,d);n++}}
+ if(n){save();toast(`Added ${n} recurring payment${n===1?'':'s'}`,false)}}
+function renderRec(){if(!$('recList'))return;const ym=ymOf(today);
+ $('recList').innerHTML=(S.rec||[]).length?S.rec.map(r=>{const p=recPaid(r,ym);return `<li class="tx" data-rec="${r.id}" style="--c:var(--acc)"><span class="dot"></span><span class="t">${esc(r.n)}<small>Every month on the ${r.day} · ${esc(catName({type:'exp',cat:r.cat}))} · ${esc(accName(r.acc))} · ${r.mode==='auto'?'added for you':'reminder'} · ${p?'✅ paid this month':'not paid yet this month'}</small></span><span class="amt">${money(r.amt)}</span></li>`}).join(''):'<li class="empty" style="display:block;border:0">No recurring payments yet.</li>';
+ if(!$('recForm').hidden)return}
+function openRec(id){recEdit=id||'__new';const r=id?S.rec.find(x=>x.id===id):{n:'',amt:'',cat:'apt',acc:'cash',day:1,mode:'remind'};
+ $('recForm').hidden=false;$('recNew').hidden=true;$('recDel').hidden=!id;
+ $('recName').value=r.n;$('recAmt').value=r.amt||'';
+ $('recCat').innerHTML=byName(catList('exp')).map(c=>`<option value="${c.id}"${c.id===r.cat?' selected':''}>${esc(c.n)}${c.home?' 🏠':''}</option>`).join('');
+ $('recAcc').innerHTML=accOpts(ACC,r.acc);$('recDay').innerHTML=Array.from({length:28},(_,i)=>`<option value="${i+1}"${i+1===+r.day?' selected':''}>${i+1}</option>`).join('');
+ $('recMode').value=r.mode||'remind';['recCat','recAcc','recDay','recMode'].forEach(i=>ddSync($(i)));$('recName').focus()}
+function closeRec(){recEdit=null;$('recForm').hidden=true;$('recNew').hidden=false}
+document.addEventListener('click',e=>{const id=e.target.id;
+ if(id==='recNew')openRec();else if(id==='recCancel')closeRec();
+ else if(id==='recSave'){const n=$('recName').value.trim(),a=r2($('recAmt').value);if(!n||!(a>0)){toast('Type a name and an amount',false);return}
+  const o={n,amt:a,cat:$('recCat').value,acc:$('recAcc').value,day:+$('recDay').value,mode:$('recMode').value};
+  if(recEdit==='__new')S.rec.push({id:uid(),start:ymOf(today),...o});else Object.assign(S.rec.find(x=>x.id===recEdit)||{},o);
+  closeRec();save();runRecurring();toast('Saved',false)}
+ else if(id==='recDel'){sure(e.target,'Tap again to delete',()=>{S.rec=S.rec.filter(x=>x.id!==recEdit);closeRec();save()})}
+ const li=e.target.closest('[data-rec]');if(li)openRec(li.dataset.rec);
+ const pb=e.target.closest('[data-recpaid]');if(pb){const[id,ym]=pb.dataset.recpaid.split('|'),r=S.rec.find(x=>x.id===id);if(!r)return;const d=recDue(r,ym)>today?today:recDue(r,ym);recAdd(r,d);save();toast(`${r.n} added as paid on ${fmtS(d)}`,false)}});
+
+/* ---------- category budgets ---------- */
+const budSpent=(cat,ym)=>r2(tx.filter(t=>spentIn(t,ym)&&t.cat===cat&&!isCheck(t)).reduce((a,t)=>a+cost(t),0));
+function budRowsHTML(){const ym=ymOf(today),d=dim(+ym.slice(0,4),+ym.slice(5)-1),left=Math.max(1,d-+today.slice(8)+1);
+ return Object.entries(S.bud||{}).filter(([k,v])=>v>0&&S.exp.some(c=>c.id===k)).map(([k,lim])=>{const u=budSpent(k,ym),l=r2(lim-u),col=l<0?'var(--out)':u>=lim*0.8?'var(--warn)':'var(--in)';
+  return `<button type="button" class="hr" data-go="reports"><span class="t">${esc(catName({type:'exp',cat:k}))} · budget<small>${money(u)} of ${money(lim)}${l>0?` · about ${money(l/left)} a day`:''}</small><span class="bar" style="display:block"><i style="width:${Math.min(100,u/lim*100)}%;background:${col}"></i></span></span><span class="v" style="color:${col}">${l<0?'over '+money(-l):money(l)+' left'}</span></button>`}).join('')}
+function renderBud(){if(!$('budRows'))return;const st=monthStats();
+ $('budRows').innerHTML=byName(catList('exp')).filter(c=>!['gam3ya'].includes(c.id)).map(c=>`<div class="row" style="align-items:end"><div><label for="bud-${c.id}">${esc(c.n)}${c.home?' 🏠':''}</label><input id="bud-${c.id}" data-bud="${c.id}" type="number" inputmode="decimal" min="0" placeholder="No limit" value="${S.bud[c.id]||''}"></div><div class="note" style="padding-bottom:16px">avg ${money(st.cats[c.id]||0)} · this month ${money(budSpent(c.id,ymOf(today)))}</div></div>`).join('')}
+document.addEventListener('click',e=>{if(e.target.id!=='budSave')return;const b={};document.querySelectorAll('[data-bud]').forEach(i=>{const v=r2(i.value);if(v>0)b[i.dataset.bud]=v});S.bud=b;save();budCheck(true);toast('Budgets saved',false)});
+let budAl={};try{budAl=JSON.parse(localStorage.getItem('exp-budal')||'{}')}catch(e){}
+function budCheck(quiet){if(!S.nfy.bud)return;const ym=ymOf(today);let ch=false;
+ for(const[k,lim]of Object.entries(S.bud||{})){if(!(lim>0))continue;const u=budSpent(k,ym),lv=u>lim?100:u>=lim*0.8?80:0,key=ym+'|'+k;if(!lv||(budAl[key]||0)>=lv)continue;
+  budAl[key]=lv;ch=true;if(quiet)continue;const n=catName({type:'exp',cat:k}),txt=lv===100?`${n}: over the monthly budget by EGP ${money(u-lim)} (${money(u)} of ${money(lim)}).`:`${n}: ${Math.round(u/lim*100)}% of the monthly budget used — EGP ${money(lim-u)} left.`;
+  toast(txt,false);if(window.Android&&Android.notifyNow)try{Android.notifyNow('bud-'+key+'-'+lv,lv===100?'🎯 Budget passed':'🎯 Budget at 80%',txt)}catch(e){}}
+ if(ch)try{for(const k of Object.keys(budAl))if(!k.startsWith(ym))delete budAl[k];localStorage.setItem('exp-budal',JSON.stringify(budAl))}catch(e){}}
+
+/* ---------- home bills: the usual day and amount ---------- */
+function homeHabit(cat){const ms=[];for(let k=1;k<=6;k++){const ym=addYm(ymOf(today),-k),l=tx.filter(t=>spentIn(t,ym)&&t.cat===cat).sort((a,b)=>a.date.localeCompare(b.date));if(l.length)ms.push(l[0])}
+ if(ms.length<2)return null;const days=ms.map(t=>+t.date.slice(8)).sort((a,b)=>a-b),day=days[Math.floor(days.length/2)];return{day:Math.min(28,day),last:ms[0].amt,n:ms.length}}
+
+/* ---------- reminders planned ahead + monthly summary + widget ---------- */
+function monthSummary(ym){const prev=addYm(ym,-1),sp=m=>r2(tx.filter(t=>spentIn(t,m)&&t.cat!=='gam3ya'&&!isCheck(t)).reduce((a,t)=>a+cost(t),0)),
+ inc=r2(tx.filter(t=>t.type==='inc'&&!voided(t)&&ymOf(t.date)===ym&&t.cat!=='gam3ya'&&t.acc!=='credit').reduce((a,t)=>a+t.amt,0)),a=sp(ym),b=sp(prev);
+ const cats={};tx.filter(t=>spentIn(t,ym)&&t.cat!=='gam3ya'&&!isCheck(t)).forEach(t=>{const k=t.cat||'_none';cats[k]=(cats[k]||0)+cost(t)});
+ const top=Object.entries(cats).sort((x,y)=>y[1]-x[1])[0],ch=b>0?Math.round((a-b)/b*100):null;
+ return `Spent EGP ${money(a)}${ch!=null?` (${ch>=0?'▲':'▼'} ${Math.abs(ch)}% vs ${MONTHS[+prev.slice(5)-1]})`:''} · income EGP ${money(inc)} · net EGP ${money(inc-a)}${top?` · top: ${catLabel(top[0])} EGP ${money(top[1])}`:''}.`}
+function planNotes(){const N=[],ym=ymOf(today),db=+S.nfy.days||0,minus=(d,k)=>iso(new Date(new Date(d+'T00:00').getTime()-k*864e5)),recCats=new Set((S.rec||[]).map(r=>r.cat));
+ if(S.nfy.rec)for(const r of S.rec||[])for(const k of [0,1]){const m=addYm(ym,k);if(r.start&&m<r.start)continue;if(recPaid(r,m))continue;const d=recDue(r,m);
+  N.push({id:`rec-${r.id}-${m}-${db}`,date:minus(d,db),title:`🔁 ${r.n} — ${db?`due ${fmtS(d)}`:'due today'}`,text:`EGP ${money(r.amt)} from ${accName(r.acc)}.${r.mode==='auto'?' The app adds it for you on the day.':' Open Expenses and tap Paid when done.'}`})}
+ if(S.nfy.home)for(const c of homeCats()){if(recCats.has(c.id)||c.id==='groc')continue;const h=homeHabit(c.id);if(!h)continue;
+  for(const k of [0,1]){const m=addYm(ym,k);if(tx.some(t=>spentIn(t,m)&&t.cat===c.id))continue;const d=recDue({day:h.day},m);if(d<today&&k===0&&daysTo(d)<-5)continue;
+   N.push({id:`home-${c.id}-${m}-${db}`,date:minus(d,db),title:`🏠 ${c.n}`,text:`Usually paid around the ${h.day}${['th','st','nd','rd'][h.day%10<4&&(h.day<11||h.day>13)?h.day%10:0]} — last time EGP ${money(h.last)}. Not recorded yet this month.`})}}
+ if(S.nfy.sum){const nx=addYm(ym,1);N.push({id:'sum-'+ym,date:nx+'-01',title:`📊 ${MONTHS[+ym.slice(5)-1]} in short`,text:monthSummary(ym),ch:'summary',chName:'Monthly summary'})}
+ return N}
+function widgetData(){const ym=ymOf(today),sp=r2(tx.filter(t=>spentIn(t,ym)&&t.cat!=='gam3ya'&&!isCheck(t)).reduce((a,t)=>a+cost(t),0)),d=dim(+ym.slice(0,4),+ym.slice(5)-1),left=Math.max(1,d-+today.slice(8)+1);
+ const g=(S.goals||[]).map(g=>goalBudget(g,goalPlan(g))).find(Boolean),lims=Object.values(S.bud||{}).filter(v=>v>0);let line,note='';
+ if(g){line=g.left<0?`Over the limit by EGP ${money(-g.left)}`:`EGP ${money(g.left)} left · ${money(g.perDay)} a day`;note='Goal spending limit'}
+ else if(lims.length){const L=r2(lims.reduce((a,b)=>a+b,0)),U=r2(Object.keys(S.bud).filter(k=>S.bud[k]>0).reduce((a,k)=>a+budSpent(k,ym),0));line=U>L?`Budgets over by EGP ${money(U-L)}`:`Budgets: EGP ${money(L-U)} left · ${money((L-U)/left)} a day`}
+ else{const inc=r2(tx.filter(t=>t.type==='inc'&&!voided(t)&&ymOf(t.date)===ym&&t.cat!=='gam3ya'&&t.acc!=='credit').reduce((a,t)=>a+t.amt,0));line=`Income EGP ${money(inc)} · net ${money(inc-sp)}`}
+ const now=new Date();return{title:`Spent in ${MONTHS[now.getMonth()]}`,spent:'EGP '+money(sp),left:line,note:(note?note+' · ':'')+'updated '+pad(now.getHours())+':'+pad(now.getMinutes())}}
+let pushT=null;function pushExtras(){clearTimeout(pushT);pushT=setTimeout(()=>{if(!window.Android)return;
+ try{Android.setNotes&&Android.setNotes(JSON.stringify(planNotes()))}catch(e){}
+ try{Android.setWidget&&Android.setWidget(JSON.stringify(widgetData()))}catch(e){}
+ try{Android.driveInvoices&&Android.driveInvoices(!!S.invDrive)}catch(e){}
+ budCheck()},450)}
+function renderNfy(){if(!$('nfyHome'))return;$('nfyHome').checked=!!S.nfy.home;$('nfyRec').checked=!!S.nfy.rec;$('nfySum').checked=!!S.nfy.sum;$('nfyBud').checked=!!S.nfy.bud;$('nfyDays').value=String(S.nfy.days??2);ddSync($('nfyDays'));
+ if($('invDrive'))$('invDrive').checked=!!S.invDrive;
+ const N=planNotes().filter(n=>n.date>=today).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,6);
+ $('nfyNext').innerHTML=N.length?`<h2 style="margin-top:14px;font-size:16px">Coming up</h2><ul class="list">${N.map(n=>`<li><span class="t">${esc(n.title)}<small>${fmt(n.date)} · ${esc(n.text)}</small></span></li>`).join('')}</ul>`:''}
+document.addEventListener('change',e=>{const id=e.target.id,m={nfyHome:'home',nfyRec:'rec',nfySum:'sum',nfyBud:'bud'};
+ if(m[id]){S.nfy[m[id]]=e.target.checked;save()}else if(id==='nfyDays'){S.nfy.days=+e.target.value;save()}
+ else if(id==='invDrive'){S.invDrive=e.target.checked;save();toast(S.invDrive?'Invoices will go to Google Drive with the next backup':'Invoices stay on the phone only',false)}});
+
 /* ---------- settings pages ---------- */
 const SECS=[['sec','🔒','Lock & appearance','Fingerprint lock, light or dark'],['acc','🏦','Accounts & credit card','Balances, limit, bill and due days'],['cats','🏷️','Categories','Add, rename or remove'],
- ['stm','📄','Bank statements','Import CIB PDF statements'],['pay','💵','Payslips','Add your salary from payslips'],['sms','✉️','Bank SMS','Card numbers, reading messages'],
+ ['stm','📄','Bank statements','Import CIB PDF statements'],['pay','💵','Payslips','Add your salary from payslips'],['sms','✉️','Bank SMS & Telda','Card numbers, messages, Telda notifications'],
+ ['rec','🔁','Recurring payments','Monthly bills: reminder or added for you'],['bud','🎯','Category budgets','A monthly limit per category, alert at 80%'],['nfy','🔔','Reminders & widget','Home bills, monthly summary, home-screen widget'],
  ['drive','☁️','Google Drive backup','Daily backup to your Drive'],['backup','💾','Backup file','Export or restore everything']];
 let setSub=null;
 function showSettingsPage(){
@@ -2574,7 +2825,9 @@ function merchantOf(body){
 const NOTICE=/كشف حساب شهر|statement (?:of|for) .{0,40}(?:card|account)|الحد الأدنى للسداد|minimum (?:payment|amount) due/i;
 const INSTRE=/تقسيط مبلغ\s*([\d,]+(?:\.\d+)?)\s*(?:جم|جنيه|egp)?\s*من\s*(.+?)\s*على\s*بطاقت.*?بقسط\s*شهري\s*([\d,]+(?:\.\d+)?)\s*(?:جم|جنيه|egp)?\s*على\s*(\d+)\s*(?:شهر|اشهر|أشهر).*?(?:أول|اول)\s*قسط\s*(?:يوم|في)?\s*(\d{1,2})\/(\d{1,2})\/(\d{4})/i;
 const OTPBUY=/الرقم السري المتغير|كلمة (?:السر|المرور) (?:المؤقتة|لمرة واحدة)|one[- ]?time (?:password|pin)|\botp\b/i;
-function parseSms(body){
+const TELDA_SRC='Telda app';
+function parseSms(body,from){
+ const app=from===TELDA_SRC||/^\s*telda\b/i.test(String(body||''));
  const b=norm(body).replace(/(egp|جم|جنيه)\s*-\s*(?=\d)/g,'$1 ');
  if(NOTICE.test(b)&&!/charged|خصم|debited/.test(b))return{err:'Statement notice',ignore:true};
  {const m=b.match(INSTRE);if(m)return{inst:true,acc:'credit',amt:numv(m[1]),m:m[2].trim(),each:numv(m[3]),months:+m[4],firstDue:`${m[7]}-${pad(+m[6])}-${pad(+m[5])}`}}
@@ -2585,6 +2838,8 @@ function parseSms(body){
  const balM=b.match(/الرصيد المتاح\s*(?:egp\s*)?([\d,]+\.\d+)|available balance(?: is)?\s*(?:egp\s*)?([\d,]+\.\d+)/);
  let acc=null,ip=false;
  for(const a of SMS_ACC)if(kwList(a).some(k=>hasKw(b,k))){acc=a;break}
+ if(app&&!acc)acc='telda';
+ if(app&&/(?:invite|refer|win\b|offer|promo|cashback up to|ادع|اكسب|عرض|خصم يصل|استمتع)/i.test(b)&&!/(?:spent|paid|sent|received|added|deposit|withdr|purchase|تم|خصم مبلغ|دفعت|استلمت)/i.test(b))return{err:'Telda advert',ignore:true};
  if(!acc&&IPRE.test(b)){acc=S.sms.ipAcc||'debit';ip=true}
  if(!acc)return{err:'None of your card or account numbers is in this message.'};
  let amt=null;const re=new RegExp(CUR+'\\s*:?\\s*'+NUM+'|'+NUM+'\\s*'+CUR,'g');let m;
@@ -2592,7 +2847,7 @@ function parseSms(body){
  if(amt==null){const m2=b.match(/(?:amount|\bamt\b|مبلغ|بمبلغ|قيمة|بقيمة)\s*(?:of|:)?\s*(\d[\d,]*(?:\.\d+)?)/);if(m2)amt=parseFloat(m2[1].replace(/,/g,''))}
  const inI=b.search(INW),outI=b.search(OUTW);
  if(OTP.test(b)&&inI<0&&outI<0)return{err:'This looks like a code message, not a payment.',otp:true};
- if(!(amt>0))return{err:'Could not find the amount.',noAmt:true,acc};
+ if(!(amt>0))return app?{err:'Telda notification without an amount',ignore:true}:{err:'Could not find the amount.',noAmt:true,acc};
  amt=r2(amt);const mer=merchantOf(body).replace(/\s*>\s*$/,'');
  let type;
  if(acc==='credit')type=REFW.test(b)?'inc':(PAYW.test(b)||(inI>=0&&(outI<0||inI<=outI)))?'pay':'exp';
@@ -2620,7 +2875,23 @@ function applyInstSms(p,ts,key){
 const otpTwin=(a,b)=>a.acc===b.acc&&a.type===b.type&&baseAmt(a)===baseAmt(b)&&a.sms&&b.sms&&Math.abs(a.sms.ts-b.sms.ts)<=15*60e3&&!!a.sms.otp2!==!!b.sms.otp2;
 /* an InstaPay fee stays an expense of the account it left, when the transfer itself becomes a move between own accounts */
 function splitFee(x,from){if(!x.ipFee)return;tx.push({id:uid(),type:'exp',acc:from,amt:x.ipFee,date:x.date,cat:feeCat(),note:'InstaPay fee',created:(x.created||0)+1});x.amt=baseAmt(x);delete x.ipFee}
-function pair(t){
+/* the same Telda money seen as a Telda app notification and as an SMS (or a bank SMS for the top-up) */
+const viaApp=x=>!!(x.sms&&x.sms.app);
+const teldaLoad=(xfer,amt)=>Math.abs(xfer.amt-amt)<0.01||Math.abs(xfer.amt/1.02-amt)<1;
+function joinAlt(x,t){x.sms.alt={from:t.sms.from,body:t.sms.body,ts:t.sms.ts,key:t.sms.key};skip.push(t.sms.key)}
+function pairTelda(t){if(!t.sms)return false;
+ for(const x of tx){if(!x.sms||x.sms.alt||Math.abs(x.sms.ts-t.sms.ts)>45*60e3)continue;
+  if(viaApp(x)===viaApp(t))continue;
+  /* same Telda movement, one from the Telda app and one by SMS */
+  if(x.acc==='telda'&&t.acc==='telda'&&x.type===t.type&&Math.abs(baseAmt(x)-baseAmt(t))<0.01){
+   if(viaApp(x)){const keep={...x.sms};x.sms={...t.sms,alt:{from:keep.from,body:keep.body,ts:keep.ts,key:keep.key}};skip.push(keep.key);if(t.ipFee&&!x.ipFee){x.ipFee=t.ipFee;x.amt=t.amt}}else joinAlt(x,t);
+   if(x.review&&t.cat){x.cat=t.cat;x.review=false}if(!x.note&&t.note)x.note=t.note;return true}
+  /* Telda top-up: bank SMS "to Telda" + Telda "money added" (2% load fee) */
+  if(t.type==='inc'&&t.acc==='telda'&&x.type==='xfer'&&x.to==='telda'&&teldaLoad(x,t.amt)){joinAlt(x,t);x.toAmt=t.amt;return true}
+  if(t.type==='xfer'&&t.to==='telda'&&x.type==='inc'&&x.acc==='telda'&&x.review&&teldaLoad(t,x.amt)){const got=x.amt,old={from:x.sms.from,body:x.sms.body,ts:x.sms.ts,key:x.sms.key};
+   for(const k of Object.keys(x))if(k!=='id'&&k!=='created')delete x[k];Object.assign(x,clone(t),{id:x.id,toAmt:got});x.sms.alt=old;skip.push(t.sms.key,old.key);return true}}
+ return false}
+function pair(t){if(pairTelda(t))return true;
  const nc=a=>a!=='credit';
  for(const x of tx){if(!x.sms||baseAmt(x)!==baseAmt(t)||Math.abs(x.sms.ts-t.sms.ts)>36e5)continue;
   if(otpTwin(x,t)){if(x.sms.otp2&&!x.stmtKey){skip.push(x.sms.key);Object.assign(x,{note:t.note,sms:t.sms});if(t.cat&&x.review){x.cat=t.cat;x.review=false}}return true}
@@ -2635,12 +2906,12 @@ function ingest0(list){const r={added:0,merged:0,known:0,failed:0};
  const known=new Set([...tx.filter(t=>t.sms).map(t=>t.sms.key),...skip]);
  for(const msg of [...list].sort((a,b)=>a.ts-b.ts)){
   const key=hash(String(msg.from||'')+'|'+norm(msg.body));if(known.has(key)){r.known++;continue}known.add(key);
-  const p=parseSms(msg.body);
+  const p=parseSms(msg.body,msg.from);
   if(p.otp||p.ignore){skip.push(key);continue}
   if(p.inst){applyInstSms(p,msg.ts,key);skip.push(key);r.merged++;continue}
   if(p.noAmt){const sb=subMatch(norm(msg.body));if(sb&&sb.price>0)Object.assign(p,{err:null,type:'exp',amt:sb.price,m:sb.n,est:true})}
   if(p.err){fails=fails.filter(f=>f.key!==key);fails.unshift({key,from:msg.from||'',body:msg.body,ts:msg.ts,err:p.err});fails=fails.slice(0,20);r.failed++;continue}
-  const t={id:uid(),type:p.type,acc:p.acc,amt:p.amt,date:iso(new Date(msg.ts)),note:p.m||'',created:msg.ts,sms:{key,from:msg.from||'',body:msg.body,ts:msg.ts,m:p.m,ip:p.ip}};
+  const t={id:uid(),type:p.type,acc:p.acc,amt:p.amt,date:iso(new Date(msg.ts)),note:p.m||'',created:msg.ts,sms:{key,from:msg.from||'',body:msg.body,ts:msg.ts,m:p.m,ip:p.ip}};if(msg.from===TELDA_SRC)t.sms.app=1;
   if(p.type==='exp'||p.type==='inc'){const c=p.m&&(S.merch[p.type+':'+mkey(p.m)]||S.merch[p.type+':~'+simKey(p.m)]);
    if(c&&S[p.type].some(x=>x.id===c))t.cat=c;else if(p.type==='inc'&&p.acc==='credit')t.cat='refund';else if(p.acc!=='credit'&&IPRE.test(norm(msg.body)))t.cat=peopleCat(p.type,p.m);else{t.cat=null;t.review=true}}
   if(p.type==='xfer')t.to=p.to||'cash';if(p.bal!=null)t.sms.bal=p.bal;
@@ -2656,10 +2927,19 @@ function ingest0(list){const r={added:0,merged:0,known:0,failed:0};
 function pushSmsConfig(){if(!HAS_SMS)return;
  const words=[...new Set([...SMS_ACC.flatMap(kwList),...IP_WORDS])];
  try{Android.smsConfig(JSON.stringify({on:!!S.sms.on,words}))}catch(e){}}
-function pollSms(){if(!HAS_SMS||!S.sms.on)return;let l;try{l=JSON.parse(Android.smsTake()||'[]')}catch(e){return}
+const HAS_NOTIF=!!(window.Android&&typeof Android.notifAccess==='function');
+const notifGranted=()=>{try{return HAS_NOTIF&&Android.notifAccess()==='granted'}catch(e){return false}};
+function pushNotifConfig(){if(HAS_NOTIF)try{Android.notifConfig(!!S.sms.notif)}catch(e){}}
+function renderNotif(){const box=$('notifState');if(!box)return;
+ if(!HAS_NOTIF){box.innerHTML='<div class="msg">Reading Telda notifications works in the Android app. You can still paste one in <b>Test a message</b> below — start it with the word Telda.</div>';return}
+ const g=notifGranted();
+ box.innerHTML=S.sms.notif&&g?'<div class="msg"><b>On.</b> New Telda notifications are added automatically.</div><div class="btns" style="margin-top:10px"><button class="btn ghost" data-sms="notifoff">Turn off</button></div>'
+  :`<div class="msg">${S.sms.notif?'Android notification access was turned off.':'Off.'}</div><div class="btns" style="margin-top:10px"><button class="btn" data-sms="notifon">Turn on Telda notifications</button></div>${S.sms.notif&&!g?notifHelp:''}`}
+const notifHelp='<div class="msg warn" style="margin-top:10px"><b>Allow notification access:</b><br>1. Tap <b>Turn on</b> — Android opens <b>Notification access</b> (Device &amp; app notifications).<br>2. Choose <b>Expenses</b> and switch it on.<br>3. If it is greyed out ("Restricted setting"): tap <b>Open app settings</b> → ⋮ (top right) → <b>Allow restricted settings</b>, then try step 2 again.<br>4. Come back here.<div class="btns" style="margin-top:10px"><button class="btn ghost" data-sms="appsettings">Open app settings</button></div></div>';
+function pollSms(){if(!HAS_SMS||!(S.sms.on||S.sms.notif))return;let l;try{l=JSON.parse(Android.smsTake()||'[]')}catch(e){return}
  if(!Array.isArray(l)||!l.length)return;const r=ingest(l);if(r.added||r.merged)toast(`Added ${r.added+r.merged} from SMS`,false)}
 function saveKw(){SMS_ACC.forEach(a=>S.sms.kw[a]=$('kw-'+a).value.trim());S.sms.ipAcc=$('ipAcc').value;save();pushSmsConfig()}
-function renderSms(){
+function renderSms(){renderNotif();
  $('kwRows').innerHTML=SMS_ACC.map(a=>`<div class="f"><label for="kw-${a}">${esc(accName(a))}</label><input id="kw-${a}" value="${esc(S.sms.kw[a]||'')}" placeholder="e.g. 1234, 100012345678" inputmode="text"></div>`).join('');
  $('ipAcc').innerHTML=accOpts(['debit','od','telda'],S.sms.ipAcc);
  let st;
@@ -2687,9 +2967,11 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-sms]');if(
  else if(a==='off'){S.sms.on=false;save();pushSmsConfig();toast('SMS reading turned off',false)}
  else if(a==='appsettings')Android.openAppSettings();
  else if(a==='scan')scanSms(+$('scanDays').value);
- else if(a==='test'){const v=$('smsTest').value.trim();if(!v)return;SMS_ACC.forEach(x=>S.sms.kw[x]=$('kw-'+x).value.trim());S.sms.ipAcc=$('ipAcc').value;const p=parseSms(v);$('smsTestOut').innerHTML=`<div class="msg${p.err?' warn':''}">${describe(p)}</div>`}
- else if(a==='clearfails'){fails=[];save()}});
-window.onResumeApp=pollSms;setInterval(pollSms,20000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)pollSms()});
+ else if(a==='test'){const v=$('smsTest').value.trim();if(!v)return;SMS_ACC.forEach(x=>S.sms.kw[x]=$('kw-'+x).value.trim());S.sms.ipAcc=$('ipAcc').value;const p=parseSms(v,/^\s*telda\b/i.test(v)?TELDA_SRC:'');$('smsTestOut').innerHTML=`<div class="msg${p.err?' warn':''}">${describe(p)}</div>`}
+ else if(a==='clearfails'){fails=[];save()}
+ else if(a==='notifon'){S.sms.notif=true;save();pushNotifConfig();if(!notifGranted()){Android.notifOpen();renderNotif()}else toast('Telda notifications on',false)}
+ else if(a==='notifoff'){S.sms.notif=false;save();pushNotifConfig();toast('Telda notifications turned off',false)}});
+window.onResumeApp=()=>{pollSms();if(location.hash==='#settings')renderNotif()};pushNotifConfig();setInterval(pollSms,20000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)pollSms()});
 
 /* ---------- swipe the screen left/right to move between tabs (same as Time Sheet) ---------- */
 {const STABS=['home','house','credit','cash','goals','gam','charity','subs','reports'];
@@ -2725,8 +3007,8 @@ function route(){if(lastHash!==null&&lastHash!==location.hash)closeCards();lastH
  window.scrollTo(0,0);const on=$('t-'+v);if(on)on.scrollIntoView({inline:'center',block:'nearest'})}
 function renderAll(){const v=location.hash.slice(1);if(v==='add'||v==='plan')return;const y=window.scrollY;route();window.scrollTo(0,y)}
 window.addEventListener('hashchange',route);
-window.__app={get tx(){return tx},monthStats};
-load();applyTheme();route();pushReminder();pushSmsConfig();pollSms();
+window.__app={get tx(){return tx},get S(){return S},get fails(){return fails},monthStats,ingest,widgetData,planNotes,calcMath,estMin};
+load();applyTheme();route();pushReminder();pushSmsConfig();pollSms();runRecurring();pushExtras();
 if(HAS_SMS&&S.sms.on&&!S.sms.scanned&&Android.smsPermission()==='granted')scanSms(3650);
 if(!window.Android)$('status').textContent='Saved in this browser';
 }

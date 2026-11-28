@@ -413,7 +413,8 @@ public class MainActivity extends Activity {
                     send(status().put("message", "Backed up to Google Drive."));
                 } else if ("restore".equals(action)) {
                     String data = DriveSync.latest(token);
-                    send(new JSONObject().put("type", "restore").put("data", data));
+                    int inv = DriveSync.restoreInvoices(this, token);
+                    send(new JSONObject().put("type", "restore").put("data", data).put("invoices", inv));
                 }
             } catch (Exception e) {
                 fail(e);
@@ -594,6 +595,40 @@ public class MainActivity extends Activity {
                         .putString("words", w == null ? "[]" : w.toString()).apply();
             } catch (Exception ignored) { }
         }
+
+        /* ---- Telda notifications ---- */
+        @JavascriptInterface
+        public String notifAccess() {
+            String l = Settings.Secure.getString(getContentResolver(), "enabled_notification_listeners");
+            return l != null && l.contains(getPackageName()) ? "granted" : "denied";
+        }
+
+        @JavascriptInterface
+        public void notifOpen() {
+            runOnUiThread(() -> {
+                try { startActivity(new Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")); }
+                catch (Exception e) { try { startActivity(new Intent(Settings.ACTION_SETTINGS)); } catch (Exception ignored) { } }
+            });
+        }
+
+        @JavascriptInterface
+        public void notifConfig(boolean on) { SmsReceiver.prefs(MainActivity.this).edit().putBoolean("notif", on).apply(); }
+
+        /* ---- planned reminders, alerts now, home-screen widget ---- */
+        @JavascriptInterface
+        public void setNotes(String json) { ReminderWorker.prefs(MainActivity.this).edit().putString("notes", json).apply(); }
+
+        @JavascriptInterface
+        public void notifyNow(String id, String title, String text) {
+            ReminderWorker.notify(MainActivity.this, 100 + (Math.abs(String.valueOf(id).hashCode()) % 800), "alerts", "Spending alerts", title, text);
+        }
+
+        @JavascriptInterface
+        public void setWidget(String json) { ExpWidget.save(MainActivity.this, json); }
+
+        /* ---- invoices in the Google Drive backup ---- */
+        @JavascriptInterface
+        public void driveInvoices(boolean on) { DriveSync.prefs(MainActivity.this).edit().putBoolean("inv", on).apply(); }
 
         @JavascriptInterface
         public String smsTake() { return SmsReceiver.take(MainActivity.this); }

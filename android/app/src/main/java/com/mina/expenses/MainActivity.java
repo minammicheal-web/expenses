@@ -79,6 +79,8 @@ public class MainActivity extends Activity {
         s.setAllowFileAccess(true);
         web.addJavascriptInterface(new Bridge(), "Android");
         web.addJavascriptInterface(new M3Feedback(this, web), "M3");
+        voice = new Voice(this, web);
+        web.addJavascriptInterface(voice, "Voice");
 
         web.setWebViewClient(new WebViewClient() {
             @Override
@@ -178,6 +180,7 @@ public class MainActivity extends Activity {
     @Override
     public void onRequestPermissionsResult(int req, String[] perms, int[] res) {
         super.onRequestPermissionsResult(req, perms, res);
+        if (req == Voice.REQ && voice != null) { voice.onPermission(res.length > 0 && res[0] == PackageManager.PERMISSION_GRANTED); return; }
         if (req != 4) return;
         try { sendJs("window.onSms&&window.onSms(" + new JSONObject().put("type", "perm").put("granted", smsGranted()).toString() + ")"); } catch (Exception ignored) { }
     }
@@ -337,6 +340,8 @@ public class MainActivity extends Activity {
         else lockView.setVisibility(View.GONE);
         if (web != null) web.evaluateJavascript("window.onResumeApp&&window.onResumeApp()", null);
     }
+
+    private Voice voice;
 
     private void sendJs(String code) { runOnUiThread(() -> web.evaluateJavascript(code, null)); }
 

@@ -3431,7 +3431,7 @@ const REFW=/refund|reversal|reversed|cashback|cash back|استرداد|استر�
 const INW=/credited|received|receive|deposit|added|incoming|inward|transferred to you|إضافة|اضافة|أضيف|اضيف|ايداع|إيداع|وارد|استلام|استلمت|تحويل لك/;
 const OUTW=/purchase|debited|deducted|charged|spent|paid|payment|withdraw|sent|transfer|\bpos\b|خصم|شراء|سحب|تحويل|ارسال|إرسال|دفع|سداد|مشتريات/;
 const PAYW=/payment received|payment of|repayment|received.*payment|سداد|تم سداد|مدفوعات/;
-const ATMW=/\batm\b|cash withdrawal|سحب نقدي|تم سحب|ماكينة|ماكينه/;
+const ATMW=/\batm\b|cash withdrawal|you withdrew|سحب نقدي|تم سحب|ماكينة|ماكينه/;
 function merchantOf(body){
  const s=digits(body).replace(/\s+/g,' ');
  {const m=s.match(/\bat\s+(.+?)\s+on\s+\d{1,2}\/\d{1,2}/i);if(m&&!/\d{6,}/.test(m[1]))return m[1].trim()}
@@ -3463,7 +3463,7 @@ function parseSms(body,from){
  if(/محتاج كاش|تقدر تحول|بسعر فائدة مخفض|عرض خاص|special offer|apply now|قدم الآن|استمتع ب/i.test(b)&&!/charged|تم خصم|debited|تم سحب|تم سداد/i.test(b))return{err:'Advert',ignore:true};
  const isOtp=OTPBUY.test(b);
  const inbound=/(?:إلى|الى)\s*حساب(?:ك|كم)/.test(b)&&!/من\s*حساب(?:ك|كم)/.test(b);
- const balM=b.match(/الرصيد المتاح\s*(?:egp\s*)?([\d,]+\.\d+)|available balance(?: is)?\s*(?:egp\s*)?([\d,]+\.\d+)/);
+ const balM=b.match(/الرصيد المتاح\s*(?:egp\s*)?([\d,]+\.\d+)|available balance(?: is)?\s*(?:egp\s*)?([\d,]+\.\d+)|\bbalance\s*:\s*(?:egp\s*)?([\d,]+(?:\.\d+)?)/);
  let acc=null,ip=false;
  for(const a of SMS_ACC)if(kwList(a).some(k=>hasKw(b,k))){acc=a;break}
  const byNum=!!acc;if(!acc&&(ab||sb))acc=accOfBank(ab||sb,b);
@@ -3487,7 +3487,7 @@ function parseSms(body,from){
  if(inbound){const nm=body.match(/من\s+(.+?)\s+برقم/);if(nm)mer2=nm[1].trim()}
  if(!isOtp&&type==='exp'){const hay=(mer+' '+b).toLowerCase(),w=bankAccs().find(a=>a!==acc&&kindOf(a)==='wallet'&&S.acc[a].bank!=='instapay'&&((bankOf(S.acc[a].bank)||[])[4]||[]).some(k=>k.length>=4&&new RegExp('(^|[^a-z])'+reEsc(k)+'([^a-z]|$)').test(hay)));if(w){type='xfer';to=w}}
  if(kindOf(acc)==='od'&&type==='exp'&&/transfer to\s+another account/i.test(b)){const d=bankAccs().find(a=>a!==acc&&kindOf(a)==='debit'&&S.acc[a].bank===S.acc[acc].bank);if(d){type='xfer';to=d}}
- return{type:isOtp?'exp':type,acc,amt,to,bal:balM&&acc!=='credit'?numv(balM[1]||balM[2]):null,m:isOtp?(b.match(/من\s+(.+?)\s+لبطاقة/)||[])[1]||mer:mer2,ip,otp2:isOtp,ipn:!isOtp&&!inbound&&IPRE.test(b)&&(type==='exp'||type==='xfer')&&acc!=='credit'}}
+ return{type:isOtp?'exp':type,acc,amt,to,bal:balM&&acc!=='credit'?numv(balM[1]||balM[2]||balM[3]):null,m:isOtp?(b.match(/من\s+(.+?)\s+لبطاقة/)||[])[1]||mer:mer2,ip,otp2:isOtp,ipn:!isOtp&&!inbound&&IPRE.test(b)&&(type==='exp'||type==='xfer')&&acc!=='credit'}}
 function describe(p){if(p.err)return p.err;
  const what={exp:`Expense from ${accName(p.acc)}`,inc:p.acc==='credit'?`Refund on ${accName(p.acc)}`:`Income to ${accName(p.acc)}`,pay:`Credit card payment (from the account whose SMS for it arrives too, otherwise ${accName(defAcc())})`,xfer:p.to==='cash'?`Cash withdrawal: ${accName(p.acc)} → ${accName('cash')}`:kindOf(p.to)==='wallet'?`Top-up: ${accName(p.acc)} → ${accName(p.to)}`:`Transfer: ${accName(p.acc)} → ${accName(p.to)}`}[p.type];
  return `${what}${p.bal!=null?` · balance after: ${egp(p.bal)}`:''} · <b>${egp(p.ipn?p.amt+ipFee(p.amt):p.amt)}</b>${p.ipn?` (${money(p.amt)} + ${money(ipFee(p.amt))} InstaPay fee)`:''}${p.m?` · ${esc(p.m)}`:''}${p.ip?' · InstaPay':''}`}
